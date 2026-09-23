@@ -1,0 +1,37 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "deckframes"
+version = "0.1.0"
+description = "Markdown → editable PowerPoint decks, with agent skills for Claude Code, Codex and other coding agents."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "ChienI Kao" }]
+requires-python = ">=3.10"
+dependencies = [
+  "python-pptx>=1.0",
+  "Pillow>=10",
+  "lxml>=4.9",
+  "PyYAML>=6",
+]
+keywords = ["pptx", "powerpoint", "markdown", "slides", "agent-skills", "claude-code", "codex"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Operating System :: OS Independent",
+  "Topic :: Office/Business :: Office Suites",
+]
+
+[project.optional-dependencies]
+preview = ["pymupdf>=1.23"]
+
+[project.scripts]
+deckframes = "deckframes.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/ChienIKao/deckframes"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/deckframes"]
