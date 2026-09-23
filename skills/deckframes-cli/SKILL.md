@@ -27,6 +27,7 @@ deckframes status --set reviewed
 | `deckframes check [file.pptx] [--json] [--no-outline]` | structural QA + slide outline |
 | `deckframes preview [file.pptx] [--backend auto\|powerpoint\|libreoffice] [--cols N]` | render images |
 | `deckframes themes list \| show NAME \| import PRESET\|FRAME.md [--name N] [--out PATH]` | themes |
+| `deckframes themes gallery [--presets] [--only a,b] [--out gallery.png]` | side-by-side image of every theme |
 | `deckframes template inspect FILE.pptx [--write-config config.json]` | map template layouts |
 | `deckframes doctor` | dependencies and renderers |
 

@@ -115,6 +115,13 @@ def _shadow_px(value) -> float:
     return abs(nums[0])
 
 
+def _describe(desc: str) -> str:
+    """FRAME.md descriptions open with boilerplate; keep the part that describes the look."""
+    d = " ".join(desc.split())
+    m = re.search(r"sacred\s*[—-]+\s*(.+)", d)
+    return (m.group(1) if m else d)[:160]
+
+
 def import_frame(path: Path, name: str | None = None) -> tuple[dict, list[str]]:
     text = path.read_text(encoding="utf-8")
     fm = _front_matter(text)
@@ -202,7 +209,7 @@ def import_frame(path: Path, name: str | None = None) -> tuple[dict, list[str]]:
     theme = {
         "name": name or path.parent.name,
         "engine": "canvas",
-        "description": (fm.get("description") or "").strip().split("\n")[0][:160],
+        "description": _describe(fm.get("description") or ""),
         "source": f"HyperFrames preset {path.parent.name} (imported by `deckframes themes import`)",
         "colors": {
             "black": colors[ink], "white": "FFFFFF", "ground": colors[ground], "text": colors[ink],

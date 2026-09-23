@@ -14,9 +14,13 @@ A canvas theme is a JSON file of design tokens; the canvas engine draws every sl
 a path → `./themes/NAME.json` → `~/.deckframes/themes/NAME.json` → built-ins.
 
 ```bash
-deckframes themes list              # show choices to the user
-deckframes themes show blockframe   # inspect tokens
+deckframes themes list                  # show choices to the user
+deckframes themes gallery --presets     # one image: every theme (incl. importable HyperFrames presets)
+deckframes themes show blockframe       # inspect tokens
 ```
+
+When the user is choosing a look, generate the gallery and show them the image (or its path) —
+it renders the same sample deck (cover, divider, content + nav bar, stats) in every theme.
 
 | Built-in | Look |
 |---|---|

@@ -126,6 +126,9 @@ class Canvas:
         self.prs = Presentation()
         self.prs.slide_width, self.prs.slide_height = E(W), E(H)
         self.blank = self.prs.slide_layouts[6]
+        # highlighter: prefer the 4th accent (yellow in BlockFrame) but only if ink stays readable on it
+        light = [p for p in self.palette[3:] + self.palette[:3] if self.luminance(p) >= 0.55]
+        self.hl = c.get("highlight") or (light[0] if light else "FFE58A")
         self.deco = theme.get("decorations", True)
         self.tilt = theme.get("tilt", True)
         self.warnings: list[str] = []
@@ -207,7 +210,7 @@ class Canvas:
             if spc:
                 rPr.set("spc", str(int(spc * 100)))
             if fmt.get("hl"):
-                set_highlight(rPr, (hl_color or self.pal(3)).lstrip("#"))
+                set_highlight(rPr, (hl_color or self.hl).lstrip("#"))
             if fmt.get("link"):
                 r.hyperlink.address = fmt["link"]
 

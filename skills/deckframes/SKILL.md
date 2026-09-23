@@ -48,7 +48,8 @@ Ask **once, in one message**, only what the request doesn't already answer. Offe
 
 1. **Purpose** → picks the workflow: thesis/defense/research talk → `deckframes-academic-defense`;
    anything else → `deckframes-general`.
-2. **Look** → a theme or a .pptx template. Run `deckframes themes list` and show the list.
+2. **Look** → a theme or a .pptx template. Run `deckframes themes list` and show the list; if the
+   user wants to see them, run `deckframes themes gallery --presets` and show the image.
    Default `blockframe`. The user may also name a HyperFrames design preset
    (`deckframes themes import <preset>`) or give a company .pptx/.potx (`deckframes-templates`).
 3. **Content mode** → `verbatim` (default: fix structure, convert to infographics, never reword)

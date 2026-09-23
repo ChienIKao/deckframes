@@ -12,9 +12,14 @@
 
 ![完整範例](docs/preview.jpg)
 
-由上到下：`blockframe`（內建），以及從 HyperFrames 匯入的 `capsule`、`coral`、`editorial-forest`、`cartesian`
+</details>
 
-![主題對照](docs/themes.jpg)
+<details>
+<summary>主題一覽（14 個）</summary>
+
+內建 `blockframe`、`default`，以及 12 套可一行匯入的 HyperFrames 設計。用 `deckframes themes gallery --presets` 產生：
+
+![主題一覽](docs/themes-gallery.jpg)
 
 </details>
 
@@ -187,6 +192,7 @@ date: 2026 / 07 / 08
 
 ```bash
 deckframes themes list                    # 列出可用主題
+deckframes themes gallery --presets       # 產生主題一覽圖（含所有可匯入的 HyperFrames 設計）
 deckframes themes import capsule          # 匯入 HyperFrames 設計（需已安裝 hyperframes skills）
 deckframes themes import path/to/FRAME.md --name my-look
 ```
@@ -208,7 +214,7 @@ deckframes themes import path/to/FRAME.md --name my-look
 | `deckframes check [out.pptx] [--json]` | 檢查溢出與超出邊界（有問題時結束代碼為 1） |
 | `deckframes preview [out.pptx]` | 每頁 PNG ＋ 總覽 grid.png |
 | `deckframes status [--set STAGE] [--json]` | 進度：brief → draft → built → checked → reviewed |
-| `deckframes themes list\|show\|import` | 主題管理 |
+| `deckframes themes list\|show\|import\|gallery` | 主題管理、主題一覽圖 |
 | `deckframes template inspect FILE.pptx [--write-config]` | 分析模版版面 |
 | `deckframes doctor` | 環境檢查 |
 

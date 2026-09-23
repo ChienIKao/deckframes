@@ -6,6 +6,7 @@
   deckframes preview [DECK.pptx] [--out DIR] [--cols N] [--backend auto|powerpoint|libreoffice]
   deckframes status [--set STAGE | --unset STAGE] [--json]
   deckframes themes list | show NAME | import FRAME.md|PRESET [--name N] [--out PATH]
+  deckframes themes gallery [--presets] [--only a,b] [--out gallery.png]
   deckframes template inspect FILE.pptx [--write-config config.json]
   deckframes doctor
 
@@ -162,6 +163,11 @@ def cmd_themes(a):
         print(f"✔ theme '{theme['name']}' → {out}")
         for n in notes:
             print("  ·", n)
+    elif a.action == "gallery":
+        from .gallery import gallery
+        out = Path(a.out or "themes-gallery.png")
+        res = gallery(out, presets=a.presets, backend=a.backend, names=a.only.split(",") if a.only else None)
+        print(f"✔ {len(res['themes'])} themes → {res['file']}")
 
 
 def cmd_template(a):
@@ -240,10 +246,13 @@ def main(argv=None):
     p.set_defaults(fn=cmd_status)
 
     p = sub.add_parser("themes", help="list / show / import themes")
-    p.add_argument("action", choices=["list", "show", "import"])
+    p.add_argument("action", choices=["list", "show", "import", "gallery"])
     p.add_argument("name", nargs="?")
     p.add_argument("--name", dest="as_name", help="(import) theme name to save as")
-    p.add_argument("--out", help="(import) output path")
+    p.add_argument("--out", help="(import) theme path / (gallery) image path")
+    p.add_argument("--presets", action="store_true", help="(gallery) also show every HyperFrames preset found")
+    p.add_argument("--only", help="(gallery) comma-separated theme names")
+    p.add_argument("--backend", choices=["auto", "powerpoint", "libreoffice"], default="auto")
     p.add_argument("--json", action="store_true")
     p.set_defaults(fn=cmd_themes)
 
