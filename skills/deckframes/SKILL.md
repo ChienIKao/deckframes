@@ -29,7 +29,8 @@ pipx install git+https://github.com/ChienIKao/deckframes         # or
 pip install git+https://github.com/ChienIKao/deckframes
 ```
 
-`python -m deckframes …` works anywhere `deckframes` does. Preview needs PowerPoint (Windows) or
+Call the `deckframes` command directly. (`python -m deckframes` only works with the Python the
+package was pip-installed into — not with `uv tool` / `pipx` installs.) Preview needs PowerPoint (Windows) or
 LibreOffice + `pip install pymupdf`; if neither exists, QA falls back to `deckframes check --json`.
 
 ## 1. Start from project state
@@ -60,6 +61,8 @@ Then create the project (one folder per deck, `<YYYYMMDD-slug>/` in the working 
 ```bash
 deckframes init <YYYYMMDD-slug> --from <script.md> --theme <theme> --workflow <workflow> --mode <mode>
 ```
+
+`<workflow>` is `deckframes-general` or `deckframes-academic-defense`; `<mode>` is `verbatim` or `refine`.
 
 `init` copies the script to `source.md` (never edited) and `deck.md` (your working copy), copies a
 sibling `assets/` folder, and writes `deck.json` and an `AGENTS.md` hand-off note.

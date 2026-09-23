@@ -41,7 +41,15 @@ def _project(path: Path | None = None):
 # --------------------------------------------------------------------------- commands
 
 
+WORKFLOWS = {"deckframes-general": "deckframes-general", "general": "deckframes-general",
+             "deckframes-academic-defense": "deckframes-academic-defense",
+             "academic-defense": "deckframes-academic-defense", "academic": "deckframes-academic-defense"}
+
+
 def cmd_init(a):
+    if a.workflow not in WORKFLOWS:
+        raise SystemExit(f"unknown workflow '{a.workflow}' — use deckframes-general or deckframes-academic-defense")
+    a.workflow = WORKFLOWS[a.workflow]
     root = Path(a.dir).resolve()
     src = Path(a.source).resolve() if a.source else None
     if src and not src.exists():

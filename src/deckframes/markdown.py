@@ -118,6 +118,8 @@ def make_item(text: str):
             attrs[m.group(1).lower()] = m.group(2).strip()
         elif part:
             pos.append(part)
+    if len(pos) > 1:  # "標題： | 說明" — the separator is the pipe, drop the dangling colon
+        pos[0] = pos[0].rstrip("：:").rstrip()
     return {"title": pos[0] if pos else "", "desc": pos[1] if len(pos) > 1 else "",
             "extra": pos[2:], "attrs": attrs, "children": []}
 

@@ -87,3 +87,12 @@ def test_themes_new(tmp_path):
     out = tmp_path / "t.pptx"
     main(["build", str(DEMO), "-o", str(out), "--theme", str(path)])
     assert check(out)["ok"]
+
+
+def test_item_colon_and_workflow_alias(tmp_path):
+    from deckframes.markdown import make_item
+    assert make_item("空間老舊： | 座位不足")["title"] == "空間老舊"
+    assert make_item("比例：3:1")["title"] == "比例：3:1"
+    main(["init", str(tmp_path / "w"), "--workflow", "general"])
+    state = json.loads((tmp_path / "w" / "deck.json").read_text(encoding="utf-8"))
+    assert state["workflow"] == "deckframes-general"
