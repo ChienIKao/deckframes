@@ -17,6 +17,7 @@ a path → `./themes/NAME.json` → `~/.deckframes/themes/NAME.json` → built-i
 deckframes themes list                  # show choices to the user
 deckframes themes gallery --presets     # one image: every theme (incl. importable HyperFrames presets)
 deckframes themes show blockframe       # inspect tokens
+deckframes themes new my-look [--from capsule] [--project]   # scaffold an editable copy
 ```
 
 When the user is choosing a look, generate the gallery and show them the image (or its path) —
@@ -43,6 +44,13 @@ maps web fonts to fonts that ship with Office, and turns decorations/tilt on onl
 brutalist presets (border ≥ 2px and hard shadow ≥ 4px). It prints what it inferred — check the
 preview and hand-tune the JSON if a role was guessed wrong. The theme lands in
 `~/.deckframes/themes/` and is then usable by name.
+
+## Custom themes
+
+When the user wants their own colours or fonts: `deckframes themes new <name>` (copies blockframe,
+or `--from` another theme) → edit the tokens below (the file's `_edit` key repeats the hints) →
+`deckframes themes gallery --only <name>` to show them → build with `--theme <name>`. Written to
+`~/.deckframes/themes/` (all projects) or, with `--project`, `./themes/` (this project only).
 
 ## Token reference
 

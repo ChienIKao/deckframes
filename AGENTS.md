@@ -36,6 +36,9 @@ tests/                   pytest smoke tests
 
 ## Development
 
+Contribution recipes (new theme, template, infographic component, workflow skill) are in
+[CONTRIBUTING.md](CONTRIBUTING.md).
+
 ```bash
 pip install -e ".[preview]" pytest
 pytest -q

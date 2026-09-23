@@ -7,6 +7,7 @@
   deckframes status [--set STAGE | --unset STAGE] [--json]
   deckframes themes list | show NAME | import FRAME.md|PRESET [--name N] [--out PATH]
   deckframes themes gallery [--presets] [--only a,b] [--out gallery.png]
+  deckframes themes new NAME [--from BASE] [--project | --out PATH] [--force]
   deckframes template inspect FILE.pptx [--write-config config.json]
   deckframes doctor
 
@@ -163,6 +164,17 @@ def cmd_themes(a):
         print(f"✔ theme '{theme['name']}' → {out}")
         for n in notes:
             print("  ·", n)
+    elif a.action == "new":
+        from .themes import new_theme
+        dest = Path(a.out) if a.out else (Path.cwd() / "themes" / f"{a.name}.json" if a.project else None)
+        path = new_theme(a.name, a.base, dest, a.force)
+        engine = resolve_theme(str(path))[0].get("engine", "template")
+        print(f"✔ theme '{a.name}' (copied from {a.base}) → {path}")
+        print("  edit: colors.palette / ground / text, fonts, stroke, decorations (hints in the _edit key)")
+        print(f"  try:  deckframes themes gallery --only {a.name}")
+        print(f"  use:  deckframes build deck.md --theme {a.name}   (or `theme: {a.name}` in front matter)")
+        if engine != "canvas":
+            print(f"  note: '{a.base}' uses the template engine — no nav bar / sub-TOC; base on blockframe for those")
     elif a.action == "gallery":
         from .gallery import gallery
         out = Path(a.out or "themes-gallery.png")
@@ -246,12 +258,15 @@ def main(argv=None):
     p.set_defaults(fn=cmd_status)
 
     p = sub.add_parser("themes", help="list / show / import themes")
-    p.add_argument("action", choices=["list", "show", "import", "gallery"])
+    p.add_argument("action", choices=["list", "show", "import", "gallery", "new"])
     p.add_argument("name", nargs="?")
     p.add_argument("--name", dest="as_name", help="(import) theme name to save as")
     p.add_argument("--out", help="(import) theme path / (gallery) image path")
     p.add_argument("--presets", action="store_true", help="(gallery) also show every HyperFrames preset found")
     p.add_argument("--only", help="(gallery) comma-separated theme names")
+    p.add_argument("--from", dest="base", default=DEFAULT_THEME, help="(new) theme to copy")
+    p.add_argument("--project", action="store_true", help="(new) write to ./themes/ instead of ~/.deckframes/themes/")
+    p.add_argument("--force", action="store_true", help="(new) overwrite an existing file")
     p.add_argument("--backend", choices=["auto", "powerpoint", "libreoffice"], default="auto")
     p.add_argument("--json", action="store_true")
     p.set_defaults(fn=cmd_themes)
@@ -266,7 +281,7 @@ def main(argv=None):
     p.set_defaults(fn=cmd_doctor)
 
     a = ap.parse_args(argv)
-    if a.cmd == "themes" and a.action in ("show", "import") and not a.name:
+    if a.cmd == "themes" and a.action in ("show", "import", "new") and not a.name:
         ap.error(f"themes {a.action} needs NAME")
     for stream in (sys.stdout, sys.stderr):
         if hasattr(stream, "reconfigure"):

@@ -75,3 +75,15 @@ def test_project_flow(tmp_path, monkeypatch):
     state = json.loads((proj / "deck.json").read_text(encoding="utf-8"))
     assert state["status"]["built"]
     assert (proj / state["output"]).exists()
+
+
+def test_themes_new(tmp_path):
+    from deckframes.themes import new_theme
+    path = new_theme("my-lab", dest=tmp_path / "my-lab.json")
+    theme = json.loads(path.read_text(encoding="utf-8"))
+    assert theme["name"] == "my-lab" and theme["based_on"] == "blockframe" and theme["engine"] == "canvas"
+    theme["colors"]["palette"] = ["1B998B", "ED217C", "FFFD82"]
+    path.write_text(json.dumps(theme), encoding="utf-8")
+    out = tmp_path / "t.pptx"
+    main(["build", str(DEMO), "-o", str(out), "--theme", str(path)])
+    assert check(out)["ok"]

@@ -203,6 +203,16 @@ deckframes themes import path/to/FRAME.md --name my-look
 
 主題欄位說明：[`skills/deckframes-design/SKILL.md`](skills/deckframes-design/SKILL.md)
 
+### 新增自己的主題或模版
+
+```bash
+deckframes themes new my-lab                 # 以 blockframe 為底，建立可修改的主題檔
+deckframes themes gallery --only my-lab      # 修改配色、字型後預覽
+deckframes build talk.md --theme my-lab
+```
+
+完整步驟（修改欄位、分享、貢獻成內建主題、.pptx 模版、新增元件或工作流）見 [CONTRIBUTING.md](CONTRIBUTING.md)。
+
 ---
 
 ## 指令
@@ -214,7 +224,7 @@ deckframes themes import path/to/FRAME.md --name my-look
 | `deckframes check [out.pptx] [--json]` | 檢查溢出與超出邊界（有問題時結束代碼為 1） |
 | `deckframes preview [out.pptx]` | 每頁 PNG ＋ 總覽 grid.png |
 | `deckframes status [--set STAGE] [--json]` | 進度：brief → draft → built → checked → reviewed |
-| `deckframes themes list\|show\|import\|gallery` | 主題管理、主題一覽圖 |
+| `deckframes themes list\|show\|import\|gallery\|new` | 主題管理、主題一覽圖、建立新主題 |
 | `deckframes template inspect FILE.pptx [--write-config]` | 分析模版版面 |
 | `deckframes doctor` | 環境檢查 |
 
@@ -259,7 +269,7 @@ pip install -e ".[preview]" pytest
 pytest -q
 ```
 
-程式架構與貢獻規則見 [`AGENTS.md`](AGENTS.md)。
+貢獻方式見 [CONTRIBUTING.md](CONTRIBUTING.md)，程式架構見 [`AGENTS.md`](AGENTS.md)。
 
 ---
 

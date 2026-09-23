@@ -28,6 +28,7 @@ deckframes status --set reviewed
 | `deckframes preview [file.pptx] [--backend auto\|powerpoint\|libreoffice] [--cols N]` | render images |
 | `deckframes themes list \| show NAME \| import PRESET\|FRAME.md [--name N] [--out PATH]` | themes |
 | `deckframes themes gallery [--presets] [--only a,b] [--out gallery.png]` | side-by-side image of every theme |
+| `deckframes themes new NAME [--from BASE] [--project \| --out PATH] [--force]` | scaffold an editable theme |
 | `deckframes template inspect FILE.pptx [--write-config config.json]` | map template layouts |
 | `deckframes doctor` | dependencies and renderers |
 

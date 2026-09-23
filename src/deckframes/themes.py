@@ -74,3 +74,37 @@ def resolve_template(ref: str | None, cwd: Path | None = None):
             if tpl:
                 return tpl, cfg
     raise SystemExit(f"template not found: {ref}")
+
+
+EDIT_HINTS = {
+    "colors.ground": "slide background",
+    "colors.text / colors.black": "body text / outlines and connectors (usually the same dark colour)",
+    "colors.muted": "secondary text",
+    "colors.palette": "2–5 accent fills cycled by components; the 4th light one is the highlighter",
+    "colors.chapter_cycle": "chapter colours for dividers and the nav band (defaults to palette)",
+    "fonts": "display = Latin headlines, label = pills, body, ea = CJK font, code",
+    "stroke": "border / thin = outline pt (0 = none); shadow / thin_shadow = hard shadow offset pt (0 = none)",
+    "decorations / tilt": "star bursts, stripe tiles, dot grid / rotated cards on or off",
+    "sizes": "title, subtitle, body_max, body_min, split_below in pt",
+}
+
+
+def new_theme(name: str, base: str = DEFAULT_THEME, dest: Path | None = None, force: bool = False) -> Path:
+    """Scaffold an editable theme JSON by copying `base`."""
+    import copy
+    import re
+
+    if not re.fullmatch(r"[a-z0-9][a-z0-9-]*", name):
+        raise SystemExit("theme names use lowercase letters, digits and hyphens (e.g. my-lab)")
+    theme, _ = resolve_theme(base)
+    t = copy.deepcopy(theme)
+    t.pop("source", None)
+    t = {"name": name, "description": f"Custom theme based on {base} — describe the look here",
+         "based_on": base, **{k: v for k, v in t.items() if k not in ("name", "description")},
+         "_edit": EDIT_HINTS}
+    dest = dest or USER_HOME / "themes" / f"{name}.json"
+    if dest.exists() and not force:
+        raise SystemExit(f"{dest} already exists (use --force to overwrite)")
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    dest.write_text(json.dumps(t, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    return dest
