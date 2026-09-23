@@ -8,7 +8,7 @@
 ![預覽](docs/highlights.jpg)
 
 <details>
-<summary>完整範例（21 頁）與主題對照</summary>
+<summary>完整範例（21 頁）</summary>
 
 ![完整範例](docs/preview.jpg)
 
