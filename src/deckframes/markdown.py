@@ -68,6 +68,39 @@ def is_cjk(ch: str) -> bool:
     return unicodedata.east_asian_width(ch) in ("W", "F")
 
 
+# Emoji are banned from decks: use `icon:` (Font Awesome / SVG) instead. Plain typographic symbols
+# such as ✓ ✗ ○ × → ★ stay allowed — only code points with emoji presentation are rejected.
+_EMOJI_BMP = (
+    (0x231A, 0x231B), (0x23E9, 0x23EC), (0x23F0, 0x23F0), (0x23F3, 0x23F3), (0x25FD, 0x25FE),
+    (0x2614, 0x2615), (0x2648, 0x2653), (0x267F, 0x267F), (0x2693, 0x2693), (0x26A1, 0x26A1),
+    (0x26AA, 0x26AB), (0x26BD, 0x26BE), (0x26C4, 0x26C5), (0x26CE, 0x26CE), (0x26D4, 0x26D4),
+    (0x26EA, 0x26EA), (0x26F2, 0x26F3), (0x26F5, 0x26F5), (0x26FA, 0x26FA), (0x26FD, 0x26FD),
+    (0x2705, 0x2705), (0x270A, 0x270B), (0x2728, 0x2728), (0x274C, 0x274C), (0x274E, 0x274E),
+    (0x2753, 0x2755), (0x2757, 0x2757), (0x2795, 0x2797), (0x27B0, 0x27B0), (0x27BF, 0x27BF),
+    (0x2B1B, 0x2B1C), (0x2B50, 0x2B50), (0x2B55, 0x2B55),
+)
+
+
+def is_emoji(text: str, i: int) -> bool:
+    cp = ord(text[i])
+    if 0x1F000 <= cp <= 0x1FAFF:          # pictographs, emoticons, transport, flags, symbols & pictographs
+        return True
+    if any(a <= cp <= b for a, b in _EMOJI_BMP):
+        return True
+    nxt = text[i + 1] if i + 1 < len(text) else ""
+    return nxt == "\uFE0F" or nxt == "\u20E3"  # emoji variation selector / keycap
+
+
+def find_emoji(text: str) -> list[tuple[int, int, str]]:
+    """[(line, column, char)] for every emoji in `text` (1-based)."""
+    hits = []
+    for ln, line in enumerate(text.split("\n"), 1):
+        for col, ch in enumerate(line):
+            if is_emoji(line, col):
+                hits.append((ln, col + 1, ch))
+    return hits
+
+
 def join_lines(a: str, b: str) -> str:
     if not a:
         return b

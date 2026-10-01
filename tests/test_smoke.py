@@ -96,3 +96,47 @@ def test_item_colon_and_workflow_alias(tmp_path):
     main(["init", str(tmp_path / "w"), "--workflow", "general"])
     state = json.loads((tmp_path / "w" / "deck.json").read_text(encoding="utf-8"))
     assert state["workflow"] == "deckframes-general"
+
+
+def test_emoji_rejected(tmp_path):
+    import pytest
+    from deckframes.markdown import find_emoji
+    assert [c for _, _, c in find_emoji("成果 \U0001F389 完成 \u2705 ok")] == ["\U0001F389", "\u2705"]
+    assert find_emoji("✓ ✗ ○ × → ★ ■ – 3×") == []          # typographic symbols stay allowed
+    assert [c for _, _, c in find_emoji("警告 \u26A0\uFE0F")] == ["⚠"]  # text symbol + VS16 = emoji
+    deck = tmp_path / "e.md"
+    deck.write_text("# 標題\n\n## 章 | Ch\n\n### 節\n\n- 重點 \U0001F680\n", encoding="utf-8")
+    with pytest.raises(SystemExit) as e:
+        main(["build", str(deck), "-o", str(tmp_path / "e.pptx")])
+    assert e.value.code == 2 and not (tmp_path / "e.pptx").exists()
+
+
+def test_check_flags_emoji_in_pptx(tmp_path):
+    from pptx import Presentation
+    from pptx.util import Inches
+    prs = Presentation()
+    s = prs.slides.add_slide(prs.slide_layouts[6])
+    s.shapes.add_textbox(Inches(1), Inches(1), Inches(4), Inches(1)).text_frame.text = "Launch \U0001F680"
+    out = tmp_path / "x.pptx"
+    prs.save(out)
+    issues = check(out)["pages"][0]["issues"]
+    assert any(i["type"] == "emoji" for i in issues)
+
+
+def test_icon_refs():
+    from deckframes.icons import parse_ref
+    assert parse_ref("users") == ("fa", None, "users")
+    assert parse_ref("fa-solid fa-users") == ("fa", "solid", "users")
+    assert parse_ref("regular:clock") == ("fa", "regular", "clock")
+    assert parse_ref("brands:github") == ("fa", "brands", "github")
+    assert parse_ref("assets/logo.svg") == ("file", "assets/logo.svg")
+    assert parse_ref("?")[0] == "text" and parse_ref("AI")[0] == "text"
+
+
+def test_svg_embedded_as_vector(tmp_path):
+    import zipfile
+    out = tmp_path / "d.pptx"
+    main(["build", str(DEMO), "-o", str(out)])
+    z = zipfile.ZipFile(out)
+    assert any(n.endswith(".svg") for n in z.namelist())
+    assert "image/svg+xml" in z.read("[Content_Types].xml").decode()

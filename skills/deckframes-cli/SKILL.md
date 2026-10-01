@@ -29,6 +29,8 @@ deckframes status --set reviewed
 | `deckframes themes list \| show NAME \| import PRESET\|FRAME.md [--name N] [--out PATH]` | themes |
 | `deckframes themes gallery [--presets] [--only a,b] [--out gallery.png]` | side-by-side image of every theme |
 | `deckframes themes new NAME [--from BASE] [--project \| --out PATH] [--force]` | scaffold an editable theme |
+| `deckframes icons search WORDS [--limit N] [--json]` | find Font Awesome Free icon names for `icon:` |
+| `deckframes icons get NAME [--out file.svg]` | check / pre-download one icon (cached in ~/.deckframes/icons) |
 | `deckframes template inspect FILE.pptx [--write-config config.json]` | map template layouts |
 | `deckframes doctor` | dependencies and renderers |
 
@@ -36,10 +38,12 @@ Building a single file outside a project also works: `deckframes build talk.md -
 
 ## QA loop
 
-1. **Build.** Every `⚠` line (missing image, SVG, table too long) must be resolved in deck.md.
+1. **Build.** A build that stops with `emoji are not allowed` lists every emoji with line:column —
+   remove them (use `icon:` where a pictogram is wanted). Every `⚠` line (missing image, unknown
+   icon, table too long) must be resolved in deck.md.
 2. **Check.** Fix until `0 issue(s)`. `--json` gives
    `{ok, slides, issues, pages:[{index, layout, text:[{level,text}], pictures, tables, charts, notes, issues:[{type, …}]}]}`;
-   issue types are `text_overflow` (needed_pt vs available_pt) and `off_slide`.
+   issue types are `text_overflow` (needed_pt vs available_pt), `off_slide` and `emoji`.
 3. **Look.** Open `grid.png` (and individual `slide-NNN.png` for detail) if you can view images.
    Check: no clipped text, visuals not cramped or floating in empty space, images not tiny, nav bar
    labels legible. If you cannot view images, compare the `check --json` outline against deck.md

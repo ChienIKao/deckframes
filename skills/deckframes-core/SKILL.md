@@ -67,11 +67,32 @@ slide_level: 4
 | `> quote` | quote; a slide holding only one quote becomes a quote card |
 | `> [!NOTE] text` | bottom callout. Kinds: NOTE, TIP, IMPORTANT, WARNING, CAUTION, SUMMARY |
 | paragraph starting `Source:` / `資料來源：` / `來源：` / `Ref:` | footer citation |
-| `![caption](assets/x.png)` on its own line | framed image + caption tag (PNG/JPG; no SVG) |
+| `![caption](assets/x.png)` on its own line | framed image + caption tag (PNG, JPG or SVG — SVG stays vector) |
 | Markdown table | native table; ○ × ✓ and numbers auto-centred |
 | ```` ```lang ```` code fence | dark code card |
 | ```` ```cards ```` `steps` `timeline` `flow` `stats` `compare` `chart` | infographics → `deckframes-infographics` |
 | `<!-- text -->` | speaker notes (multi-line OK) |
+
+## No emoji — use icons
+
+Emoji are banned from every part of a deck. `deckframes build` exits with an error listing each
+emoji's line and column; `deckframes check` reports `emoji` issues in a built .pptx. Typographic
+symbols (✓ ✗ ○ × → ★ ■ –) are fine.
+
+Where a pictogram helps, use an icon reference on an infographic item (`icon:`):
+
+| Reference | Meaning |
+|---|---|
+| `icon: users` | Font Awesome Free (solid style first, then regular, then brands) |
+| `icon: regular:clock` / `fa-regular fa-clock` | a specific Font Awesome style |
+| `icon: brands:github` | brand logos |
+| `icon: assets/mark.svg` | your own SVG (kept as vector) or PNG |
+| `icon: ?` / `icon: A` | a plain ASCII glyph rendered as text |
+
+Find names with `deckframes icons search <word>` (e.g. `chart`, `user`, `clock`); browse at
+https://fontawesome.com/search?ic=free. Icons are downloaded once from the jsDelivr CDN and cached
+in `~/.deckframes/icons/`; Font Awesome icons are recoloured to fit the fill they sit on.
+Font Awesome Free icons are CC BY 4.0 — the attribution comment travels inside each embedded SVG.
 
 ## Automatic layout (canvas themes)
 
@@ -92,5 +113,6 @@ Control breaks yourself with `---`.
 
 ## Assets
 
-Image paths are relative to deck.md (or `--assets DIR`). Convert SVG to PNG first. Prefer ≥ 1600 px
+Image paths are relative to deck.md (or `--assets DIR`). SVG is embedded as a vector picture (with a
+PNG fallback for old viewers). Prefer ≥ 1600 px
 wide images.

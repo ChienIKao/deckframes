@@ -12,7 +12,7 @@ from pptx import Presentation
 from pptx.util import Inches
 
 from .layout import EMU_PER_PT
-from .markdown import disp_width
+from .markdown import disp_width, find_emoji
 
 
 def text_need(shp):
@@ -52,6 +52,10 @@ def check(path: str | Path) -> dict:
                     txt = "".join(r.text for r in p.runs)
                     if txt.strip():
                         item["text"].append({"level": p.level, "text": txt})
+                        found = [c for _, _, c in find_emoji(txt)]
+                        if found:
+                            item["issues"].append({"type": "emoji", "shape": shp.name, "chars": "".join(found),
+                                                   "excerpt": txt[:30]})
                 need, avail = text_need(shp)
                 if need > avail * 1.1 + 4:
                     item["issues"].append({"type": "text_overflow", "shape": shp.name,
@@ -84,7 +88,9 @@ def format_report(report: dict, outline: bool = True) -> str:
             if s["notes"]:
                 out.append(f"   [notes] {s['notes'][:60]}")
         for i in s["issues"]:
-            if i["type"] == "text_overflow":
+            if i["type"] == "emoji":
+                out.append(f"   ⚠ emoji not allowed: {i['chars']} — {i['excerpt']}")
+            elif i["type"] == "text_overflow":
                 out.append(f"   ⚠ text overflow: ~{i['needed_pt']}pt needed > {i['available_pt']}pt box — {i['excerpt']}")
             else:
                 out.append(f"   ⚠ shape off slide: {i['shape']}")

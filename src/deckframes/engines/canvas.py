@@ -23,6 +23,8 @@ from pptx.enum.text import MSO_ANCHOR, MSO_AUTO_SIZE, PP_ALIGN
 from pptx.oxml.ns import qn
 from pptx.util import Emu, Pt
 
+from ..icons import IconError, add_svg_picture, parse_ref, recolor, svg_aspect
+from ..icons import resolve as resolve_icon
 from ..layout import TEXT_KINDS, estimate_height_pt, merge_bullets, text_units
 from ..markdown import Block, disp_width, inline_runs, is_cjk, plain
 
@@ -315,15 +317,45 @@ class Canvas:
             self.warnings.append(f"image not found: {path}")
             return None
         if p.suffix.lower() == ".svg":
-            self.warnings.append(f"SVG is not supported, convert to PNG: {path}")
-            return None
-        with Image.open(p) as im:
-            iw, ih = im.size
+            data = p.read_bytes()
+            iw, ih = svg_aspect(data), 1.0
+        else:
+            with Image.open(p) as im:
+                iw, ih = im.size
         sc = min(w / iw, h / ih)
         pw, ph = iw * sc, ih * sc
-        pic = s.shapes.add_picture(str(p), E(x + (w - pw) / 2), E(y + (h - ph) / 2), E(pw), E(ph))
-        pic._element.nvPicPr.cNvPr.set("descr", p.stem)
+        box = (E(x + (w - pw) / 2), E(y + (h - ph) / 2), E(pw), E(ph))
+        if p.suffix.lower() == ".svg":
+            pic = add_svg_picture(s, data, *box, descr=p.stem)
+        else:
+            pic = s.shapes.add_picture(str(p), *box)
+            pic._element.nvPicPr.cNvPr.set("descr", p.stem)
         return pic, (x + (w - pw) / 2, y + (h - ph) / 2, pw, ph)
+
+    def glyph(self, s, ref, x, y, w, h, color, scale=0.6) -> bool:
+        """Draw an icon reference centred in the box. False when `ref` is plain text (caller draws it)."""
+        if not ref or parse_ref(ref)[0] == "text":
+            return False
+        try:
+            kind, data, recolourable = resolve_icon(ref, self.base)
+        except IconError as e:
+            self.warnings.append(str(e))
+            return False
+        side = min(w, h) * scale
+        if kind == "svg":
+            if recolourable:
+                data = recolor(data, color)
+            a = svg_aspect(data)
+            gw, gh = (side, side / a) if a >= 1 else (side * a, side)
+            add_svg_picture(s, data, E(x + (w - gw) / 2), E(y + (h - gh) / 2), E(gw), E(gh), descr=ref)
+        else:
+            import io
+            from PIL import Image
+            with Image.open(io.BytesIO(data)) as im:
+                a = im.size[0] / im.size[1]
+            gw, gh = (side, side / a) if a >= 1 else (side * a, side)
+            s.shapes.add_picture(io.BytesIO(data), E(x + (w - gw) / 2), E(y + (h - gh) / 2), E(gw), E(gh))
+        return True
 
     def pal(self, k):
         return self.palette[k % len(self.palette)]
@@ -793,18 +825,27 @@ class Canvas:
         from PIL import Image
         p = Path(d["path"])
         p = p if p.is_absolute() else self.base / p
-        if not p.exists() or p.suffix.lower() == ".svg":
-            self.warnings.append(f"[{title}] image missing or unsupported: {d['path']}")
+        if not p.exists():
+            self.warnings.append(f"[{title}] image not found: {d['path']}")
             return
+        svg = p.suffix.lower() == ".svg"
         cap = 0.55 if d.get("alt") else 0.1
-        with Image.open(p) as im:
-            iw, ih = im.size
+        if svg:
+            data = p.read_bytes()
+            iw, ih = svg_aspect(data), 1.0
+        else:
+            with Image.open(p) as im:
+                iw, ih = im.size
         pad = 0.12
         sc = min((w - 2 * pad - 0.1) / iw, (h - cap - 2 * pad - 0.1) / ih)
         fw, fh = iw * sc + 2 * pad, ih * sc + 2 * pad
         fx, fy = x + (w - fw) / 2, y + (h - cap - fh) / 2
         self.block(s, fx, fy, fw, fh, self.white)
-        s.shapes.add_picture(str(p), E(fx + pad), E(fy + pad), E(fw - 2 * pad), E(fh - 2 * pad))
+        box = (E(fx + pad), E(fy + pad), E(fw - 2 * pad), E(fh - 2 * pad))
+        if svg:
+            add_svg_picture(s, data, *box, descr=d.get("alt") or p.stem)
+        else:
+            s.shapes.add_picture(str(p), *box)
         if d.get("alt"):
             self.pill(s, fx + 0.2, fy + fh - 0.12, d["alt"], self.pal(3), size=11, rot=-3, upper=False,
                       font="body")
@@ -878,6 +919,8 @@ class Canvas:
         fill = self.color_for(k + 1)
         self.block(s, x, y, d, d, fill, thin=True)
         label = it["attrs"].get("icon") or f"{k + 1}"
+        if self.glyph(s, label, x, y, d, d, self.on(fill)):
+            return
         font = "display" if label.isascii() else "body"
         self.text(s, x, y, d, d, label, size, font=font, color=self.on(fill), align=PP_ALIGN.CENTER,
                   anchor=MSO_ANCHOR.MIDDLE)
@@ -952,8 +995,10 @@ class Canvas:
                 self.block(s, cx, cy, cw, ch, self.white, thin=True)
                 self.shape(s, MSO_SHAPE.RECTANGLE, cx, cy, cw, 0.55, fill=self.color_for(k), line=self.black,
                            lw=self.tw)
-                self.text(s, cx, cy, cw, 0.55, f"STEP {k + 1}", 15, font="label", bold=True,
-                          color=self.on(self.color_for(k)),
+                has_icon = self.glyph(s, it["attrs"].get("icon"), cx + 0.1, cy + 0.05, 0.45, 0.45,
+                                      self.on(self.color_for(k)), scale=0.75)
+                self.text(s, cx + (0.4 if has_icon else 0), cy, cw - (0.4 if has_icon else 0), 0.55,
+                          f"STEP {k + 1}", 15, font="label", bold=True, color=self.on(self.color_for(k)),
                           align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE, spc=1.5)
                 lines = [{"text": it["title"], "size": 20, "bold": True, "color": self.black, "space_after": 6}]
                 if it["desc"]:
@@ -970,9 +1015,11 @@ class Canvas:
         for k, it in enumerate(items):
             cy = y0 + k * step + step / 2
             self.block(s, lx - dsz / 2, cy - dsz / 2, dsz, dsz, self.color_for(k), thin=True)
-            self.text(s, lx - dsz / 2, cy - dsz / 2, dsz, dsz, str(k + 1), 18, font="display",
-                      color=self.on(self.color_for(k)),
-                      align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE)
+            if not self.glyph(s, it["attrs"].get("icon"), lx - dsz / 2, cy - dsz / 2, dsz, dsz,
+                              self.on(self.color_for(k))):
+                self.text(s, lx - dsz / 2, cy - dsz / 2, dsz, dsz, str(k + 1), 18, font="display",
+                          color=self.on(self.color_for(k)),
+                          align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE)
             lines = [{"text": it["title"], "size": 20, "bold": True, "color": self.black, "space_after": 2}]
             if it["desc"]:
                 lines.append({"text": it["desc"], "size": 15, "color": "3A3A3A"})
@@ -1015,10 +1062,13 @@ class Canvas:
     def flow_box(self, s, it, k, x, y, w, h):
         fill = self.color_for(k)
         self.block(s, x, y, w, h, fill, thin=True)
+        top = 0.0
+        if h >= 1.3 and self.glyph(s, it["attrs"].get("icon"), x, y + 0.12, w, 0.55, self.on(fill), scale=0.95):
+            top = 0.55
         lines = [{"text": it["title"], "size": 19, "bold": True, "color": self.on(fill), "space_after": 3}]
         if it["desc"]:
             lines.append({"text": it["desc"], "size": 14, "color": self.on(fill)})
-        self.text(s, x + 0.12, y + 0.05, w - 0.24, h - 0.1, lines, 19, align=PP_ALIGN.CENTER,
+        self.text(s, x + 0.12, y + 0.05 + top, w - 0.24, h - 0.1 - top, lines, 19, align=PP_ALIGN.CENTER,
                   anchor=MSO_ANCHOR.MIDDLE)
 
     def comp_stats(self, s, d, x, y, w, h):

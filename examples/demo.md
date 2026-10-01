@@ -25,9 +25,9 @@ closing: Q&A
 - 缺乏數據：**備料全憑經驗判斷**
 
 ```cards stack
-- 連鎖品牌 A | 會員 App、行動支付、集點 | tag: 回訪率提升
-- 獨立咖啡館 B | 線上預訂、到店取餐 | tag: 零排隊
-- 複合式書店 C | 空間預約、活動報名 | tag: 客群擴大
+- 連鎖品牌 A | 會員 App、行動支付、集點 | tag: 回訪率提升 | img: assets/brand-a.svg
+- 獨立咖啡館 B | 線上預訂、到店取餐 | tag: 零排隊 | icon: mug-hot
+- 複合式書店 C | 空間預約、活動報名 | tag: 客群擴大 | icon: book-open
 ```
 
 資料來源：示範用虛構案例。
@@ -49,9 +49,9 @@ closing: Q&A
 #### 門市三大痛點
 
 ```cards
-- 尖峰排隊過長 | 點餐與結帳集中在同一櫃檯 | icon: ?
-- 備料浪費 | 鮮奶與烘焙品常在打烊前報廢 | icon: !
-- 熟客難經營 | 沒有會員資料，無法個人化推薦 | icon: ×
+- 尖峰排隊過長 | 點餐與結帳集中在同一櫃檯 | icon: clock
+- 備料浪費 | 鮮奶與烘焙品常在打烊前報廢 | icon: trash-can
+- 熟客難經營 | 沒有會員資料，無法個人化推薦 | icon: user-group
 ```
 
 ### 提案目標
@@ -109,11 +109,11 @@ closing: Q&A
 #### 資料流程
 
 ```flow
-- 線上點餐
-- 訂單資料
-- 銷量分析
-- 備料建議
-- 門市執行
+- 線上點餐 | icon: mobile-screen
+- 訂單資料 | icon: database
+- 銷量分析 | icon: chart-line
+- 備料建議 | icon: clipboard-list
+- 門市執行 | icon: store
 ```
 
 #### 關鍵洞察
@@ -129,10 +129,10 @@ closing: Q&A
 #### 四個階段
 
 ```timeline
-- 第一階段 | 上線線上點餐
-- 第二階段 | 建立會員資料
-- 第三階段 | 導入銷量報表
-- 第四階段 | 預測備料與排班
+- 第一階段 | 上線線上點餐 | icon: mobile-screen
+- 第二階段 | 建立會員資料 | icon: id-card
+- 第三階段 | 導入銷量報表 | icon: chart-column
+- 第四階段 | 預測備料與排班 | icon: calendar-check
 ```
 
 #### 試營運成效（示意）

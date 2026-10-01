@@ -14,7 +14,7 @@ description: >
    chapters.
 2. **Front matter.** `eyebrow` (event or purpose), `author`, `date`, `subtitle`; logos if supplied.
 3. **Infographics.** Walk every slide through `deckframes-infographics`; keep plain arguments as
-   bullets.
+   bullets. Pictograms come from `icon:` (Font Awesome / SVG) — never emoji.
 4. **Assets.** Put images in `assets/`, reference them where they support the point; propose
    placements to the user when the script doesn't say.
 5. **Mode.** In `refine` mode shorten long paragraphs into bullets and move the original wording

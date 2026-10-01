@@ -87,6 +87,10 @@ Domain skills, loaded by the workflows as needed:
 ## Non-negotiables
 
 - **Edit `deck.md`, never the .pptx.** Every fix goes back into the Markdown and is rebuilt.
+- **No emoji — anywhere.** Not in titles, bullets, cards, tags or notes. `deckframes build` refuses a
+  deck.md that contains emoji and `deckframes check` flags any in the .pptx. When a visual marker
+  helps, use an icon: `icon: <font-awesome-name>` on an infographic item (find names with
+  `deckframes icons search <word>`) or an SVG file (`icon: assets/x.svg`, `![caption](assets/x.svg)`).
 - **Never invent numbers.** `stats` and `chart` values come from the user's material only; missing
   values become `— value —` placeholders listed in your report.
 - **Don't reword in verbatim mode.** Restructuring, splitting slides, converting to infographic

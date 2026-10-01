@@ -55,6 +55,8 @@ This folder is a deckframes deck (Markdown → editable PowerPoint). Any coding 
 3. Loop: `deckframes build` → `deckframes check` (fix until 0 issues) → `deckframes preview` (inspect grid.png).
 4. Record progress: `deckframes status --set draft|reviewed`.
 5. Never invent numbers; in `verbatim` mode never reword the user's text.
+6. No emoji anywhere (the build rejects them). For pictograms use `icon: <font-awesome-name>` or an SVG
+   (`deckframes icons search <word>`).
 
 If the deckframes skills are installed, load `deckframes` for the full workflow.
 Install the CLI: `uv tool install git+https://github.com/ChienIKao/deckframes`.

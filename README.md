@@ -54,6 +54,7 @@
 | 結尾 | Q&A |
 
 其他功能：
+- 禁止 emoji，改用 Font Awesome 或 SVG 圖示（向量嵌入）
 - 依實際文字框大小自動拆頁
 - 中文斷行處理
 - 講者備註、頁尾資料來源
@@ -177,7 +178,7 @@ date: 2026 / 07 / 08
 
 | 元件 | 適合 | 項目寫法 |
 |---|---|---|
-| `cards` | 並列案例、問題、亮點 | `- 標題 \| 說明 \| tag: 標籤 \| icon: ? \| img: 圖片` |
+| `cards` | 並列案例、問題、亮點 | `- 標題 \| 說明 \| tag: 標籤 \| icon: users \| img: 圖片` |
 | `flow` | 演進、流程 | `- 節點 \| 說明`，或單行 `A -> B -> C` |
 | `steps`／`timeline` | 方法步驟（直向／橫向） | `- 步驟 \| 說明` |
 | `stats` | 關鍵數字 | `- 30% \| 標籤 \| 補充` |
@@ -185,6 +186,27 @@ date: 2026 / 07 / 08
 | `chart` | 實驗數據 | 在 ```` ```chart column 標題 ```` 區塊內放 Markdown 表格 |
 
 內容型態與元件的對照規則：[`skills/deckframes-infographics/SKILL.md`](skills/deckframes-infographics/SKILL.md)
+
+### 圖示（禁止 emoji）
+
+簡報裡**一律不准用 emoji**：`deckframes build` 遇到 emoji 會直接中止，並列出行號；`deckframes check` 也會檢查輸出檔。
+✓ ✗ ○ × → 這類一般符號不受影響。需要圖示時，在元件項目加上 `icon:`：
+
+| 寫法 | 來源 |
+|---|---|
+| `icon: users` | [Font Awesome Free](https://fontawesome.com/search?ic=free) 圖示（先找 solid，再找 regular、brands） |
+| `icon: regular:clock`、`icon: brands:github` | 指定 Font Awesome 樣式 |
+| `icon: assets/mark.svg` | 自己的 SVG（保持向量）或 PNG |
+
+```bash
+deckframes icons search chart     # 用關鍵字找圖示名稱
+```
+
+- `icon:` 可以用在 `cards`、`steps`、`timeline`、`flow`。
+- 圖示第一次使用時會從 jsDelivr CDN 下載，之後快取在 `~/.deckframes/icons/`。
+- Font Awesome 圖示會依色塊自動改色，並以向量 SVG 嵌入，在 PowerPoint 裡可以「轉換成圖形」再編輯。
+- 一般圖片也支援 SVG：`![圖說](assets/diagram.svg)`。
+- Font Awesome Free 圖示採 CC BY 4.0 授權，嵌入的 SVG 內附原始授權註記。
 
 ---
 
@@ -225,6 +247,7 @@ deckframes build talk.md --theme my-lab
 | `deckframes preview [out.pptx]` | 每頁 PNG ＋ 總覽 grid.png |
 | `deckframes status [--set STAGE] [--json]` | 進度：brief → draft → built → checked → reviewed |
 | `deckframes themes list\|show\|import\|gallery\|new` | 主題管理、主題一覽圖、建立新主題 |
+| `deckframes icons search WORDS` / `icons get NAME` | 找 Font Awesome 圖示名稱／預先下載 |
 | `deckframes template inspect FILE.pptx [--write-config]` | 分析模版版面 |
 | `deckframes doctor` | 環境檢查 |
 
@@ -256,6 +279,9 @@ deckframes build talk.md --theme my-lab
 **`==強調==` 沒有色塊？** 需要 PowerPoint 2019 或 Microsoft 365。
 
 **可以接著在 PowerPoint 裡改嗎？** 可以，所有元素都是原生的圖形、文字框、表格和圖表。但重新建置會覆蓋手動修改。
+
+**為什麼不能用 emoji？**
+emoji 在不同電腦、不同字型下長得不一樣，投影時常變成方框或彩色貼圖，跟主題風格也不搭。改用 `icon:`，圖示會照主題配色、以向量呈現。
 
 **AI 看不到圖片怎麼辦？** `deckframes check --json` 會輸出每頁的文字大綱和問題清單，AI 可以據此逐頁核對。
 

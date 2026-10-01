@@ -34,7 +34,7 @@ Set `recap: true` when chapters have ≥ 4 sections, so the committee sees where
 | Academic content | Treatment |
 |---|---|
 | Industry context / motivating cases | `cards stack` with `tag:` |
-| Research gaps or "three problems" | `cards` with `icon:` |
+| Research gaps or "three problems" | `cards` with Font Awesome `icon:` (no emoji) |
 | Contributions / highlights | `stats` only if the numbers are in the script; otherwise `cards` |
 | Literature comparison | ○ × table + `> [!NOTE]` legend |
 | Method pipeline | `flow` overview slide, then one slide per stage |

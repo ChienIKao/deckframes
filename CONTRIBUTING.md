@@ -123,7 +123,7 @@ deckframes build talk.md --template my-school
 | 檔案 | 修改 |
 |---|---|
 | `src/deckframes/markdown.py` | 把名稱加進 `COMPONENT_TYPES`，讓 ```` ```pyramid ```` 被解析成元件（項目語法沿用 `make_item`） |
-| `src/deckframes/engines/canvas.py` | 新增 `comp_pyramid(self, s, d, x, y, w, h)`。只能用主題 token（`self.color_for(k)`、`self.on(fill)`、`self.block(...)`），不要寫死顏色 |
+| `src/deckframes/engines/canvas.py` | 新增 `comp_pyramid(self, s, d, x, y, w, h)`。只能用主題 token（`self.color_for(k)`、`self.on(fill)`、`self.block(...)`），不要寫死顏色；項目的 `icon:` 用 `self.glyph(...)` 畫 |
 | `src/deckframes/layout.py` | 在 `degrade()` 決定模版模式下要退化成什麼（條列或表格） |
 | `skills/deckframes-infographics/SKILL.md` | 在對照表和語法表加一列：什麼內容適合用它 |
 | `skills/deckframes-core/SKILL.md` | 在元件清單加上名稱 |
@@ -162,4 +162,5 @@ deckframes build talk.md --template my-school
 - [ ] `deckframes build examples/demo.md` 後 `deckframes check` 為 0 issue
 - [ ] 改到外觀時，附上 `deckframes themes gallery` 或 `deckframes preview` 的截圖
 - [ ] 範例內容是虛構的，不含個人或機構的真實資料
+- [ ] 範例、文件與 skill 都沒有 emoji（需要圖示請用 Font Awesome 或 SVG）
 - [ ] 相關的 skill 與 README 已同步更新

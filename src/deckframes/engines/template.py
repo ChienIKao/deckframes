@@ -471,18 +471,24 @@ class Renderer:
         if not path.exists():
             self.warnings.append(f"[{title}] image not found: {d['path']}")
             return
-        if path.suffix.lower() == ".svg":
-            self.warnings.append(f"[{title}] SVG is not supported, convert to PNG: {d['path']}")
-            return
+        svg = path.suffix.lower() == ".svg"
         cap_h = int(Inches(0.4)) if d["alt"] and self.cfg.get("image_captions", True) else 0
-        from PIL import Image
-        with Image.open(path) as im:
-            iw, ih = im.size
+        if svg:
+            from ..icons import add_svg_picture, svg_aspect
+            data = path.read_bytes()
+            iw, ih = svg_aspect(data) * 1000, 1000
+        else:
+            from PIL import Image
+            with Image.open(path) as im:
+                iw, ih = im.size
         avail_h = h - cap_h
         scale = min(w / iw, avail_h / ih)
         pw, ph_ = int(iw * scale), int(ih * scale)
         px, py = x + (w - pw) // 2, y + (avail_h - ph_) // 2
-        pic = slide.shapes.add_picture(str(path), px, py, pw, ph_)
+        if svg:
+            pic = add_svg_picture(slide, data, px, py, pw, ph_)
+        else:
+            pic = slide.shapes.add_picture(str(path), px, py, pw, ph_)
         pic._element.nvPicPr.cNvPr.set("descr", d["alt"] or path.stem)
         if cap_h:
             tb = slide.shapes.add_textbox(x, py + ph_ + int(Inches(0.05)), w, cap_h)

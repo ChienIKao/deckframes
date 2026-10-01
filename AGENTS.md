@@ -13,6 +13,8 @@ If the deckframes skills are installed, load the `deckframes` skill and follow i
    `skills/deckframes-core/SKILL.md` and `skills/deckframes-infographics/SKILL.md`.
 3. `deckframes build && deckframes check && deckframes preview`, fix `deck.md`, repeat.
 4. Never hand-edit the .pptx, never invent numbers, never reword the user's text in verbatim mode.
+5. Never use emoji (the build rejects them). Pictograms come from `icon:` — Font Awesome names
+   (`deckframes icons search <word>`) or SVG files.
 
 ## Repository layout
 

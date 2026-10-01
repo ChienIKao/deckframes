@@ -16,6 +16,7 @@ dependencies = [
   "Pillow>=10",
   "lxml>=4.9",
   "PyYAML>=6",
+  "pymupdf>=1.23",
 ]
 keywords = ["pptx", "powerpoint", "markdown", "slides", "agent-skills", "claude-code", "codex"]
 classifiers = [
@@ -23,9 +24,6 @@ classifiers = [
   "Operating System :: OS Independent",
   "Topic :: Office/Business :: Office Suites",
 ]
-
-[project.optional-dependencies]
-preview = ["pymupdf>=1.23"]
 
 [project.scripts]
 deckframes = "deckframes.cli:main"

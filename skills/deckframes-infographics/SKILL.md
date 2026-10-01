@@ -15,7 +15,7 @@ a visual.
 | Content shape | Block |
 |---|---|
 | Parallel examples (companies, cases, products) | ```` ```cards stack ```` with `tag:` and `img:` |
-| N problems / pain points / highlights | ```` ```cards ```` with `icon:` |
+| N problems / pain points / highlights | ```` ```cards ```` with a Font Awesome `icon:` each |
 | A transformation (reactive → proactive, old → new) | ```` ```flow vertical ```` |
 | A pipeline / system flow | ```` ```flow ```` |
 | Method steps | ```` ```steps ```` (vertical) or ```` ```timeline ```` (horizontal) |
@@ -41,9 +41,14 @@ a visual.
 Inside a block, one list item per element; fields are separated by ` | `:
 
 ```
-- Title | Description | extra… | tag: label | img: path | icon: ?
+- Title | Description | extra… | tag: label | img: path | icon: users
   - child line (card / compare-column bullets)
 ```
+
+`icon:` works on `cards` (icon square), `steps` (replaces the number), `timeline` (in the step
+header) and `flow` (above the node title, when the box is tall enough). Use a Font Awesome Free name
+(`deckframes icons search chart`), a style-qualified name (`regular:clock`, `brands:github`) or an
+SVG path. Pick icons that carry meaning (clock = waiting time, database = data) — and never emoji.
 
 | Block | 1st field | 2nd field | extra / children | Options after the block name |
 |---|---|---|---|---|
@@ -76,5 +81,6 @@ Source: author's survey, 2026.
 
 ## Never
 
+- Use emoji anywhere (the build fails). Use `icon:` instead.
 - Invent values for `stats` or `chart`. Use `— value —` and report it.
 - Delete or reword the user's sentences in verbatim mode (converting structure is fine).

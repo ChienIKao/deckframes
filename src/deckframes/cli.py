@@ -8,6 +8,7 @@
   deckframes themes list | show NAME | import FRAME.md|PRESET [--name N] [--out PATH]
   deckframes themes gallery [--presets] [--only a,b] [--out gallery.png]
   deckframes themes new NAME [--from BASE] [--project | --out PATH] [--force]
+  deckframes icons search WORDS | get NAME [--out file.svg]
   deckframes template inspect FILE.pptx [--write-config config.json]
   deckframes doctor
 
@@ -62,14 +63,24 @@ def cmd_init(a):
 
 
 def cmd_build(a):
-    from .markdown import parse_markdown
+    from .markdown import find_emoji, parse_markdown
 
     root, state = _project(Path(a.deck).parent if a.deck else None)
     deck = Path(a.deck) if a.deck else (root / state["deck"] if root else None)
     if deck is None or not deck.exists():
         raise SystemExit("no deck given and no deck.json found — pass DECK.md or run `deckframes init`")
     deck = deck.resolve()
-    doc = parse_markdown(deck.read_text(encoding="utf-8"))
+    text = deck.read_text(encoding="utf-8")
+    hits = find_emoji(text)
+    if hits:
+        print(f"✘ {deck.name}: emoji are not allowed in decks — use `icon:` with a Font Awesome name or an SVG",
+              file=sys.stderr)
+        for ln, col, ch in hits[:30]:
+            print(f"  line {ln}:{col}  {ch!r}  U+{ord(ch):04X}", file=sys.stderr)
+        if len(hits) > 30:
+            print(f"  … {len(hits) - 30} more", file=sys.stderr)
+        sys.exit(2)
+    doc = parse_markdown(text)
     out = Path(a.output) if a.output else (root / state["output"] if root else deck.with_suffix(".pptx"))
     cwd = root or deck.parent
 
@@ -190,6 +201,32 @@ def cmd_themes(a):
         print(f"✔ {len(res['themes'])} themes → {res['file']}")
 
 
+def cmd_icons(a):
+    from .icons import CACHE, FA_VERSION, IconError, fa_svg, parse_ref, search
+    try:
+        if a.action == "search":
+            rows = search(a.query, a.limit)
+            if a.json:
+                print(json.dumps(rows, ensure_ascii=False, indent=2))
+                return
+            if not rows:
+                print(f"no Font Awesome {FA_VERSION} icon matches '{a.query}'")
+            for r in rows:
+                print(f"{r['name']:28} {','.join(r['styles']):22} {r['label']}")
+        else:
+            kind = parse_ref(a.query)
+            if kind[0] != "fa":
+                raise SystemExit(f"'{a.query}' is not a Font Awesome name")
+            data, style = fa_svg(kind[2], kind[1])
+            if a.out:
+                Path(a.out).write_bytes(data)
+            print(f"✔ {style}:{kind[2]}  ({len(data)} bytes, cached in {CACHE})"
+                  + (f" → {a.out}" if a.out else ""))
+            print(f"  use:  icon: {kind[2] if style == 'solid' else style + ':' + kind[2]}")
+    except IconError as e:
+        raise SystemExit(str(e))
+
+
 def cmd_template(a):
     from .engines.template import inspect_template
     print(inspect_template(Path(a.file), Path(a.write_config) if a.write_config else None))
@@ -278,6 +315,14 @@ def main(argv=None):
     p.add_argument("--backend", choices=["auto", "powerpoint", "libreoffice"], default="auto")
     p.add_argument("--json", action="store_true")
     p.set_defaults(fn=cmd_themes)
+
+    p = sub.add_parser("icons", help="find / fetch Font Awesome icons for `icon:`")
+    p.add_argument("action", choices=["search", "get"])
+    p.add_argument("query", help="search words, or an icon name such as users / regular:clock / brands:github")
+    p.add_argument("--limit", type=int, default=20)
+    p.add_argument("--out", help="(get) also save the SVG here")
+    p.add_argument("--json", action="store_true")
+    p.set_defaults(fn=cmd_icons)
 
     p = sub.add_parser("template", help=".pptx template tools")
     p.add_argument("action", choices=["inspect"])
