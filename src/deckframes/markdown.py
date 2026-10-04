@@ -54,7 +54,7 @@ class SlideSpec:
 
 HEADING = re.compile(r"^(#{1,6})\s+(.*?)\s*#*\s*$")
 LIST_ITEM = re.compile(r"^(\s*)([-*+]|\d+[.)])\s+(.*)$")
-IMAGE_LINE = re.compile(r'^!\[([^\]]*)\]\(\s*<?([^)\s>]+)>?(?:\s+"[^"]*")?\s*\)$')
+IMAGE_LINE = re.compile(r'^!\[([^\]]*)\]\(\s*<?([^)\s>]+)>?(?:\s+"([^"]*)")?\s*\)$')
 FENCE = re.compile(r"^(`{3,}|~{3,})\s*([\w+-]*)\s*(.*)$")
 HR = re.compile(r"^\s*(-{3,}|\*{3,}|_{3,})\s*$")
 TABLE_SEP = re.compile(r"^\s*\|?\s*:?-{2,}:?\s*(\|\s*:?-{2,}:?\s*)*\|?\s*$")
@@ -286,7 +286,8 @@ def parse_markdown(text: str) -> Doc:
         im = IMAGE_LINE.match(stripped)
         if im:
             flush()
-            cur.blocks.append(Block("image", {"alt": im.group(1), "path": im.group(2)}))
+            cur.blocks.append(Block("image", {"alt": im.group(1), "path": im.group(2),
+                                              "opts": (im.group(3) or "").lower().split()}))
             i += 1
             continue
 

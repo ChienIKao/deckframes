@@ -26,7 +26,7 @@ a visual.
 | A bridging key sentence | paragraphs with `==highlight==` → statement slide |
 | Formula legend, symbol notes, the slide's takeaway | `> [!NOTE]` / `> [!IMPORTANT]` / `> [!TIP]` |
 | Citation | `Source: …` paragraph |
-| Screenshots, architecture, plots | `![caption](assets/x.png)` |
+| Screenshots, architecture, plots | `![caption](assets/x.png)` — one per slide; for app screenshots use `#### Feature \| one-line message` and no bullets (showcase layout) |
 | The core message | a lone `> quote` → quote card |
 
 ## Composition rules

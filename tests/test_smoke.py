@@ -140,3 +140,35 @@ def test_svg_embedded_as_vector(tmp_path):
     z = zipfile.ZipFile(out)
     assert any(n.endswith(".svg") for n in z.namelist())
     assert "image/svg+xml" in z.read("[Content_Types].xml").decode()
+
+
+def _image_layout(tmp_path, size, body, title="#### 截圖 | 一句話說明這張圖"):
+    from PIL import Image
+    from deckframes.engines.canvas import Canvas
+    from deckframes.markdown import parse_markdown
+    from deckframes.themes import resolve_theme
+    Image.new("RGB", size, "white").save(tmp_path / "img.png")
+    doc = parse_markdown(f"# T\n\n## 章 | Ch\n\n### 節\n\n{title}\n\n{body}\n")
+    theme, _ = resolve_theme("blockframe")
+    c = Canvas(theme, doc.meta, tmp_path)
+    c.chapters = [s for s in doc.sections if s.title]
+    sl = doc.sections[0].subsections[0].slides[0]
+    from deckframes.engines.canvas import Page
+    pg = Page("content", title=sl.title, subtitle=sl.subtitle, chapter=0, sub=0, blocks=sl.blocks)
+    text, vis, callouts, sources = c.split_blocks(pg.blocks)
+    return c.layout(pg, c.text_paras(text), vis, callouts, bool(sources))
+
+
+def test_portrait_image_becomes_showcase(tmp_path):
+    lay = _image_layout(tmp_path, (650, 1080), "![](img.png)")
+    assert lay["mode"] == "showcase"
+    assert lay["visual"][3] > 5.0                      # image column spans (almost) the full height
+
+
+def test_text_and_image_split_follows_aspect(tmp_path):
+    wide = _image_layout(tmp_path, (1754, 1241), "- 一點\n- 兩點\n\n![](img.png)")
+    tall = _image_layout(tmp_path, (650, 1080), "- 一點\n- 兩點\n\n![](img.png)")
+    assert wide["mode"] == tall["mode"] == "split"
+    assert wide["visual"][2] > tall["visual"][2]       # landscape image gets the wider column
+    left = _image_layout(tmp_path, (1754, 1241), '- 一點\n\n![](img.png "left")')
+    assert left["visual"][0] < left["text"][0]         # "left" puts the image first

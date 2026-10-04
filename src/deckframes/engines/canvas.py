@@ -134,6 +134,7 @@ class Canvas:
         self.deco = theme.get("decorations", True)
         self.tilt = theme.get("tilt", True)
         self.warnings: list[str] = []
+        self._img_cache: dict = {}
         self.chapters = []
         self.counter = 0
 
@@ -629,11 +630,6 @@ class Canvas:
         sources = [b for b in blocks if b.kind == "source"]
         return text, visuals, callouts, sources
 
-    def body_box(self, has_sub, n_callouts):
-        top = NAV_H + 1.35 + (0.4 if has_sub else 0)
-        bottom = H - 0.75 - (1.15 * n_callouts)
-        return PAD, top, W - 2 * PAD, bottom - top
-
     def text_ratio(self, visuals):
         if any(v.kind == "component" and v.data["type"] in ("cards", "steps", "compare") for v in visuals):
             return 0.42
@@ -668,11 +664,10 @@ class Canvas:
         base = Page("content", title=pg.title, subtitle=pg.subtitle, chapter=pg.chapter, sub=pg.sub,
                     notes=pg.notes)
         units = [u for b in text for u, _ in text_units(b)]
-        _, _, w, h = self.body_box(bool(pg.subtitle), len(callouts))
-        if vis:
-            w *= self.text_ratio(vis)
         floor = self.sizes["split_below"]
         paras = self.text_paras(text)
+        lay = self.layout(pg, paras, vis, callouts, bool(sources))
+        w, h = lay["text"][2], lay["text"][3]
         if len(units) < 2 or estimate_height_pt(paras, floor * 1.08, E(w)) <= h * 72:
             base.blocks = text + vis + callouts + sources
             return [base]
@@ -698,44 +693,158 @@ class Canvas:
                 paras.append({"text": f"「{b.data}」", "bullet": "none", "italic": True, "color": self.muted})
         return paras
 
+    # ------------------------------------------------------------------ layout planning
+    def img_info(self, d):
+        """(aspect w/h, pixel width or None) for an image block, cached."""
+        key = d["path"]
+        if key not in self._img_cache:
+            p = Path(d["path"])
+            p = p if p.is_absolute() else self.base / p
+            info = None
+            if p.exists():
+                if p.suffix.lower() == ".svg":
+                    info = (svg_aspect(p.read_bytes()), None)
+                else:
+                    from PIL import Image
+                    with Image.open(p) as im:
+                        info = (im.size[0] / im.size[1], im.size[0])
+            self._img_cache[key] = info
+        return self._img_cache[key]
+
+    def callout_height(self, d, w):
+        need = self.lines_height([{"text": d["text"], "size": 15}], max(1.0, w - 1.6)) + 0.3
+        return min(1.6, max(0.85, need))
+
+    def layout(self, pg, paras, visuals, callouts, has_sources):
+        """Decide boxes for this slide. Returns {mode, text, visual, callouts:[(x, y, w, h)], title_w}.
+
+        Images are sized from their real aspect ratio instead of a fixed column split:
+        - image only, portrait  → "showcase": image fills the full height on the right, the subtitle
+                                  becomes the headline on the left
+        - image only, landscape → image gets the whole body (down to the footer)
+        - text + one image      → the image column is as wide as the image is at full height
+                                  (clamped), text takes the rest; callouts sit under the text
+        `"left"` / `"wide"` in the image's Markdown title override placement / emphasis.
+        """
+        top = NAV_H + 0.3 if pg.chapter is not None else 0.5
+        x, w = PAD, W - 2 * PAD
+        bottom = H - (0.75 if has_sources else 0.55)
+        body_y = top + 1.05 + (0.4 if pg.subtitle else 0)
+        gap = 0.45
+        single = visuals[0] if len(visuals) == 1 and visuals[0].kind == "image" else None
+        info = self.img_info(single.data) if single else None
+        out = {"mode": "", "title_w": w, "text": (x, body_y, w, bottom - body_y), "visual": None, "callouts": []}
+
+        def stack_callouts(cx, cw, y_end):
+            hs = [self.callout_height(c.data, cw) for c in callouts]
+            y0 = y_end - sum(hs) - 0.3 * len(hs)
+            out["callouts"] = []
+            yy = y0 + 0.3
+            for hh in hs:
+                out["callouts"].append((cx, yy, cw, hh))
+                yy += hh + 0.3
+            return y0
+
+        if single and info and not paras:
+            a, opts = info[0], single.data.get("opts", [])
+            cb = stack_callouts(x, w, bottom) if callouts else bottom
+
+            def fitted(bw, bh):  # area of the image fitted into a box
+                return min(bw, bh * a) * min(bh, bw / a)
+
+            vy = top + 0.05
+            sc_h = bottom - vy - 0.34
+            sc_w = min(w * (0.5 if a < 1.0 else 1.0) - 0.34, sc_h * a, w - 3.2 - gap - 0.34)
+            showcase_area = fitted(sc_w, sc_h)
+            plain_area = fitted(w - 0.34, cb - body_y - 0.34)
+            wants_showcase = (pg.subtitle or single.data.get("alt")) and "center" not in opts
+            if wants_showcase and (a < 1.0 or showcase_area > plain_area * 1.1):
+                img_w = sc_w + 0.34
+                left = "left" in opts
+                vx = x if left else x + w - img_w
+                tx = x + img_w + gap if left else x
+                tw = w - img_w - gap
+                out.update(mode="showcase", title_w=tw, visual=(vx, vy, img_w, bottom - vy))
+                tb = stack_callouts(tx, tw, bottom) if callouts else bottom
+                out["text"] = (tx, body_y - (0.4 if pg.subtitle else 0), tw, tb - body_y + (0.4 if pg.subtitle else 0))
+                if left:
+                    out["title_x"] = tx
+                return out
+            vb = stack_callouts(x, w, bottom) if callouts else bottom
+            out.update(mode="visual", visual=(x, body_y, w, vb - body_y))
+            return out
+
+        if single and info and paras:
+            a, opts = info[0], single.data.get("opts", [])
+            cap = 0.55 if single.data.get("alt") else 0.1
+            full_h = bottom - body_y
+            natural = (full_h - cap - 0.34) * a + 0.34
+            lo, hi = (0.55 * w, 0.75 * w) if "wide" in opts else (0.3 * w, 0.66 * w)
+            img_w = max(lo, min(hi, natural))
+            tw = w - img_w - gap
+            floor = self.sizes["split_below"]
+            text_bottom = bottom
+            for _ in range(12):  # give the text room if it cannot fit at the split threshold
+                text_bottom = (stack_callouts(0, tw, bottom) if callouts else bottom)
+                if tw >= 0.62 * w or estimate_height_pt(paras, floor * 1.08, E(tw)) <= (text_bottom - body_y) * 72:
+                    break
+                tw += 0.3
+                img_w = w - tw - gap
+            left = "left" in opts
+            tx = x + img_w + gap if left else x
+            vx = x if left else x + tw + gap
+            if callouts:
+                stack_callouts(tx, tw, bottom)
+            out.update(mode="split", text=(tx, body_y, tw, text_bottom - body_y), visual=(vx, body_y, img_w, full_h))
+            return out
+
+        vb = stack_callouts(x, w, bottom) if callouts else bottom
+        h = vb - body_y
+        if not visuals:
+            out.update(mode="text", text=(x, body_y, w, h))
+        elif not paras:
+            out.update(mode="visual", visual=(x, body_y, w, h))
+        else:
+            tw = w * self.text_ratio(visuals)
+            out.update(mode="split", text=(x, body_y, tw, h), visual=(x + tw + gap, body_y, w - tw - gap, h))
+        return out
+
     def render_content(self, pg):
         s = self.new_slide(notes=pg.notes)
         text, visuals, callouts, sources = self.split_blocks(pg.blocks)
         if pg.chapter is not None:
             self.nav(s, pg.chapter, pg.sub)
         top = NAV_H + 0.3 if pg.chapter is not None else 0.5
-        self.text(s, PAD, top, W - 2 * PAD, 0.7, self.full_title(pg), self.sizes["title"], bold=True,
+        paras = self.text_paras(text)
+        lay = self.layout(pg, paras, visuals, callouts, bool(sources))
+        tx0 = lay.get("title_x", PAD)
+        self.text(s, tx0, top, lay["title_w"], 0.7, self.full_title(pg), self.sizes["title"], bold=True,
                   color=self.black, anchor=MSO_ANCHOR.MIDDLE)
-        if pg.subtitle:
+        if pg.subtitle and lay["mode"] != "showcase":
             self.text(s, PAD, top + 0.7, W - 2 * PAD, 0.4, pg.subtitle, self.sizes["subtitle"], bold=True,
                       color=self.muted)
-        x, y, w, h = self.body_box(bool(pg.subtitle), len(callouts))
-        if pg.chapter is None:
-            y -= NAV_H - 0.2
-            h += NAV_H - 0.2
-        paras = self.text_paras(text)
+        x, y, w, h = lay["text"]
 
         statement = (not visuals and paras and len(paras) <= 4 and all(p["bullet"] == "none" for p in paras)
                      and any(f.get("hl") for p in paras for _, f in inline_runs(p["text"])))
         only_quote = not visuals and len(text) == 1 and text[0].kind == "quote"
-        if statement:
+        if lay["mode"] == "showcase":
+            self.draw_showcase_text(s, pg, visuals[0].data, x, y, w, h)
+            self.draw_visuals(s, visuals, *lay["visual"], pg.title)
+        elif statement:
             self.draw_statement(s, paras, x, y, w, h)
         elif only_quote:
             self.draw_quote(s, text[0].data, x, y, w, h)
         elif not visuals:
             self.draw_text(s, paras, x, y, w, h, pg.title, max_size=self.sizes["body_max"] + 4)
         elif not paras:
-            self.draw_visuals(s, visuals, x, y, w, h, pg.title)
+            self.draw_visuals(s, visuals, *lay["visual"], pg.title)
         else:
-            tw = w * self.text_ratio(visuals)
-            gap = 0.45
-            self.draw_text(s, paras, x, y, tw, h, pg.title)
-            self.draw_visuals(s, visuals, x + tw + gap, y, w - tw - gap, h, pg.title)
+            self.draw_text(s, paras, x, y, w, h, pg.title)
+            self.draw_visuals(s, visuals, *lay["visual"], pg.title)
 
-        cy = y + h + 0.3
-        for c in callouts:
-            self.draw_callout(s, c.data, x, cy, w, 0.85)
-            cy += 1.15
+        for c, (cx, cy, cw, ch) in zip(callouts, lay["callouts"]):
+            self.draw_callout(s, c.data, cx, cy, cw, ch)
         if sources:
             src = "；".join(plain(b.data) for b in sources)
             self.text(s, PAD, H - 0.55, W - 2 * PAD - 1.2, 0.4, src, 9, color=self.muted,
@@ -782,6 +891,25 @@ class Canvas:
             self.runs(p, pd["text"], sz, bold=pd.get("bold"), color=pd.get("color", self.ink),
                       italic=pd.get("italic"))
 
+    def draw_showcase_text(self, s, pg, d, x, y, w, h):
+        """Left column of an image showcase: the subtitle becomes the headline, the caption sits under it."""
+        lines = []
+        if pg.subtitle:
+            avail = (w - 0.3) * 72
+            size = min(34, max(20, int(avail / max(1.0, disp_width(pg.subtitle)) * 0.95)))
+            clauses = [c for c in re.split(r"(?<=[，、；：。,;:])\s*", pg.subtitle) if c]
+            if len(clauses) > 1 and disp_width(pg.subtitle) * size > avail:
+                # break at the punctuation instead of mid-phrase; size to the longest clause
+                size = min(34, max(20, int(avail / max(disp_width(c) for c in clauses) * 0.95)))
+            else:
+                clauses = [pg.subtitle]
+            for k, c in enumerate(clauses):
+                lines.append({"text": c, "size": size, "bold": True, "color": self.black,
+                              "space_after": 14 if k == len(clauses) - 1 else 2})
+        if d.get("alt"):
+            lines.append({"text": d["alt"], "size": 16, "color": self.muted})
+        self.text(s, x, y, w - 0.3, h, lines, 30, anchor=MSO_ANCHOR.MIDDLE, line_spacing=1.1)
+
     def draw_statement(self, s, paras, x, y, w, h):
         lines = [{"text": p["text"], "size": 28, "bold": True, "space_after": 22} for p in paras]
         self.text(s, x + 0.6, y, w - 1.2, h, lines, 28, color=self.black, anchor=MSO_ANCHOR.MIDDLE,
@@ -803,7 +931,11 @@ class Canvas:
         label, ci = self.CALLOUT.get(d["kind"], (d["kind"].upper(), 1))
         fill = self.color_for(ci)
         self.block(s, x, y, w, h, fill, thin=True)
-        self.text(s, x + 1.3, y, w - 1.6, h, d["text"], 15, bold=True, color=self.on(fill), anchor=MSO_ANCHOR.MIDDLE)
+        size = 15
+        while size > 11 and self.lines_height([{"text": d["text"], "size": size}], w - 1.6) + 0.2 > h:
+            size -= 1
+        self.text(s, x + 1.3, y, w - 1.6, h, d["text"], size, bold=True, color=self.on(fill),
+                  anchor=MSO_ANCHOR.MIDDLE)
         self.pill(s, x + 0.2, y + (h - 0.44) / 2, label, self.white, size=13, rot=-4)
 
     # ------------------------------------------------------------------ visuals
@@ -841,6 +973,9 @@ class Canvas:
         fw, fh = iw * sc + 2 * pad, ih * sc + 2 * pad
         fx, fy = x + (w - fw) / 2, y + (h - cap - fh) / 2
         self.block(s, fx, fy, fw, fh, self.white)
+        if not svg and iw / max(0.1, fw - 2 * pad) < 90:
+            self.warnings.append(f"[{title}] image is low resolution: {iw}px across {fw - 2 * pad:.1f}in "
+                                 f"(~{iw / max(0.1, fw - 2 * pad):.0f} dpi) — use a larger source")
         box = (E(fx + pad), E(fy + pad), E(fw - 2 * pad), E(fh - 2 * pad))
         if svg:
             add_svg_picture(s, data, *box, descr=d.get("alt") or p.stem)

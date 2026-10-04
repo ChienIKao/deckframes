@@ -187,6 +187,19 @@ date: 2026 / 07 / 08
 
 內容型態與元件的對照規則：[`skills/deckframes-infographics/SKILL.md`](skills/deckframes-infographics/SKILL.md)
 
+### 圖片
+
+圖片會依實際長寬比自動挑出能放得最大的版面：
+
+| 情況 | 版面 |
+|---|---|
+| 一張直式圖（手機截圖、海報），投影片只有副標或圖說、沒有條列 | 展示版型：圖片在右側撐滿整個高度，副標放大成左側主文案 |
+| 一張橫式圖，沒有條列 | 比較「左文右圖」和「置中撐滿」，取圖片較大的那個 |
+| 文字＋一張圖 | 圖片欄寬依圖片在全高下的自然寬度計算，文字放不下才讓出空間；提示框放在文字欄下方 |
+
+需要時可以在圖片標題加提示：`![圖說](assets/map.png "wide")` 讓圖片優先放大，`"left"` 把圖放左邊，`"center"` 不用展示版型。
+圖片像素不夠時，建置會警告 `image is low resolution`。
+
 ### 圖示（禁止 emoji）
 
 簡報裡**一律不准用 emoji**：`deckframes build` 遇到 emoji 會直接中止，並列出行號；`deckframes check` 也會檢查輸出檔。

@@ -67,7 +67,7 @@ slide_level: 4
 | `> quote` | quote; a slide holding only one quote becomes a quote card |
 | `> [!NOTE] text` | bottom callout. Kinds: NOTE, TIP, IMPORTANT, WARNING, CAUTION, SUMMARY |
 | paragraph starting `Source:` / `資料來源：` / `來源：` / `Ref:` | footer citation |
-| `![caption](assets/x.png)` on its own line | framed image + caption tag (PNG, JPG or SVG — SVG stays vector) |
+| `![caption](assets/x.png)` on its own line | framed image + caption tag (PNG, JPG or SVG — SVG stays vector); layout hints in the title: `![caption](x.png "left wide")` |
 | Markdown table | native table; ○ × ✓ and numbers auto-centred |
 | ```` ```lang ```` code fence | dark code card |
 | ```` ```cards ```` `steps` `timeline` `flow` `stats` `compare` `chart` | infographics → `deckframes-infographics` |
@@ -104,6 +104,25 @@ Font Awesome Free icons are CC BY 4.0 — the attribution comment travels inside
 | text + one image/table/infographic | text left (~42–45%), visual right |
 | visual(s) only | full width |
 | callout | pinned to the bottom of the body area |
+
+## Images: sized from their real shape
+
+The engine reads each image's aspect ratio and picks the layout that shows it largest:
+
+| Slide | What happens |
+|---|---|
+| one portrait image (phone screenshot, poster) + slide subtitle or caption, no body text | **showcase**: image fills the full height on the right; the subtitle becomes the headline on the left (broken at its commas) |
+| one landscape image + subtitle or caption, no body text | showcase if that makes the image larger, otherwise the image fills the whole body |
+| one image, no subtitle / caption / text | image fills the body, centred |
+| text + one image | the image column is as wide as the image is at full body height (30–66% of the width); text takes the rest and widens only if it would not fit; callouts sit under the text so the image keeps its height |
+
+Hints go in the Markdown image title (space-separated): `left` (image on the left), `wide` (image
+gets 55–75% of the width — use for maps, floor plans, dense diagrams), `center` (no showcase).
+
+So, for screenshots and photos: give the slide a `#### Title | one-line message` (or a caption) and no
+bullets, and the image is shown big. Detailed figures beside text: add `"wide"` and keep ≤ 3 bullets.
+A build warning `image is low resolution (~N dpi)` means the source is too small for the space it
+gets — ask the user for a larger export.
 
 ## Pagination
 
