@@ -459,11 +459,19 @@ class Canvas:
         self.star(s, 11.6, 0.55, 1.2, self.pal(3), text=m.get("badge"), rot=14)
 
     def picture_card(self, s, path, x, y, w, h, rot=0.0):
-        card = self.block(s, x, y, w, h, self.white, rot=rot)
-        got = self.picture(s, path, x + 0.12, y + 0.12, w - 0.24, h - 0.24)
-        if got and rot:
-            got[0].rotation = rot
-        return card
+        got = self.picture(s, path, x, y, w, h)
+        if got:
+            self.outline(got[0])
+            if rot:
+                got[0].rotation = rot
+        return got
+
+    def outline(self, pic):
+        """Images get only a thin ink outline (theme `stroke.image`, pt) — no card, no padding, no shadow."""
+        width = self.t.get("stroke", {}).get("image", 1.0)
+        if width > 0:
+            pic.line.color.rgb = rgb(self.black)
+            pic.line.width = Pt(width)
 
     # ------------------------------------------------------------------ outline (大綱)
     def render_outline(self, pg):
@@ -728,7 +736,7 @@ class Canvas:
         """
         top = NAV_H + 0.3 if pg.chapter is not None else 0.5
         x, w = PAD, W - 2 * PAD
-        bottom = H - (0.75 if has_sources else 0.55)
+        bottom = H - (0.75 if has_sources else 0.68)
         body_y = top + 1.05 + (0.4 if pg.subtitle else 0)
         gap = 0.45
         single = visuals[0] if len(visuals) == 1 and visuals[0].kind == "image" else None
@@ -753,13 +761,13 @@ class Canvas:
                 return min(bw, bh * a) * min(bh, bw / a)
 
             vy = top + 0.05
-            sc_h = bottom - vy - 0.34
-            sc_w = min(w * (0.5 if a < 1.0 else 1.0) - 0.34, sc_h * a, w - 3.2 - gap - 0.34)
+            sc_h = bottom - vy - 0.05
+            sc_w = min(w * (0.5 if a < 1.0 else 1.0) - 0.05, sc_h * a, w - 3.2 - gap - 0.05)
             showcase_area = fitted(sc_w, sc_h)
-            plain_area = fitted(w - 0.34, cb - body_y - 0.34)
+            plain_area = fitted(w - 0.05, cb - body_y - 0.05)
             wants_showcase = (pg.subtitle or single.data.get("alt")) and "center" not in opts
             if wants_showcase and (a < 1.0 or showcase_area > plain_area * 1.1):
-                img_w = sc_w + 0.34
+                img_w = sc_w + 0.05
                 left = "left" in opts
                 vx = x if left else x + w - img_w
                 tx = x + img_w + gap if left else x
@@ -776,9 +784,9 @@ class Canvas:
 
         if single and info and paras:
             a, opts = info[0], single.data.get("opts", [])
-            cap = 0.55 if single.data.get("alt") else 0.1
+            cap = 0.5 if single.data.get("alt") else 0.0
             full_h = bottom - body_y
-            natural = (full_h - cap - 0.34) * a + 0.34
+            natural = (full_h - cap - 0.05) * a + 0.05
             lo, hi = (0.55 * w, 0.75 * w) if "wide" in opts else (0.3 * w, 0.66 * w)
             img_w = max(lo, min(hi, natural))
             tw = w - img_w - gap
@@ -961,28 +969,27 @@ class Canvas:
             self.warnings.append(f"[{title}] image not found: {d['path']}")
             return
         svg = p.suffix.lower() == ".svg"
-        cap = 0.55 if d.get("alt") else 0.1
+        cap = 0.5 if d.get("alt") else 0.0
         if svg:
             data = p.read_bytes()
             iw, ih = svg_aspect(data), 1.0
         else:
             with Image.open(p) as im:
                 iw, ih = im.size
-        pad = 0.12
-        sc = min((w - 2 * pad - 0.1) / iw, (h - cap - 2 * pad - 0.1) / ih)
-        fw, fh = iw * sc + 2 * pad, ih * sc + 2 * pad
-        fx, fy = x + (w - fw) / 2, y + (h - cap - fh) / 2
-        self.block(s, fx, fy, fw, fh, self.white)
-        if not svg and iw / max(0.1, fw - 2 * pad) < 90:
-            self.warnings.append(f"[{title}] image is low resolution: {iw}px across {fw - 2 * pad:.1f}in "
-                                 f"(~{iw / max(0.1, fw - 2 * pad):.0f} dpi) — use a larger source")
-        box = (E(fx + pad), E(fy + pad), E(fw - 2 * pad), E(fh - 2 * pad))
+        sc = min((w - 0.05) / iw, (h - cap - 0.05) / ih)
+        pw, ph = iw * sc, ih * sc
+        px, py = x + (w - pw) / 2, y + (h - cap - ph) / 2
+        if not svg and iw / max(0.1, pw) < 90:
+            self.warnings.append(f"[{title}] image is low resolution: {iw}px across {pw:.1f}in "
+                                 f"(~{iw / max(0.1, pw):.0f} dpi) — use a larger source")
+        box = (E(px), E(py), E(pw), E(ph))
         if svg:
-            add_svg_picture(s, data, *box, descr=d.get("alt") or p.stem)
+            pic = add_svg_picture(s, data, *box, descr=d.get("alt") or p.stem)
         else:
-            s.shapes.add_picture(str(p), *box)
+            pic = s.shapes.add_picture(str(p), *box)
+        self.outline(pic)
         if d.get("alt"):
-            self.pill(s, fx + 0.2, fy + fh - 0.12, d["alt"], self.pal(3), size=11, rot=-3, upper=False,
+            self.pill(s, px, py + ph + 0.1, d["alt"], self.pal(3), size=11, upper=False,
                       font="body")
 
     def draw_code(self, s, d, x, y, w, h, title=""):

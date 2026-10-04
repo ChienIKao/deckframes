@@ -65,6 +65,7 @@ or `--from` another theme) → edit the tokens below (the file's `_edit` key rep
 | `fonts.ea` | CJK font (default Microsoft JhengHei) |
 | `stroke.border` / `thin` | outline weights in pt (0 = no outline) |
 | `stroke.shadow` / `thin_shadow` | hard shadow offsets in pt (0 = no shadow) |
+| `stroke.image` | thin outline around pictures in pt (default 1; 0 = none). Pictures never get a card or shadow |
 | `decorations` / `tilt` | star bursts, stripe tiles, dot grids / rotated cards on or off |
 | `sizes.title` `subtitle` `body_max` `body_min` `split_below` | type scale in pt |
 

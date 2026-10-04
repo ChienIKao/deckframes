@@ -220,7 +220,7 @@ def import_frame(path: Path, name: str | None = None) -> tuple[dict, list[str]]:
             "body": _map_font(body_src, "body"), "ea": "Microsoft JhengHei", "code": "Consolas",
         },
         "stroke": {"border": round(bpx / 2, 2), "shadow": round(spx / 2, 2),
-                   "thin": round(tpx / 2, 2), "thin_shadow": round(tspx / 2, 2)},
+                   "thin": round(tpx / 2, 2), "thin_shadow": round(tspx / 2, 2), "image": 1},
         "decorations": brutal,
         "tilt": brutal,
         "sizes": {"title": 28, "subtitle": 16, "body_max": 20, "body_min": 12, "split_below": 14},

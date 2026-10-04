@@ -9,8 +9,20 @@
     "ground": "FFFDF5",
     "text": "111111",
     "muted": "7A7A7A",
-    "palette": ["FE90E8", "C0F7FE", "99E885", "F7CB46", "FFDC8B"],
-    "chapter_cycle": ["99E885", "C0F7FE", "FE90E8", "F7CB46", "FFDC8B"]
+    "palette": [
+      "FE90E8",
+      "C0F7FE",
+      "99E885",
+      "F7CB46",
+      "FFDC8B"
+    ],
+    "chapter_cycle": [
+      "99E885",
+      "C0F7FE",
+      "FE90E8",
+      "F7CB46",
+      "FFDC8B"
+    ]
   },
   "fonts": {
     "display": "Arial Black",
@@ -23,7 +35,8 @@
     "border": 2.25,
     "shadow": 5,
     "thin": 1.5,
-    "thin_shadow": 3
+    "thin_shadow": 3,
+    "image": 1
   },
   "sizes": {
     "title": 28,

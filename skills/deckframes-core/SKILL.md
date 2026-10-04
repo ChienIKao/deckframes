@@ -67,7 +67,7 @@ slide_level: 4
 | `> quote` | quote; a slide holding only one quote becomes a quote card |
 | `> [!NOTE] text` | bottom callout. Kinds: NOTE, TIP, IMPORTANT, WARNING, CAUTION, SUMMARY |
 | paragraph starting `Source:` / `資料來源：` / `來源：` / `Ref:` | footer citation |
-| `![caption](assets/x.png)` on its own line | framed image + caption tag (PNG, JPG or SVG — SVG stays vector); layout hints in the title: `![caption](x.png "left wide")` |
+| `![caption](assets/x.png)` on its own line | image with a thin outline + caption tag below (PNG, JPG or SVG — SVG stays vector); layout hints in the title: `![caption](x.png "left wide")` |
 | Markdown table | native table; ○ × ✓ and numbers auto-centred |
 | ```` ```lang ```` code fence | dark code card |
 | ```` ```cards ```` `steps` `timeline` `flow` `stats` `compare` `chart` | infographics → `deckframes-infographics` |

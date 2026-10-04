@@ -83,7 +83,7 @@ EDIT_HINTS = {
     "colors.palette": "2–5 accent fills cycled by components; the 4th light one is the highlighter",
     "colors.chapter_cycle": "chapter colours for dividers and the nav band (defaults to palette)",
     "fonts": "display = Latin headlines, label = pills, body, ea = CJK font, code",
-    "stroke": "border / thin = outline pt (0 = none); shadow / thin_shadow = hard shadow offset pt (0 = none)",
+    "stroke": "border / thin = outline pt (0 = none); shadow / thin_shadow = hard shadow offset pt (0 = none); image = picture outline pt",
     "decorations / tilt": "star bursts, stripe tiles, dot grid / rotated cards on or off",
     "sizes": "title, subtitle, body_max, body_min, split_below in pt",
 }

@@ -199,6 +199,7 @@ date: 2026 / 07 / 08
 
 需要時可以在圖片標題加提示：`![圖說](assets/map.png "wide")` 讓圖片優先放大，`"left"` 把圖放左邊，`"center"` 不用展示版型。
 圖片像素不夠時，建置會警告 `image is low resolution`。
+圖片只加一圈細框（主題的 `stroke.image`，預設 1pt，設 0 就不加框），不墊底框、不加陰影，圖說放在圖片下方。
 
 ### 圖示（禁止 emoji）
 
