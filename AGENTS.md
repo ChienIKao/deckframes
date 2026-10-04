@@ -23,16 +23,20 @@ src/deckframes/
   cli.py            argparse entry point (`deckframes …`)
   markdown.py       deck.md → Doc tree (chapters › sections › slides), inline runs
   layout.py         text measurement, pagination, template-engine planning
-  engines/canvas.py theme-token renderer: cover, outline, dividers, nav bar, infographics
+  engines/canvas.py theme-token renderer: pagination, layout, core infographics, images
+  engines/style.py  surfaces (brutal/glass/clay/…), backgrounds, textures, decorations
+  engines/chrome.py cover / outline / divider / nav / callout / closing variants
+  engines/diagrams.py diagram, lanes, mapping, stack, matrix, pyramid, funnel, cycle, progress
   engines/template.py  placeholder renderer for user .pptx/.potx templates
   check.py          structural QA report (JSON-serialisable)
+  lint.py           deck-level variety lint (`monotony:` build warnings)
   preview.py        PowerPoint COM / LibreOffice → PNG + grid
   project.py        deck.json state, init, stage tracking
   themes.py         theme/template lookup (project → ~/.deckframes → built-in)
   frame_import.py   HyperFrames FRAME.md → canvas theme
   themes/*.json     built-in themes
 skills/<name>/SKILL.md   agent skills (Agent Skills format; installable with `npx skills add`)
-examples/                demo decks (fictional content)
+examples/                demo decks (fictional content); components.md shows every block
 tests/                   pytest smoke tests
 ```
 

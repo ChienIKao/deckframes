@@ -1,0 +1,68 @@
+{
+  "name": "glassmorphism",
+  "engine": "canvas",
+  "description": "玻璃擬態：鮮豔漸層背景上的半透明毛玻璃卡片、柔光球、白色細邊",
+  "colors": {
+    "white": "FFFFFF",
+    "ground": "5B47E0",
+    "text": "FFFFFF",
+    "title": "FFFFFF",
+    "muted": "E0E2FF",
+    "black": "FFFFFF",
+    "card_text": "FFFFFF",
+    "card_muted": "EEF0FF",
+    "palette": [
+      "A78BFA",
+      "F472B6",
+      "38BDF8",
+      "34D399",
+      "FBBF24"
+    ],
+    "highlight": "FBBF24"
+  },
+  "fonts": {
+    "ea": "Microsoft JhengHei",
+    "code": "Consolas",
+    "display": "Segoe UI Black",
+    "heading": "Segoe UI Semibold",
+    "body": "Segoe UI",
+    "label": "Segoe UI Semibold"
+  },
+  "stroke": {
+    "border": 0,
+    "shadow": 0,
+    "thin": 0,
+    "thin_shadow": 0,
+    "image": 0.75
+  },
+  "decorations": true,
+  "tilt": false,
+  "style": {
+    "surface": "glass",
+    "radius": 0.26,
+    "cover": "centered",
+    "divider": "centered",
+    "nav": "pills",
+    "outline": "grid",
+    "callout": "tint",
+    "closing": "centered",
+    "ground": {
+      "type": "gradient",
+      "colors": [
+        "4F46E5",
+        "DB2777"
+      ],
+      "angle": 135
+    },
+    "decor": [
+      "glass"
+    ]
+  },
+  "sizes": {
+    "title": 28,
+    "subtitle": 16,
+    "body_max": 20,
+    "body_min": 12,
+    "split_below": 14
+  }
+}

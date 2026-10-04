@@ -1,0 +1,57 @@
+{
+  "name": "victorian",
+  "engine": "canvas",
+  "description": "維多利亞：羊皮紙、酒紅與墨綠、雙線花框、菱形飾角、古典襯線",
+  "colors": {
+    "white": "FBF4E6",
+    "ground": "F3E9D6",
+    "text": "2B1D14",
+    "muted": "7A6450",
+    "palette": [
+      "6B1E2E",
+      "2F4A3A",
+      "B08D57",
+      "1F2A44",
+      "8C6A4F"
+    ],
+    "black": "2B1D14"
+  },
+  "fonts": {
+    "ea": "Microsoft JhengHei",
+    "code": "Consolas",
+    "display": "Castellar",
+    "heading": "Book Antiqua",
+    "body": "Book Antiqua",
+    "label": "Copperplate Gothic Bold"
+  },
+  "stroke": {
+    "border": 1.5,
+    "shadow": 0,
+    "thin": 1.0,
+    "thin_shadow": 0,
+    "image": 1.0
+  },
+  "decorations": true,
+  "tilt": false,
+  "style": {
+    "surface": "ornate",
+    "radius": 0,
+    "cover": "frame",
+    "divider": "centered",
+    "nav": "underline",
+    "outline": "list",
+    "callout": "tint",
+    "closing": "centered",
+    "accent_line": "B08D57",
+    "decor": [
+      "ornament"
+    ]
+  },
+  "sizes": {
+    "title": 28,
+    "subtitle": 16,
+    "body_max": 20,
+    "body_min": 12,
+    "split_below": 14
+  }
+}

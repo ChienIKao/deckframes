@@ -24,7 +24,11 @@ from pptx.oxml.ns import qn
 from pptx.util import Emu, Pt
 
 from ..icons import IconError, add_svg_picture, parse_ref, recolor, svg_aspect
+from .chrome import ChromeMixin
+from .diagrams import DiagramMixin
+from .style import StyleMixin
 from ..icons import resolve as resolve_icon
+from .style import mix
 from ..layout import TEXT_KINDS, estimate_height_pt, merge_bullets, text_units
 from ..markdown import Block, disp_width, inline_runs, is_cjk, plain
 
@@ -109,7 +113,7 @@ def strip_style(shape):
 # --------------------------------------------------------------------------- engine
 
 
-class Canvas:
+class Canvas(StyleMixin, ChromeMixin, DiagramMixin):
     def __init__(self, theme: dict, meta: dict, base_dir: Path):
         self.t, self.meta, self.base = theme, meta, base_dir
         c = theme["colors"]
@@ -133,6 +137,15 @@ class Canvas:
         self.hl = c.get("highlight") or (light[0] if light else "FFE58A")
         self.deco = theme.get("decorations", True)
         self.tilt = theme.get("tilt", True)
+        # colour roles: ink on the slide ground, ink on cards, ink on light/dark fills
+        self.title_ink = c.get("title", self.ink)
+        self.dark_ink = c.get("on_light") or (self.black if self.luminance(self.black) < 0.4 else "111111")
+        self.light_ink = c.get("on_dark", "FFFFFF")
+        self.card_ink = c.get("card_text") or self.on(self.white)
+        self.card_muted = c.get("card_muted") or ("4A4A4A" if self.luminance(self.white) >= 0.5 else "C9C9D3")
+        self.tones = {"negative": c.get("negative", "E5534B"), "positive": c.get("positive", "4CAF6A"),
+                      "info": c.get("info", self.palette[min(1, len(self.palette) - 1)])}
+        self.init_style(theme)
         self.warnings: list[str] = []
         self._img_cache: dict = {}
         self.chapters = []
@@ -146,7 +159,7 @@ class Canvas:
 
     def on(self, fill: str) -> str:
         """Readable text colour on top of `fill`."""
-        return self.black if self.luminance(fill) >= 0.5 else "FFFFFF"
+        return getattr(self, "dark_ink", "111111") if self.luminance(fill) >= 0.5 else getattr(self, "light_ink", "FFFFFF")
 
     def dim_on(self, fill: str) -> str:
         return "4A4A4A" if self.luminance(fill) >= 0.5 else "D8D8D8"
@@ -177,12 +190,8 @@ class Canvas:
 
     def block(self, s, x, y, w, h, fill, thin=False, rot=0.0, kind=MSO_SHAPE.RECTANGLE, line=None,
               shadow=None):
-        """Bordered shape with a hard, zero-blur offset shadow (BlockFrame's core atom)."""
-        off = (self.tsw if thin else self.sw) / 72
-        if off > 0:
-            self.shape(s, kind, x + off, y + off, w, h, fill=shadow or self.black, rot=rot)
-        return self.shape(s, kind, x, y, w, h, fill=fill, line=line or self.black,
-                          lw=self.tw if thin else self.bw, rot=rot)
+        """A card / box drawn in the theme's surface style (brutal, glass, clay, neu, paper, …)."""
+        return self.surface_block(s, x, y, w, h, fill, thin, rot, kind, line, shadow)
 
     def line(self, s, x1, y1, x2, y2, color=None, width=None):
         ln = strip_style(s.shapes.add_connector(MSO_CONNECTOR.STRAIGHT, E(x1), E(y1), E(x2), E(y2)))
@@ -191,8 +200,9 @@ class Canvas:
         return ln
 
     def runs(self, p, text, size, font="body", bold=None, color=None, italic=None, spc=None, hl_color=None):
-        latin = {"display": self.f_display, "label": self.f_label, "body": self.f_body,
+        latin = {"display": self.f_display, "label": self.f_label, "body": self.f_body, "heading": self.f_heading,
                  "code": self.f_code}[font]
+        ea_face = self.f_ea_heading if font == "heading" else self.f_ea
         for chunk, fmt in inline_runs(text):
             if not chunk:
                 continue
@@ -206,7 +216,7 @@ class Canvas:
             f.color.rgb = rgb(color or self.ink)
             f.name = self.f_code if fmt.get("code") else latin
             rPr = r._r.get_or_add_rPr()
-            set_ea(rPr, self.f_ea)
+            set_ea(rPr, ea_face)
             if any(is_cjk(ch) for ch in chunk):
                 rPr.set("lang", "zh-TW")
                 rPr.set("altLang", "en-US")
@@ -248,7 +258,7 @@ class Canvas:
 
     def measure(self, text, size, font="body"):
         """Approximate rendered width in inches."""
-        factor = {"display": 1.18, "label": 1.0, "body": 1.0, "code": 1.0}[font]
+        factor = {"display": 1.18, "label": 1.0, "body": 1.0, "heading": 1.05, "code": 1.0}[font]
         w = 0.0
         for ch in plain(text):
             w += disp_width(ch) * (factor if ord(ch) < 0x2E80 else 1.0)
@@ -279,11 +289,11 @@ class Canvas:
         return total
 
     def card_lines(self, it, title=20, desc=15, child=14):
-        lines = [{"text": it["title"], "size": title, "bold": True, "color": self.black, "space_after": 3}]
+        lines = [{"text": it["title"], "size": title, "bold": True, "color": self.card_ink, "space_after": 3}]
         if it["desc"]:
-            lines.append({"text": it["desc"], "size": desc, "color": "3A3A3A", "space_after": 2})
+            lines.append({"text": it["desc"], "size": desc, "color": self.card_muted, "space_after": 2})
         for c in it["children"] + it["extra"]:
-            lines.append({"text": "■ " + c, "size": child, "color": "3A3A3A"})
+            lines.append({"text": "■ " + c, "size": child, "color": self.card_muted})
         return lines
 
     def pill_width(self, text, size, font="label", upper=True):
@@ -367,10 +377,9 @@ class Canvas:
     def ch_color(self, ci):
         return self.chapter_cycle[ci % len(self.chapter_cycle)]
 
-    def new_slide(self, ground=None, notes=None):
+    def new_slide(self, ground=None, notes=None, role=None):
         s = self.prs.slides.add_slide(self.blank)
-        s.background.fill.solid()
-        s.background.fill.fore_color.rgb = rgb(ground or self.ground)
+        self.paint_ground(s, ground, role)
         self.counter += 1
         if notes:
             s.notes_slide.notes_text_frame.text = "\n\n".join(notes)
@@ -427,8 +436,8 @@ class Canvas:
         return len(blocks) == 1 and blocks[0].kind in ("para", "quote") and disp_width(plain(blocks[0].data)) <= 80
 
     # ------------------------------------------------------------------ cover
-    def render_cover(self, pg):
-        s = self.new_slide(notes=pg.notes)
+    def cover_split(self, pg):
+        s = self.new_slide(notes=pg.notes, role="cover")
         m = self.meta
         self.dots(s, 7.4, 0, 5.93, 3.6)
         _, pw = self.pill(s, PAD + 0.1, 1.0, m.get("eyebrow", "PRESENTATION"), self.pal(3), size=13)
@@ -438,12 +447,12 @@ class Canvas:
         size = max(min(54, int(7.1 * 72 / math.ceil(n / k) * 0.97)) for k in (1, 2, 3))
         lines = math.ceil(n * size / 72 / 7.1)
         tw = min(7.3, math.ceil(n / lines) * size / 72 * 1.04 + 0.15)   # narrow the box so lines balance
-        self.text(s, PAD + 0.1, 1.75, tw, 3.2, title, size, bold=True, color=self.black,
+        self.text(s, PAD + 0.1, 1.75, tw, 3.2, title, size, bold=True, color=self.title_ink, font="heading",
                   anchor=MSO_ANCHOR.MIDDLE, line_spacing=1.05)
         if pg.subtitle:
             sub_font = "display" if pg.subtitle.isascii() else "body"
             sub = pg.subtitle.upper() if pg.subtitle.isascii() else pg.subtitle
-            self.text(s, PAD + 0.1, 5.0, 7.3, 0.6, sub, 18, font=sub_font, bold=True, color=self.black)
+            self.text(s, PAD + 0.1, 5.0, 7.3, 0.6, sub, 18, font=sub_font, bold=True, color=self.title_ink)
         x = PAD + 0.1
         for k, key in enumerate(("author", "date")):
             if m.get(key):
@@ -453,10 +462,7 @@ class Canvas:
         if m.get("cover_image"):
             self.picture_card(s, m["cover_image"], 8.3, 1.3, 4.3, 3.6, rot=3)
         else:
-            self.block(s, 8.9, 1.2, 3.4, 2.5, self.pal(0), rot=6)
-            self.block(s, 8.2, 3.3, 2.8, 2.1, self.pal(1), rot=-4)
-            self.stripes(s, 11.1, 4.2, 1.5, 1.5, self.pal(2), rot=8)
-        self.star(s, 11.6, 0.55, 1.2, self.pal(3), text=m.get("badge"), rot=14)
+            self.decorate(s, (7.9, 0.5, 4.9, 6.2), "cover")
 
     def picture_card(self, s, path, x, y, w, h, rot=0.0):
         got = self.picture(s, path, x, y, w, h)
@@ -474,30 +480,29 @@ class Canvas:
             pic.line.width = Pt(width)
 
     # ------------------------------------------------------------------ outline (大綱)
-    def render_outline(self, pg):
-        s = self.new_slide()
+    def outline_line(self, pg):
+        s = self.new_slide(role="outline")
         m = self.meta
         self.pill(s, PAD + 0.1, 1.0, m.get("outline_label", "OUTLINE"), self.pal(3), size=13)
-        self.text(s, PAD + 0.1, 1.7, 5.8, 1.3, m.get("outline_title", "大綱"), 60, bold=True, color=self.black)
+        self.text(s, PAD + 0.1, 1.7, 5.8, 1.3, m.get("outline_title", "大綱"), 60, bold=True, color=self.title_ink,
+                  font="heading")
         self.text(s, PAD + 0.1, 2.9, 5.8, 0.7, m.get("outline_en", "OUTLINE"), 26, font="display",
-                  color=self.black, spc=-0.5)
-        self.block(s, 1.0, 4.6, 2.6, 1.8, self.pal(0), rot=-6)
-        self.stripes(s, 3.3, 5.3, 1.3, 1.3, self.pal(1), rot=7)
-        self.star(s, 4.5, 4.2, 1.0, self.pal(2), rot=10)
+                  color=self.title_ink, spc=-0.5)
+        self.decorate(s, (0.8, 4.0, 4.9, 2.9), "outline")
 
         n = len(self.chapters)
         top, bottom = 0.7, 6.8
         step = min(1.05, (bottom - top) / n)
         y0 = top + ((bottom - top) - step * n) / 2
         lx = 7.3
-        self.line(s, lx, 0, lx, H, width=3)
+        self.line(s, lx, 0, lx, H, width=self.rule_w)
         bh = min(0.62, step * 0.62)
         for k, ch in enumerate(self.chapters):
             cy = y0 + step * k + step / 2
             self.block(s, lx - 0.48, cy - bh / 2, 0.96, bh, self.ch_color(k))
             self.text(s, lx - 0.48, cy - bh / 2, 0.96, bh, f"{k + 1:02d}", 20, font="display",
                       color=self.on(self.ch_color(k)), align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE)
-            lines = [{"text": ch.title, "size": 24, "bold": True, "color": self.black}]
+            lines = [{"text": ch.title, "size": 24, "bold": True, "color": self.title_ink}]
             if ch.subtitle:
                 lines.append({"text": ch.subtitle.upper(), "size": 11, "font": "label", "bold": True,
                               "color": self.muted, "spc": 1})
@@ -505,23 +510,25 @@ class Canvas:
         self.counter_pill(s)
 
     # ------------------------------------------------------------------ chapter divider + sub-TOC
-    def render_divider(self, pg):
+    def divider_panel(self, pg):
         ch = self.chapters[pg.chapter]
         col = self.ch_color(pg.chapter)
-        s = self.new_slide(notes=pg.notes)
+        s = self.new_slide(notes=pg.notes, role="divider")
         pw = 5.3
-        self.shape(s, MSO_SHAPE.RECTANGLE, -0.05, -0.05, pw + 0.05, H + 0.1, fill=col, line=self.black)
+        self.shape(s, MSO_SHAPE.RECTANGLE, -0.05, -0.05, pw + 0.05, H + 0.1, fill=col,
+                   line=self.black if self.surface in ("brutal", "pixel", "outline") else None)
         self.text(s, PAD + 0.05, 0.45, 3.5, 1.4, f"{pg.chapter + 1:02d}", 80, font="display", color=self.on(col),
                   spc=-2)
         self.shape(s, MSO_SHAPE.RECTANGLE, PAD + 0.15, 1.85, 1.9, 0.1, fill=self.on(col))
         n = disp_width(ch.title)
         size = 60 if n <= 4 else 50 if n <= 6 else 40 if n <= 9 else 32
-        lines = [{"text": ch.title, "size": size, "bold": True, "color": self.on(col), "space_after": 6}]
+        lines = [{"text": ch.title, "size": size, "bold": True, "color": self.on(col), "space_after": 6,
+                  "font": "heading"}]
         if ch.subtitle:
             lines.append({"text": ch.subtitle.upper(), "size": 22, "font": "display", "color": self.on(col),
                           "spc": -0.3})
         self.text(s, 0.3, 2.5, pw - 0.6, 3.0, lines, size, align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE)
-        self.star(s, pw - 0.75, 5.9, 1.2, self.pal(3) if col != self.pal(3) else self.pal(0), rot=16)
+        self.decorate(s, (pw - 1.2, 5.4, 1.8, 1.8), "divider")
 
         subs = ch.subsections
         lx = 6.6
@@ -529,11 +536,11 @@ class Canvas:
             intro = ch.blocks[0].data if ch.blocks and self.short_intro(ch.blocks) else ""
             if intro:
                 self.block(s, 6.4, 2.6, 6.2, 2.2, self.white)
-                self.text(s, 6.7, 2.8, 5.6, 1.8, intro, 22, bold=True, color=self.black,
+                self.text(s, 6.7, 2.8, 5.6, 1.8, intro, 22, bold=True, color=self.card_ink,
                           anchor=MSO_ANCHOR.MIDDLE)
             self.counter_pill(s)
             return
-        self.line(s, lx, 0, lx, H, width=3)
+        self.line(s, lx, 0, lx, H, width=self.rule_w)
         n = len(subs)
         top, bottom = 0.6, 6.9
         step = min(1.15, (bottom - top) / n)
@@ -543,38 +550,38 @@ class Canvas:
             cy = y0 + step * k + step / 2
             current = pg.recap and k == pg.sub
             dim = pg.recap and k != pg.sub
-            fill = self.black if current else (self.white if dim else col)
+            fill = self.title_ink if current else (self.white if dim else col)
             self.block(s, lx - 0.45, cy - bh / 2, 0.9, bh, fill, thin=dim)
             self.text(s, lx - 0.45, cy - bh / 2, 0.9, bh, ROMAN[k] if k < len(ROMAN) else str(k + 1), 20,
-                      font="display", color=self.white if current else (self.muted if dim else self.black),
+                      font="display", color=self.muted if dim else self.on(fill),
                       align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE)
             lines = [{"text": sub.title, "size": 24, "bold": True,
-                      "color": self.muted if dim else self.black}]
+                      "color": self.muted if dim else self.title_ink}]
             if sub.subtitle:
                 lines.append({"text": sub.subtitle, "size": 12, "color": self.muted})
             self.text(s, lx + 0.8, cy - step / 2, 5.6, step, lines, 24, anchor=MSO_ANCHOR.MIDDLE)
         self.counter_pill(s)
 
     # ------------------------------------------------------------------ closing
-    def render_closing(self, pg):
-        s = self.new_slide(ground=self.black)
+    def closing_frame(self, pg):
+        s = self.new_slide(ground=self.dark_ink, role="closing")
         w, h = 8.2, 2.8
         x, y = (W - w) / 2, (H - h) / 2 + 0.2
         self.shape(s, MSO_SHAPE.RECTANGLE, x + 0.17, y + 0.17, w, h, fill=self.pal(3))
-        frame = self.shape(s, MSO_SHAPE.RECTANGLE, x, y, w, h, fill=self.black, line=self.white, lw=3)
+        frame = self.shape(s, MSO_SHAPE.RECTANGLE, x, y, w, h, fill=self.dark_ink, line="FFFFFF", lw=3)
         size = 72 if disp_width(pg.title) <= 6 else 48
         font = "display" if pg.title.isascii() else "body"
-        self.text(s, 0, 0, 0, 0, pg.title, size, font=font, bold=True, color=self.white, align=PP_ALIGN.CENTER,
+        self.text(s, 0, 0, 0, 0, pg.title, size, font=font, bold=True, color="FFFFFF", align=PP_ALIGN.CENTER,
                   anchor=MSO_ANCHOR.MIDDLE, target=frame)
         label = self.meta.get("closing_label", "THANK YOU")
-        self.pill(s, (W - self.pill_width(label, 13)) / 2, y - 0.75, label, self.white, size=13, shadow=False)
+        self.pill(s, (W - self.pill_width(label, 13)) / 2, y - 0.75, label, "FFFFFF", size=13, shadow=False)
         self.star(s, x + w - 0.7, y - 0.6, 1.3, self.pal(0), rot=18)
 
     # ------------------------------------------------------------------ chrome for content slides
     def counter_pill(self, s):
         self.pill(s, W - PAD - 0.75, H - 0.52, f"{self.counter:02d}", self.white, size=11, shadow=False)
 
-    def nav(self, s, ci, si):
+    def nav_band(self, s, ci, si):
         col = self.ch_color(ci)
         self.shape(s, MSO_SHAPE.RECTANGLE, 0, 0, W, NAV_H, fill=col)
         self.line(s, 0, NAV_H, W, NAV_H)
@@ -592,7 +599,7 @@ class Canvas:
             if k == ci:
                 tw = self.measure(ch.title, 14) + 0.5
                 sp = self.block(s, cx - tw / 2, 0.1, tw, 0.4, self.white, thin=True)
-                self.text(s, 0, 0, 0, 0, ch.title, 14, bold=True, color=self.black, align=PP_ALIGN.CENTER,
+                self.text(s, 0, 0, 0, 0, ch.title, 14, bold=True, color=self.card_ink, align=PP_ALIGN.CENTER,
                           anchor=MSO_ANCHOR.MIDDLE, target=sp)
             else:
                 self.text(s, cx - slot / 2, 0.1, slot, 0.4, ch.title, 13, color=self.dim_on(col),
@@ -612,9 +619,9 @@ class Canvas:
         x = min(max(left, cx - total / 2), right - total)
         for k, (sub, w) in enumerate(zip(subs, widths)):
             if k == si:
-                sp = self.shape(s, MSO_SHAPE.ROUNDED_RECTANGLE, x, 0.6, w, 0.3, fill=self.black, line=self.black,
-                                lw=self.tw)
-                self.text(s, 0, 0, 0, 0, sub.title, size, bold=True, color=self.white, align=PP_ALIGN.CENTER,
+                sp = self.shape(s, MSO_SHAPE.ROUNDED_RECTANGLE, x, 0.6, w, 0.3, fill=self.dark_ink,
+                                line=self.dark_ink, lw=self.tw)
+                self.text(s, 0, 0, 0, 0, sub.title, size, bold=True, color="FFFFFF", align=PP_ALIGN.CENTER,
                           anchor=MSO_ANCHOR.MIDDLE, target=sp)
             else:
                 self.text(s, x, 0.6, w, 0.3, sub.title, size, color=self.dim_on(col), align=PP_ALIGN.CENTER,
@@ -639,7 +646,10 @@ class Canvas:
         return text, visuals, callouts, sources
 
     def text_ratio(self, visuals):
-        if any(v.kind == "component" and v.data["type"] in ("cards", "steps", "compare") for v in visuals):
+        types = {v.data["type"] for v in visuals if v.kind == "component"}
+        if types & {"diagram", "lanes", "matrix", "mapping", "cycle"}:
+            return 0.33
+        if types & {"cards", "steps", "compare", "pyramid", "funnel", "stack"}:
             return 0.42
         return 0.45
 
@@ -734,7 +744,7 @@ class Canvas:
                                   (clamped), text takes the rest; callouts sit under the text
         `"left"` / `"wide"` in the image's Markdown title override placement / emphasis.
         """
-        top = NAV_H + 0.3 if pg.chapter is not None else 0.5
+        top = self.content_top(pg)
         x, w = PAD, W - 2 * PAD
         bottom = H - (0.75 if has_sources else 0.68)
         body_y = top + 1.05 + (0.4 if pg.subtitle else 0)
@@ -822,12 +832,12 @@ class Canvas:
         text, visuals, callouts, sources = self.split_blocks(pg.blocks)
         if pg.chapter is not None:
             self.nav(s, pg.chapter, pg.sub)
-        top = NAV_H + 0.3 if pg.chapter is not None else 0.5
+        top = self.content_top(pg)
         paras = self.text_paras(text)
         lay = self.layout(pg, paras, visuals, callouts, bool(sources))
         tx0 = lay.get("title_x", PAD)
         self.text(s, tx0, top, lay["title_w"], 0.7, self.full_title(pg), self.sizes["title"], bold=True,
-                  color=self.black, anchor=MSO_ANCHOR.MIDDLE)
+                  color=self.title_ink, anchor=MSO_ANCHOR.MIDDLE, font="heading")
         if pg.subtitle and lay["mode"] != "showcase":
             self.text(s, PAD, top + 0.7, W - 2 * PAD, 0.4, pg.subtitle, self.sizes["subtitle"], bold=True,
                       color=self.muted)
@@ -852,7 +862,7 @@ class Canvas:
             self.draw_visuals(s, visuals, *lay["visual"], pg.title)
 
         for c, (cx, cy, cw, ch) in zip(callouts, lay["callouts"]):
-            self.draw_callout(s, c.data, cx, cy, cw, ch)
+            self.callout(s, c.data, cx, cy, cw, ch)
         if sources:
             src = "；".join(plain(b.data) for b in sources)
             self.text(s, PAD, H - 0.55, W - 2 * PAD - 1.2, 0.4, src, 9, color=self.muted,
@@ -912,7 +922,7 @@ class Canvas:
             else:
                 clauses = [pg.subtitle]
             for k, c in enumerate(clauses):
-                lines.append({"text": c, "size": size, "bold": True, "color": self.black,
+                lines.append({"text": c, "size": size, "bold": True, "color": self.title_ink, "font": "heading",
                               "space_after": 14 if k == len(clauses) - 1 else 2})
         if d.get("alt"):
             lines.append({"text": d["alt"], "size": 16, "color": self.muted})
@@ -920,24 +930,25 @@ class Canvas:
 
     def draw_statement(self, s, paras, x, y, w, h):
         lines = [{"text": p["text"], "size": 28, "bold": True, "space_after": 22} for p in paras]
-        self.text(s, x + 0.6, y, w - 1.2, h, lines, 28, color=self.black, anchor=MSO_ANCHOR.MIDDLE,
-                  align=PP_ALIGN.CENTER)
-        self.star(s, x + w - 1.1, y + 0.1, 0.9, self.pal(0), rot=12)
+        self.text(s, x + 0.6, y, w - 1.2, h, lines, 28, color=self.title_ink, anchor=MSO_ANCHOR.MIDDLE,
+                  align=PP_ALIGN.CENTER, font="heading")
+        self.decorate(s, (x + w - 1.3, y, 1.3, 1.3), "accent")
 
     def draw_quote(self, s, text, x, y, w, h):
         cw, ch = min(w, 10.0), min(h, 3.2)
         cx, cy = x + (w - cw) / 2, y + (h - ch) / 2
         self.block(s, cx, cy, cw, ch, self.white)
-        self.text(s, cx + 0.5, cy + 0.3, cw - 1.0, ch - 0.6, f"「{text}」", 30, bold=True, color=self.black,
-                  anchor=MSO_ANCHOR.MIDDLE, align=PP_ALIGN.CENTER)
+        self.text(s, cx + 0.5, cy + 0.3, cw - 1.0, ch - 0.6, f"「{text}」", 30, bold=True, color=self.card_ink,
+                  anchor=MSO_ANCHOR.MIDDLE, align=PP_ALIGN.CENTER, font="heading")
         self.pill(s, cx - 0.2, cy - 0.3, "QUOTE", self.pal(0), size=12, rot=-5)
 
     CALLOUT = {"note": ("註", 1), "tip": ("TIP", 2), "important": ("重點", 0), "warning": ("注意", 3),
-               "caution": ("注意", 0), "summary": ("小結", 2)}
+               "caution": ("注意", 0), "summary": ("小結", 2), "problem": ("問題", 0), "result": ("結果", 2),
+               "success": ("結果", 2)}
 
-    def draw_callout(self, s, d, x, y, w, h):
+    def callout_pill(self, s, d, x, y, w, h):
         label, ci = self.CALLOUT.get(d["kind"], (d["kind"].upper(), 1))
-        fill = self.color_for(ci)
+        fill = self.tone_fill(d["kind"]) or self.color_for(ci)
         self.block(s, x, y, w, h, fill, thin=True)
         size = 15
         while size > 11 and self.lines_height([{"text": d["text"], "size": size}], w - 1.6) + 0.2 > h:
@@ -1016,8 +1027,9 @@ class Canvas:
         tx = x
         gf = s.shapes.add_table(nr, nc, E(tx), E(y), E(w), E(th))
         # shadow must sit behind the table
-        shadow = self.shape(s, MSO_SHAPE.RECTANGLE, tx + self.sw / 72, y + self.sw / 72, w, th, fill=self.black)
-        gf._element.addprevious(shadow._element)
+        if self.surface in ("brutal", "pixel"):
+            shadow = self.shape(s, MSO_SHAPE.RECTANGLE, tx + self.sw / 72, y + self.sw / 72, w, th, fill=self.black)
+            gf._element.addprevious(shadow._element)
         tbl = gf.table
         tblPr = tbl._tbl.tblPr
         tblPr.set("bandRow", "0")
@@ -1034,15 +1046,16 @@ class Canvas:
             for c, val in enumerate(row):
                 cell = tbl.cell(r, c)
                 cell.fill.solid()
-                cell.fill.fore_color.rgb = rgb(hc if r == 0 else (self.white if r % 2 else self.ground))
+                cf = hc if r == 0 else (self.white if r % 2 else self.ground)
+                cell.fill.fore_color.rgb = rgb(cf)
                 cell.margin_left = cell.margin_right = E(0.08)
                 cell.margin_top = cell.margin_bottom = E(0.03)
                 cell.vertical_anchor = MSO_ANCHOR.MIDDLE
                 tcPr = cell._tc.get_or_add_tcPr()
                 for k, tag in enumerate(("a:lnL", "a:lnR", "a:lnT", "a:lnB")):
-                    ln = etree.Element(qn(tag), w=str(int(self.tw * 12700)), cap="flat", cmpd="sng", algn="ctr")
+                    ln = etree.Element(qn(tag), w=str(int(self.table_rule * 12700)), cap="flat", cmpd="sng", algn="ctr")
                     sf = etree.SubElement(ln, qn("a:solidFill"))
-                    etree.SubElement(sf, qn("a:srgbClr"), val=self.black)
+                    etree.SubElement(sf, qn("a:srgbClr"), val=self.table_line)
                     tcPr.insert(k, ln)
                 tf = cell.text_frame
                 tf.word_wrap = True
@@ -1052,7 +1065,7 @@ class Canvas:
                     p.alignment = amap[aligns[c]]
                 elif r == 0 or re.fullmatch(r"[○●◎×✓✗✔✘△\-—vVxXoO]|[\d.,%+\-]+", v or "-"):
                     p.alignment = PP_ALIGN.CENTER
-                self.runs(p, val, size, bold=True if r == 0 else None, color=self.on(hc) if r == 0 else self.black)
+                self.runs(p, val, size, bold=True if r == 0 else None, color=self.on(cf))
         if rh * nr > h * 1.05:
             self.warnings.append(f"[{title}] table may overflow ({nr} rows)")
 
@@ -1142,10 +1155,10 @@ class Canvas:
                 self.text(s, cx + (0.4 if has_icon else 0), cy, cw - (0.4 if has_icon else 0), 0.55,
                           f"STEP {k + 1}", 15, font="label", bold=True, color=self.on(self.color_for(k)),
                           align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE, spc=1.5)
-                lines = [{"text": it["title"], "size": 20, "bold": True, "color": self.black, "space_after": 6}]
+                lines = [{"text": it["title"], "size": 20, "bold": True, "color": self.card_ink, "space_after": 6}]
                 if it["desc"]:
-                    lines.append({"text": it["desc"], "size": 15, "color": "3A3A3A"})
-                lines += [{"text": "■ " + c, "size": 14, "color": "3A3A3A"} for c in it["children"]]
+                    lines.append({"text": it["desc"], "size": 15, "color": self.card_muted})
+                lines += [{"text": "■ " + c, "size": 14, "color": self.card_muted} for c in it["children"]]
                 self.text(s, cx + 0.2, cy + 0.75, cw - 0.4, ch - 0.9, lines, 20)
             return
         step = min(1.35, h / n)
@@ -1162,10 +1175,10 @@ class Canvas:
                 self.text(s, lx - dsz / 2, cy - dsz / 2, dsz, dsz, str(k + 1), 18, font="display",
                           color=self.on(self.color_for(k)),
                           align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE)
-            lines = [{"text": it["title"], "size": 20, "bold": True, "color": self.black, "space_after": 2}]
+            lines = [{"text": it["title"], "size": 20, "bold": True, "color": self.title_ink, "space_after": 2}]
             if it["desc"]:
-                lines.append({"text": it["desc"], "size": 15, "color": "3A3A3A"})
-            lines += [{"text": "■ " + c, "size": 14, "color": "3A3A3A"} for c in it["children"]]
+                lines.append({"text": it["desc"], "size": 15, "color": self.muted})
+            lines += [{"text": "■ " + c, "size": 14, "color": self.muted} for c in it["children"]]
             self.text(s, lx + dsz / 2 + 0.3, cy - step / 2, w - dsz - 0.7, step, lines, 20,
                       anchor=MSO_ANCHOR.MIDDLE)
 
@@ -1227,17 +1240,18 @@ class Canvas:
         for k, it in enumerate(items):
             r, c = divmod(k, cols)
             cx, cy = x + c * (cw + gap), y0 + r * (ch + gap)
-            rot = -2 if k % 2 == 0 else 2
+            rot = (-2 if k % 2 == 0 else 2) if self.tilt else 0
             self.block(s, cx, cy, cw, ch, self.white, thin=True, rot=rot)
-            self.shape(s, MSO_SHAPE.OVAL, cx + cw - 0.42, cy + 0.2, 0.2, 0.2, fill=self.color_for(k), line=self.black,
-                       lw=self.tw)
+            if self.deco:
+                self.shape(s, MSO_SHAPE.OVAL, cx + cw - 0.42, cy + 0.2, 0.2, 0.2, fill=self.color_for(k),
+                           line=self.black, lw=self.tw)
             num = it["title"]
             size = 60 if len(num) <= 5 else 44 if len(num) <= 8 else 32
-            lines = [{"text": num, "size": size, "font": "display", "color": self.black, "space_after": 4}]
+            lines = [{"text": num, "size": size, "font": "display", "color": self.stat_ink(k), "space_after": 4}]
             if it["desc"]:
-                lines.append({"text": it["desc"], "size": 20, "bold": True, "color": self.black, "space_after": 2})
+                lines.append({"text": it["desc"], "size": 20, "bold": True, "color": self.card_ink, "space_after": 2})
             for extra in it["extra"] + it["children"]:
-                lines.append({"text": extra, "size": 14, "color": "3A3A3A"})
+                lines.append({"text": extra, "size": 14, "color": self.card_muted})
             tb = self.text(s, cx + 0.3, cy + 0.2, cw - 0.6, ch - 0.4, lines, size, anchor=MSO_ANCHOR.MIDDLE)
             tb.rotation = rot
 
@@ -1255,21 +1269,22 @@ class Canvas:
         ch = min(h, max(2.6, need))
         y += (h - ch) / 2
         h = ch
+        toned = any(a in d["args"] for a in ("tone", "pros-cons", "proscons"))
         for k, it in enumerate(items):
             cx = x + k * (cw + gap)
-            self.block(s, cx, y, cw, h, self.white)
-            self.shape(s, MSO_SHAPE.RECTANGLE, cx, y, cw, hh, fill=self.color_for(k * 2), line=self.black,
-                       lw=self.bw)
-            hc = self.color_for(k * 2)
+            hc = (self.tones["positive"] if k == 0 else self.tones["negative"]) if toned else self.color_for(k * 2)
+            self.block(s, cx, y, cw, h, mix(hc, self.ground, 0.85) if toned else self.white)
+            self.shape(s, MSO_SHAPE.RECTANGLE, cx, y, cw, hh, fill=hc,
+                       line=self.black if self.surface in ("brutal", "pixel") else None, lw=self.bw)
             head = [{"text": it["title"], "size": 24, "bold": True, "color": self.on(hc)}]
             if it["desc"]:
                 head.append({"text": it["desc"], "size": 13, "color": self.on(hc)})
             self.text(s, cx, y, cw, hh, head, 24, align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE)
-            lines = [{"text": "■ " + c, "size": 19, "color": self.ink, "space_after": 10}
+            lines = [{"text": "■ " + c, "size": 19, "color": self.card_ink, "space_after": 10}
                      for c in it["children"] + it["extra"]]
             if lines:
                 self.text(s, cx + 0.35, y + hh + 0.35, cw - 0.7, h - hh - 0.5, lines, 19)
-        if n == 2:
+        if n == 2 and not toned:
             self.star(s, x + cw + gap / 2 - 0.55, y + h / 2 - 0.55, 1.1, self.pal(3), text="VS", rot=10, size=16)
 
     def comp_chart(self, s, d, x, y, w, h):

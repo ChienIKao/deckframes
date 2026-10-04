@@ -1,0 +1,58 @@
+{
+  "name": "editorial",
+  "engine": "canvas",
+  "description": "雜誌編輯：米白紙、Bodoni 大標、細線分欄、朱紅點綴，像一本設計雜誌",
+  "colors": {
+    "white": "FFFFFF",
+    "ground": "FAF8F3",
+    "text": "1C1C1C",
+    "muted": "6E6A63",
+    "palette": [
+      "B5452B",
+      "1C1C1C",
+      "C9A227",
+      "3E5C76",
+      "8C8C8C"
+    ],
+    "black": "1C1C1C"
+  },
+  "fonts": {
+    "ea": "Microsoft JhengHei",
+    "code": "Consolas",
+    "display": "Bodoni MT",
+    "heading": "Georgia",
+    "body": "Georgia",
+    "label": "Franklin Gothic Medium"
+  },
+  "stroke": {
+    "border": 0.75,
+    "shadow": 0,
+    "thin": 0.75,
+    "thin_shadow": 0,
+    "image": 0.75
+  },
+  "decorations": true,
+  "tilt": false,
+  "style": {
+    "surface": "outline",
+    "radius": 0,
+    "cover": "poster",
+    "divider": "hero",
+    "nav": "underline",
+    "outline": "list",
+    "callout": "tint",
+    "closing": "poster",
+    "accent_line": "B5452B",
+    "decor": [
+      "rules"
+    ],
+    "stat_color": true
+  },
+  "sizes": {
+    "title": 28,
+    "subtitle": 16,
+    "body_max": 20,
+    "body_min": 12,
+    "split_below": 14
+  }
+}

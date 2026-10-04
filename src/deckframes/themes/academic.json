@@ -1,0 +1,43 @@
+{
+  "name": "academic",
+  "engine": "canvas",
+  "description": "學術簡報（lab meeting 風格）：白底、藍色膠囊導覽、金色細線、襯線標題、紅綠結論色帶",
+  "colors": {
+    "black": "1F2328",
+    "white": "FFFFFF",
+    "ground": "FFFFFF",
+    "text": "1F2328",
+    "title": "111111",
+    "muted": "8A8F98",
+    "palette": ["1F6FD1", "E9A23B", "5BA65B", "C9D9F2", "F2E2BF"],
+    "chapter_cycle": ["1F6FD1", "1F6FD1", "1F6FD1", "1F6FD1", "1F6FD1"],
+    "negative": "E05A55",
+    "positive": "7CC86A",
+    "highlight": "FFE58A"
+  },
+  "fonts": {
+    "display": "Times New Roman",
+    "heading": "Times New Roman",
+    "label": "Segoe UI Semibold",
+    "body": "Segoe UI",
+    "ea": "Microsoft JhengHei",
+    "ea_heading": "Microsoft JhengHei",
+    "code": "Consolas"
+  },
+  "stroke": {"border": 1.25, "shadow": 0, "thin": 1.0, "thin_shadow": 0, "image": 0.75},
+  "decorations": false,
+  "tilt": false,
+  "style": {
+    "surface": "outline",
+    "radius": 0.08,
+    "cover": "editorial",
+    "divider": "minimal",
+    "nav": "pills",
+    "outline": "list",
+    "callout": "banner",
+    "closing": "centered",
+    "accent_line": "E9A23B",
+    "decor": []
+  },
+  "sizes": {"title": 26, "subtitle": 14, "body_max": 20, "body_min": 12, "split_below": 14}
+}

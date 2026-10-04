@@ -1,0 +1,56 @@
+{
+  "name": "claymorphism",
+  "engine": "canvas",
+  "description": "黏土擬物：粉嫩糖果色、大圓角、柔和的外陰影＋內高光，像捏出來的立體塊",
+  "colors": {
+    "white": "FFFFFF",
+    "ground": "F1EEF8",
+    "text": "3B3355",
+    "muted": "8C84A6",
+    "palette": [
+      "FF9AA2",
+      "7FD8D4",
+      "A8E6A3",
+      "FFD58C",
+      "C6A8E8"
+    ],
+    "black": "3B3355"
+  },
+  "fonts": {
+    "ea": "Microsoft JhengHei",
+    "code": "Consolas",
+    "display": "Arial Rounded MT Bold",
+    "heading": "Arial Rounded MT Bold",
+    "body": "Segoe UI",
+    "label": "Arial Rounded MT Bold"
+  },
+  "stroke": {
+    "border": 0,
+    "shadow": 0,
+    "thin": 0,
+    "thin_shadow": 0,
+    "image": 0.75
+  },
+  "decorations": true,
+  "tilt": false,
+  "style": {
+    "surface": "clay",
+    "radius": 0.32,
+    "cover": "centered",
+    "divider": "centered",
+    "nav": "pills",
+    "outline": "grid",
+    "callout": "tint",
+    "closing": "centered",
+    "decor": [
+      "clay"
+    ]
+  },
+  "sizes": {
+    "title": 28,
+    "subtitle": 16,
+    "body_max": 20,
+    "body_min": 12,
+    "split_below": 14
+  }
+}

@@ -55,6 +55,11 @@ deckframes themes new my-lab --project        # 寫到目前資料夾的 themes/
 | `stroke` | `border`／`thin` 框線粗細、`shadow`／`thin_shadow` 硬陰影位移，單位 pt，0 = 不要 |
 | `decorations`、`tilt` | 星爆、斜紋、點陣裝飾／卡片傾斜 |
 | `sizes` | 字級（pt） |
+| `style.surface` | 卡片質感：`brutal` `pixel` `flat` `outline` `soft` `glass` `clay` `neu` `paper` `sketch` `neon` `luxury` `ornate` |
+| `style.cover`／`divider`／`nav`／`outline`／`callout`／`closing` | 各種頁面的版型變化（例如 `nav: pills`、`callout: banner`） |
+| `style.ground`、`texture`、`decor` | 漸層背景、底紋（格線、掃描線、紙紋…）、裝飾清單 |
+
+`style` 的完整選項見 [`skills/deckframes-design/SKILL.md`](skills/deckframes-design/SKILL.md)。想要新風格時，先從結構最接近的內建主題複製（`--from swiss`），只換顏色字型；真的需要不同結構才改 `style`。新的裝飾或質感寫在 `engines/style.py`（`deco_*`、`surface_block`），新的封面／導覽列版型寫在 `engines/chrome.py`。
 
 - 色碼不用加 `#`。
 - 色塊上的文字會自動在深色與白色間切換，不用擔心對比。
@@ -123,12 +128,13 @@ deckframes build talk.md --template my-school
 | 檔案 | 修改 |
 |---|---|
 | `src/deckframes/markdown.py` | 把名稱加進 `COMPONENT_TYPES`，讓 ```` ```pyramid ```` 被解析成元件（項目語法沿用 `make_item`） |
-| `src/deckframes/engines/canvas.py` | 新增 `comp_pyramid(self, s, d, x, y, w, h)`。只能用主題 token（`self.color_for(k)`、`self.on(fill)`、`self.block(...)`），不要寫死顏色；項目的 `icon:` 用 `self.glyph(...)` 畫 |
+| `src/deckframes/engines/diagrams.py` | 新增 `comp_pyramid(self, s, d, x, y, w, h)`（canvas 會依名稱呼叫 `comp_<type>`）。只能用主題 token（`self.color_for(k)`、`self.on(fill)`、`self.block(...)`），不要寫死顏色；項目的 `icon:` 用 `self.glyph(...)` 畫 |
 | `src/deckframes/layout.py` | 在 `degrade()` 決定模版模式下要退化成什麼（條列或表格） |
 | `skills/deckframes-infographics/SKILL.md` | 在對照表和語法表加一列：什麼內容適合用它 |
 | `skills/deckframes-core/SKILL.md` | 在元件清單加上名稱 |
-| `examples/demo.md` | 加一張示範投影片 |
-| `tests/test_smoke.py` | 確認 demo 建置後 `check` 為 0 issue |
+| `examples/components.md` | 加一張示範投影片 |
+| `src/deckframes/engines/canvas.py` | 在 `text_ratio` 決定旁邊文字欄的寬度比例 |
+| `tests/test_smoke.py` | `test_components_render_on_many_themes` 會在多個主題上建置並要求 `check` 為 0 issue |
 
 完成後用 `deckframes themes gallery` 確認各主題都正常，特別是深色與淺色的 palette。
 

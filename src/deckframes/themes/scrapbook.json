@@ -1,0 +1,58 @@
+{
+  "name": "scrapbook",
+  "engine": "canvas",
+  "description": "剪貼簿：牛皮紙底、拍立得、紙膠帶、手寫字，卡片微微歪斜",
+  "colors": {
+    "white": "FFFDF8",
+    "ground": "F3E9D8",
+    "text": "3B2F2F",
+    "muted": "8A7563",
+    "palette": [
+      "F4A6A6",
+      "8FC1E3",
+      "F7D774",
+      "A8D5A2",
+      "D8B4F8"
+    ],
+    "black": "3B2F2F"
+  },
+  "fonts": {
+    "ea": "Microsoft JhengHei",
+    "code": "Consolas",
+    "display": "Segoe Print",
+    "heading": "Segoe Print",
+    "body": "Segoe UI",
+    "label": "Ink Free"
+  },
+  "stroke": {
+    "border": 0,
+    "shadow": 0,
+    "thin": 0,
+    "thin_shadow": 0,
+    "image": 0.75
+  },
+  "decorations": true,
+  "tilt": true,
+  "style": {
+    "surface": "paper",
+    "radius": 0,
+    "cover": "split",
+    "divider": "hero",
+    "nav": "underline",
+    "outline": "grid",
+    "callout": "tint",
+    "closing": "centered",
+    "texture": "paper",
+    "decor": [
+      "tape",
+      "sparkles"
+    ]
+  },
+  "sizes": {
+    "title": 28,
+    "subtitle": 16,
+    "body_max": 20,
+    "body_min": 12,
+    "split_below": 14
+  }
+}

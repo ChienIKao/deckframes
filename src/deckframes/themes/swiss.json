@@ -1,0 +1,58 @@
+{
+  "name": "swiss",
+  "engine": "canvas",
+  "description": "瑞士國際主義：網格、無襯線粗體、紅黑白、大圓與粗線，嚴格靠左對齊",
+  "colors": {
+    "white": "F2F2F2",
+    "ground": "FFFFFF",
+    "text": "111111",
+    "muted": "777777",
+    "palette": [
+      "E30613",
+      "111111",
+      "0055A4",
+      "FFD100",
+      "777777"
+    ],
+    "black": "111111"
+  },
+  "fonts": {
+    "ea": "Microsoft JhengHei",
+    "code": "Consolas",
+    "display": "Arial Black",
+    "heading": "Arial",
+    "body": "Arial",
+    "label": "Arial"
+  },
+  "stroke": {
+    "border": 0,
+    "shadow": 0,
+    "thin": 0,
+    "thin_shadow": 0,
+    "image": 0.75
+  },
+  "decorations": true,
+  "tilt": false,
+  "style": {
+    "surface": "flat",
+    "radius": 0,
+    "cover": "poster",
+    "divider": "hero",
+    "nav": "underline",
+    "outline": "list",
+    "callout": "banner",
+    "closing": "poster",
+    "texture": "none",
+    "decor": [
+      "circle"
+    ],
+    "stat_color": true
+  },
+  "sizes": {
+    "title": 28,
+    "subtitle": 16,
+    "body_max": 20,
+    "body_min": 12,
+    "split_below": 14
+  }
+}

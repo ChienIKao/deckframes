@@ -1,0 +1,70 @@
+{
+  "name": "synthwave",
+  "engine": "canvas",
+  "description": "Synthwave：80 年代霓虹、紫紅漸層夜空、條紋夕陽與透視網格地平線",
+  "colors": {
+    "white": "26104F",
+    "ground": "1B0B3F",
+    "text": "F6E7FF",
+    "title": "FFFFFF",
+    "muted": "B48AD6",
+    "black": "FF3CAC",
+    "card_text": "F6E7FF",
+    "card_muted": "C9A8E8",
+    "palette": [
+      "FF3CAC",
+      "2DE2E6",
+      "F9C80E",
+      "FF6C11",
+      "9B5DE5"
+    ],
+    "highlight": "F9C80E"
+  },
+  "fonts": {
+    "ea": "Microsoft JhengHei",
+    "code": "Consolas",
+    "display": "Agency FB",
+    "heading": "Bahnschrift SemiBold",
+    "body": "Segoe UI",
+    "label": "Agency FB"
+  },
+  "stroke": {
+    "border": 0,
+    "shadow": 0,
+    "thin": 0,
+    "thin_shadow": 0,
+    "image": 0.75
+  },
+  "decorations": true,
+  "tilt": false,
+  "style": {
+    "surface": "neon",
+    "radius": 0.06,
+    "cover": "split",
+    "divider": "band",
+    "nav": "underline",
+    "outline": "list",
+    "callout": "tint",
+    "closing": "centered",
+    "ground": {
+      "type": "gradient",
+      "colors": [
+        "14072E",
+        "4A1258"
+      ],
+      "angle": 90
+    },
+    "decor": [
+      "sun",
+      "floor"
+    ],
+    "stat_color": true
+  },
+  "sizes": {
+    "title": 28,
+    "subtitle": 16,
+    "body_max": 20,
+    "body_min": 12,
+    "split_below": 14
+  }
+}

@@ -1,0 +1,63 @@
+{
+  "name": "cyberpunk",
+  "engine": "canvas",
+  "description": "賽博龐克：黑底、螢光黃與青、切角面板、警示斜紋、霓虹光暈",
+  "colors": {
+    "white": "12121F",
+    "ground": "0A0A12",
+    "text": "E6F7FF",
+    "title": "FCEE0A",
+    "muted": "7A8CA3",
+    "black": "FCEE0A",
+    "card_text": "E6F7FF",
+    "card_muted": "9FB3C8",
+    "palette": [
+      "FCEE0A",
+      "00F0FF",
+      "FF003C",
+      "B026FF",
+      "00FF9F"
+    ],
+    "highlight": "FCEE0A"
+  },
+  "fonts": {
+    "ea": "Microsoft JhengHei",
+    "code": "Consolas",
+    "display": "Agency FB",
+    "heading": "Bahnschrift SemiBold Condensed",
+    "body": "Bahnschrift",
+    "label": "OCR A Extended"
+  },
+  "stroke": {
+    "border": 0,
+    "shadow": 0,
+    "thin": 0,
+    "thin_shadow": 0,
+    "image": 0.75
+  },
+  "decorations": true,
+  "tilt": false,
+  "style": {
+    "surface": "neon",
+    "radius": 0,
+    "cover": "poster",
+    "divider": "band",
+    "nav": "breadcrumb",
+    "outline": "list",
+    "callout": "banner",
+    "closing": "poster",
+    "texture": "grid",
+    "decor": [
+      "hazard"
+    ],
+    "title_upper": true,
+    "stat_color": true
+  },
+  "sizes": {
+    "title": 28,
+    "subtitle": 16,
+    "body_max": 20,
+    "body_min": 12,
+    "split_below": 14
+  }
+}

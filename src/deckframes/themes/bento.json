@@ -1,0 +1,57 @@
+{
+  "name": "bento",
+  "engine": "canvas",
+  "description": "Bento Grid：大小不一的圓角磚格拼出版面，乾淨的產品發表會風格",
+  "colors": {
+    "white": "FFFFFF",
+    "ground": "F5F5F7",
+    "text": "1D1D1F",
+    "muted": "86868B",
+    "palette": [
+      "0071E3",
+      "FF9F0A",
+      "30D158",
+      "BF5AF2",
+      "FF375F"
+    ],
+    "black": "1D1D1F"
+  },
+  "fonts": {
+    "ea": "Microsoft JhengHei",
+    "code": "Consolas",
+    "display": "Segoe UI Black",
+    "heading": "Segoe UI Semibold",
+    "body": "Segoe UI",
+    "label": "Segoe UI Semibold"
+  },
+  "stroke": {
+    "border": 0,
+    "shadow": 0,
+    "thin": 0,
+    "thin_shadow": 0,
+    "image": 0.75
+  },
+  "decorations": true,
+  "tilt": false,
+  "style": {
+    "surface": "soft",
+    "radius": 0.24,
+    "cover": "bento",
+    "divider": "centered",
+    "nav": "breadcrumb",
+    "outline": "grid",
+    "callout": "tint",
+    "closing": "centered",
+    "decor": [
+      "tiles"
+    ],
+    "stat_color": true
+  },
+  "sizes": {
+    "title": 28,
+    "subtitle": 16,
+    "body_max": 20,
+    "body_min": 12,
+    "split_below": 14
+  }
+}

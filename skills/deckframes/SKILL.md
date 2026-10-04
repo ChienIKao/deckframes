@@ -96,6 +96,8 @@ Domain skills, loaded by the workflows as needed:
 - **Don't reword in verbatim mode.** Restructuring, splitting slides, converting to infographic
   blocks and adding English chapter subtitles are fine; deleting or rewriting sentences needs a yes.
 - **One visual idea per slide.** ≤ 5 bullets beside a visual; move detail to `<!-- notes -->`.
+- **Vary the presentation.** Plan blocks across the whole deck — 16 infographic blocks exist; don't
+  ride one or two. Resolve every `monotony:` warning from `deckframes build`.
 - **Record progress** with `deckframes status --set <stage>` so another agent can resume.
 
 ## Done means

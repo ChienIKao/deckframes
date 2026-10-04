@@ -172,3 +172,45 @@ def test_text_and_image_split_follows_aspect(tmp_path):
     assert wide["visual"][2] > tall["visual"][2]       # landscape image gets the wider column
     left = _image_layout(tmp_path, (1754, 1241), '- 一點\n\n![](img.png "left")')
     assert left["visual"][0] < left["text"][0]         # "left" puts the image first
+
+
+COMPONENTS = ROOT / "examples" / "components.md"
+
+
+def test_new_components_parse():
+    doc = parse_markdown(COMPONENTS.read_text(encoding="utf-8"))
+    from deckframes.lint import content_slides, slide_pattern
+
+    used = {slide_pattern(sl.blocks) for sl in content_slides(doc)}
+    assert {"lanes", "diagram", "mapping", "stack", "matrix", "funnel", "pyramid", "cycle", "progress"} <= used
+
+
+def test_components_render_on_many_themes(tmp_path):
+    for theme in ["academic", "claymorphism", "cybercore", "glassmorphism", "swiss", "victorian", "pixel-art"]:
+        out = tmp_path / f"{theme}.pptx"
+        try:
+            main(["build", str(COMPONENTS), "--theme", theme, "-o", str(out)])
+        except SystemExit as e:
+            assert not e.code
+        report = check(out)
+        assert report["ok"], (theme, report["issues"][:3])
+
+
+def test_builtin_themes_have_distinct_styles():
+    from deckframes.themes import list_themes
+
+    themes = [json.loads(Path(t["path"]).read_text(encoding="utf-8")) for t in list_themes()
+              if t["engine"] == "canvas" and t["source"] == "builtin"]
+    assert len(themes) >= 20
+    sigs = {(t["style"]["surface"], t["style"].get("cover"), t["style"].get("nav")) for t in themes if "style" in t}
+    assert len(sigs) >= 12
+
+
+def test_monotony_warning():
+    from deckframes.lint import variety
+
+    slides = "\n".join(f"### Slide {i}\n\n- a\n- b\n" for i in range(6))
+    doc = parse_markdown(f"# Deck\n\n## Part\n\n{slides}")
+    warns = variety(doc)
+    assert any("consecutive" in w for w in warns)
+    assert any("6/6" in w for w in warns)

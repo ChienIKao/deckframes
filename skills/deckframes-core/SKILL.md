@@ -37,6 +37,8 @@ theme: blockframe            # or template: <name|path>
 eyebrow: Thesis Defense      # pill above the cover title
 subtitle: English subtitle
 author: Presenter: Name
+authors: Ann Lee; Bo Chen     # cover author list (shown by covers that have an author block, e.g. academic)
+affiliations: Dept. of CS; Lab X
 date: 2026 / 07 / 08
 badge: 2026                  # text in the cover star burst (decorative themes)
 cover_image: assets/cover.png
@@ -65,12 +67,12 @@ slide_level: 4
 | `**bold**`, `*italic*`, `` `code` ``, `[text](url)` | inline formatting |
 | `==key phrase==` | highlighter mark + bold |
 | `> quote` | quote; a slide holding only one quote becomes a quote card |
-| `> [!NOTE] text` | bottom callout. Kinds: NOTE, TIP, IMPORTANT, WARNING, CAUTION, SUMMARY |
+| `> [!NOTE] text` | bottom callout. Kinds: NOTE, TIP, IMPORTANT, WARNING, CAUTION, SUMMARY, PROBLEM (negative tone), RESULT / SUCCESS (positive tone) |
 | paragraph starting `Source:` / `資料來源：` / `來源：` / `Ref:` | footer citation |
 | `![caption](assets/x.png)` on its own line | image with a thin outline + caption tag below (PNG, JPG or SVG — SVG stays vector); layout hints in the title: `![caption](x.png "left wide")` |
 | Markdown table | native table; ○ × ✓ and numbers auto-centred |
 | ```` ```lang ```` code fence | dark code card |
-| ```` ```cards ```` `steps` `timeline` `flow` `stats` `compare` `chart` | infographics → `deckframes-infographics` |
+| ```` ```cards ```` `steps` `timeline` `flow` `stats` `compare` `chart` `diagram` `lanes` `mapping` `stack` `matrix` `pyramid` `funnel` `cycle` `progress` | infographics → `deckframes-infographics` (vary them across the deck) |
 | `<!-- text -->` | speaker notes (multi-line OK) |
 
 ## No emoji — use icons

@@ -1,0 +1,57 @@
+{
+  "name": "bohemian",
+  "engine": "canvas",
+  "description": "波希米亞：大地色、彩虹拱門、太陽圓、紙質紋理、圓潤字型",
+  "colors": {
+    "white": "FFF9F0",
+    "ground": "F5ECDF",
+    "text": "4A3226",
+    "muted": "9C7F6B",
+    "palette": [
+      "C8553D",
+      "E8A33D",
+      "7A8B5C",
+      "D98E73",
+      "5B6C8F"
+    ],
+    "black": "4A3226"
+  },
+  "fonts": {
+    "ea": "Microsoft JhengHei",
+    "code": "Consolas",
+    "display": "Cooper Black",
+    "heading": "Cooper Black",
+    "body": "Candara",
+    "label": "Candara"
+  },
+  "stroke": {
+    "border": 0,
+    "shadow": 0,
+    "thin": 0,
+    "thin_shadow": 0,
+    "image": 0.75
+  },
+  "decorations": true,
+  "tilt": false,
+  "style": {
+    "surface": "soft",
+    "radius": 0.18,
+    "cover": "split",
+    "divider": "panel",
+    "nav": "underline",
+    "outline": "grid",
+    "callout": "tint",
+    "closing": "centered",
+    "texture": "paper",
+    "decor": [
+      "arches"
+    ]
+  },
+  "sizes": {
+    "title": 28,
+    "subtitle": 16,
+    "body_max": 20,
+    "body_min": 12,
+    "split_below": 14
+  }
+}

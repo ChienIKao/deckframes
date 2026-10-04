@@ -1,6 +1,6 @@
 """Theme gallery: render the same sample deck in every theme and tile the results.
 
-One row per theme: label column + cover, chapter divider, content slide (nav bar + cards),
+One row per theme: label column + cover, chapter divider, content slide (nav bar + cards), diagram,
 stats slide. `--presets` also includes every HyperFrames design preset found on the machine
 (imported on the fly, nothing is saved).
 """
@@ -47,13 +47,15 @@ closing: Q&A
 
 ### 方法
 
-#### 流程
+#### 架構
 
-```flow
-- 輸入
-- 處理
-- 輸出
+```diagram focus=模型
+- 資料 -> 模型
+- 條件 -> 模型
+- 模型 -> 輸出
 ```
+
+> [!RESULT] 範例結論
 
 ## 結果 | Results
 
@@ -68,8 +70,8 @@ closing: Q&A
 ```
 """
 
-CANVAS_PICK = [1, 3, 4, 7]    # cover, chapter divider, content + nav, stats
-TEMPLATE_PICK = [1, 3, 4, 6]
+CANVAS_PICK = [1, 3, 4, 5, 7]    # cover, chapter divider, content + nav, diagram + callout, stats
+TEMPLATE_PICK = [1, 3, 4, 5, 6]
 
 FONT_CANDIDATES = ["msjh.ttc", "msjhbd.ttc", "C:/Windows/Fonts/msjh.ttc", "NotoSansCJK-Regular.ttc",
                    "/System/Library/Fonts/PingFang.ttc", "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",

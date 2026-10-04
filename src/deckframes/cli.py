@@ -104,7 +104,9 @@ def cmd_build(a):
     out.parent.mkdir(parents=True, exist_ok=True)
     prs.save(out)
     print(f"✔ {out}  ({len(prs.slides)} slides, {engine})")
-    for w in eng.warnings:
+    from .lint import variety
+
+    for w in [*eng.warnings, *variety(doc)]:
         print("  ⚠", w)
     if root:
         proj.mark(root, "built")

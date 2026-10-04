@@ -1,0 +1,57 @@
+{
+  "name": "pixel-art",
+  "engine": "canvas",
+  "description": "像素風：8-bit 調色盤、方塊硬陰影、格線底、像素愛心",
+  "colors": {
+    "white": "FFFFFF",
+    "ground": "F2F0E6",
+    "text": "1A1C2C",
+    "muted": "5F574F",
+    "palette": [
+      "FF004D",
+      "29ADFF",
+      "00E436",
+      "FFEC27",
+      "FFA300"
+    ],
+    "black": "1A1C2C"
+  },
+  "fonts": {
+    "ea": "Microsoft JhengHei",
+    "code": "Consolas",
+    "display": "OCR A Extended",
+    "heading": "Lucida Console",
+    "body": "Consolas",
+    "label": "OCR A Extended"
+  },
+  "stroke": {
+    "border": 2.5,
+    "shadow": 6,
+    "thin": 2,
+    "thin_shadow": 4,
+    "image": 1.5
+  },
+  "decorations": true,
+  "tilt": false,
+  "style": {
+    "surface": "pixel",
+    "radius": 0,
+    "cover": "split",
+    "divider": "panel",
+    "nav": "band",
+    "outline": "line",
+    "callout": "pill",
+    "closing": "frame",
+    "texture": "grid",
+    "decor": [
+      "pixels"
+    ]
+  },
+  "sizes": {
+    "title": 28,
+    "subtitle": 16,
+    "body_max": 20,
+    "body_min": 12,
+    "split_below": 14
+  }
+}

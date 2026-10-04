@@ -1,0 +1,64 @@
+{
+  "name": "cybercore",
+  "engine": "canvas",
+  "description": "Cybercore：黑底終端機綠、掃描線、像素雜訊、OCR 字型，像駭客螢幕",
+  "colors": {
+    "white": "0C1A10",
+    "ground": "07100A",
+    "text": "B9FFB0",
+    "title": "D9FFD4",
+    "muted": "4F9A57",
+    "black": "39FF14",
+    "on_dark": "D9FFD4",
+    "card_text": "D9FFD4",
+    "card_muted": "7FCF86",
+    "palette": [
+      "39FF14",
+      "00E5FF",
+      "FF2E97",
+      "FFE600",
+      "7CFFCB"
+    ],
+    "highlight": "39FF14"
+  },
+  "fonts": {
+    "ea": "Microsoft JhengHei",
+    "code": "Consolas",
+    "display": "OCR A Extended",
+    "heading": "OCR A Extended",
+    "body": "Consolas",
+    "label": "OCR A Extended"
+  },
+  "stroke": {
+    "border": 0,
+    "shadow": 0,
+    "thin": 0,
+    "thin_shadow": 0,
+    "image": 0.75
+  },
+  "decorations": true,
+  "tilt": false,
+  "style": {
+    "surface": "neon",
+    "radius": 0,
+    "cover": "split",
+    "divider": "band",
+    "nav": "breadcrumb",
+    "outline": "list",
+    "callout": "tint",
+    "closing": "centered",
+    "texture": "scanlines",
+    "decor": [
+      "scan",
+      "pixels"
+    ],
+    "stat_color": true
+  },
+  "sizes": {
+    "title": 28,
+    "subtitle": 16,
+    "body_max": 20,
+    "body_min": 12,
+    "split_below": 14
+  }
+}

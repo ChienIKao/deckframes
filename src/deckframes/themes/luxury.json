@@ -1,0 +1,61 @@
+{
+  "name": "luxury",
+  "engine": "canvas",
+  "description": "奢華字體：黑金配色、Bodoni 標題、雙細線框、大量留白",
+  "colors": {
+    "white": "17171A",
+    "ground": "0E0E10",
+    "text": "EDE4D3",
+    "title": "F5EEDF",
+    "muted": "A89F91",
+    "black": "C9A45C",
+    "card_text": "EDE4D3",
+    "card_muted": "A89F91",
+    "palette": [
+      "C9A45C",
+      "E8D8B0",
+      "8C7B5C",
+      "3B3B3F",
+      "B08D57"
+    ],
+    "highlight": "C9A45C"
+  },
+  "fonts": {
+    "ea": "Microsoft JhengHei",
+    "code": "Consolas",
+    "display": "Bodoni MT",
+    "heading": "Bodoni MT",
+    "body": "Garamond",
+    "label": "Copperplate Gothic Light"
+  },
+  "stroke": {
+    "border": 0.75,
+    "shadow": 0,
+    "thin": 0.75,
+    "thin_shadow": 0,
+    "image": 0.75
+  },
+  "decorations": true,
+  "tilt": false,
+  "style": {
+    "surface": "luxury",
+    "radius": 0,
+    "cover": "frame",
+    "divider": "centered",
+    "nav": "underline",
+    "outline": "list",
+    "callout": "tint",
+    "closing": "centered",
+    "accent_line": "C9A45C",
+    "decor": [
+      "rules"
+    ]
+  },
+  "sizes": {
+    "title": 28,
+    "subtitle": 16,
+    "body_max": 20,
+    "body_min": 12,
+    "split_below": 14
+  }
+}

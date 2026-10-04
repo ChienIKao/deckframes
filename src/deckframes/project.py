@@ -57,6 +57,8 @@ This folder is a deckframes deck (Markdown → editable PowerPoint). Any coding 
 5. Never invent numbers; in `verbatim` mode never reword the user's text.
 6. No emoji anywhere (the build rejects them). For pictograms use `icon: <font-awesome-name>` or an SVG
    (`deckframes icons search <word>`).
+7. Vary the infographic blocks across the deck (diagram, lanes, mapping, stack, matrix, cycle, …);
+   resolve every `monotony:` build warning.
 
 If the deckframes skills are installed, load `deckframes` for the full workflow.
 Install the CLI: `uv tool install git+https://github.com/ChienIKao/deckframes`.

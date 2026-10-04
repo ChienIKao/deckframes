@@ -1,0 +1,64 @@
+{
+  "name": "surrealism",
+  "engine": "canvas",
+  "description": "超現實：夕陽漸層天空、漂浮的球體與拱門、凝視的眼睛，夢境般的構圖",
+  "colors": {
+    "white": "FFFFFF",
+    "ground": "F7DCCD",
+    "text": "2B2350",
+    "muted": "7A6F99",
+    "palette": [
+      "F28C6A",
+      "7E9CF5",
+      "F5C76A",
+      "9ED9C5",
+      "D98AC8"
+    ],
+    "black": "2B2350"
+  },
+  "fonts": {
+    "ea": "Microsoft JhengHei",
+    "code": "Consolas",
+    "display": "Bodoni MT Black",
+    "heading": "Bodoni MT",
+    "body": "Segoe UI",
+    "label": "Segoe UI Semibold"
+  },
+  "stroke": {
+    "border": 0,
+    "shadow": 0,
+    "thin": 0,
+    "thin_shadow": 0,
+    "image": 0.75
+  },
+  "decorations": true,
+  "tilt": false,
+  "style": {
+    "surface": "soft",
+    "radius": 0.28,
+    "cover": "split",
+    "divider": "centered",
+    "nav": "breadcrumb",
+    "outline": "grid",
+    "callout": "tint",
+    "closing": "centered",
+    "ground": {
+      "type": "gradient",
+      "colors": [
+        "F7DCCD",
+        "AFC8EC"
+      ],
+      "angle": 90
+    },
+    "decor": [
+      "surreal"
+    ]
+  },
+  "sizes": {
+    "title": 28,
+    "subtitle": 16,
+    "body_max": 20,
+    "body_min": 12,
+    "split_below": 14
+  }
+}

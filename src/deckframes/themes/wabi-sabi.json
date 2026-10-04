@@ -1,0 +1,57 @@
+{
+  "name": "wabi-sabi",
+  "engine": "canvas",
+  "description": "侘寂：灰米土色、不完美的墨圈、石頭、紙紋，安靜留白",
+  "colors": {
+    "white": "F7F3EC",
+    "ground": "EFEAE2",
+    "text": "3A3530",
+    "muted": "8C8478",
+    "palette": [
+      "8C6E54",
+      "A8B09A",
+      "C9B79C",
+      "5E5A55",
+      "B5835A"
+    ],
+    "black": "3A3530"
+  },
+  "fonts": {
+    "ea": "Microsoft JhengHei",
+    "code": "Consolas",
+    "display": "Perpetua Titling MT",
+    "heading": "Perpetua",
+    "body": "Segoe UI",
+    "label": "Perpetua"
+  },
+  "stroke": {
+    "border": 0,
+    "shadow": 0,
+    "thin": 0,
+    "thin_shadow": 0,
+    "image": 0.75
+  },
+  "decorations": true,
+  "tilt": false,
+  "style": {
+    "surface": "soft",
+    "radius": 0.12,
+    "cover": "minimal",
+    "divider": "minimal",
+    "nav": "breadcrumb",
+    "outline": "list",
+    "callout": "tint",
+    "closing": "centered",
+    "texture": "noise",
+    "decor": [
+      "enso"
+    ]
+  },
+  "sizes": {
+    "title": 28,
+    "subtitle": 16,
+    "body_max": 20,
+    "body_min": 12,
+    "split_below": 14
+  }
+}

@@ -1,0 +1,65 @@
+{
+  "name": "ethereal",
+  "engine": "canvas",
+  "description": "空靈：粉藍漸層、柔焦光球、閃光、細字，輕盈夢幻",
+  "colors": {
+    "white": "FFFFFF",
+    "ground": "FBEFF6",
+    "text": "4A3F6B",
+    "muted": "9A8FB5",
+    "palette": [
+      "F9A8D4",
+      "A5B4FC",
+      "99F6E4",
+      "FDE68A",
+      "C4B5FD"
+    ],
+    "black": "4A3F6B"
+  },
+  "fonts": {
+    "ea": "Microsoft JhengHei",
+    "code": "Consolas",
+    "display": "Gabriola",
+    "heading": "Segoe UI Light",
+    "body": "Segoe UI",
+    "label": "Segoe UI"
+  },
+  "stroke": {
+    "border": 0,
+    "shadow": 0,
+    "thin": 0,
+    "thin_shadow": 0,
+    "image": 0.75
+  },
+  "decorations": true,
+  "tilt": false,
+  "style": {
+    "surface": "glass",
+    "radius": 0.3,
+    "cover": "centered",
+    "divider": "centered",
+    "nav": "breadcrumb",
+    "outline": "list",
+    "callout": "tint",
+    "closing": "centered",
+    "ground": {
+      "type": "gradient",
+      "colors": [
+        "FCE7F3",
+        "DFF1FD"
+      ],
+      "angle": 135
+    },
+    "decor": [
+      "orbs",
+      "sparkles"
+    ]
+  },
+  "sizes": {
+    "title": 30,
+    "subtitle": 16,
+    "body_max": 20,
+    "body_min": 12,
+    "split_below": 14
+  }
+}

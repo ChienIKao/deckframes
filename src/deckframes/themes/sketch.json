@@ -1,0 +1,57 @@
+{
+  "name": "sketch",
+  "engine": "canvas",
+  "description": "概念手繪：方格紙、手寫標題、虛線框、麥克筆色塊與塗鴉箭頭",
+  "colors": {
+    "white": "FFFFFF",
+    "ground": "FBFAF6",
+    "text": "2E2E2E",
+    "muted": "7D7D7D",
+    "palette": [
+      "F2C94C",
+      "8EC5FF",
+      "F28B82",
+      "A0D995",
+      "D7B8F3"
+    ],
+    "black": "2E2E2E"
+  },
+  "fonts": {
+    "ea": "Microsoft JhengHei",
+    "code": "Consolas",
+    "display": "Segoe Print",
+    "heading": "Segoe Print",
+    "body": "Segoe UI",
+    "label": "Ink Free"
+  },
+  "stroke": {
+    "border": 0,
+    "shadow": 0,
+    "thin": 0,
+    "thin_shadow": 0,
+    "image": 0.75
+  },
+  "decorations": true,
+  "tilt": true,
+  "style": {
+    "surface": "sketch",
+    "radius": 0.04,
+    "cover": "split",
+    "divider": "minimal",
+    "nav": "underline",
+    "outline": "list",
+    "callout": "tint",
+    "closing": "centered",
+    "texture": "grid",
+    "decor": [
+      "doodle"
+    ]
+  },
+  "sizes": {
+    "title": 28,
+    "subtitle": 16,
+    "body_max": 20,
+    "body_min": 12,
+    "split_below": 14
+  }
+}

@@ -60,8 +60,9 @@ HR = re.compile(r"^\s*(-{3,}|\*{3,}|_{3,})\s*$")
 TABLE_SEP = re.compile(r"^\s*\|?\s*:?-{2,}:?\s*(\|\s*:?-{2,}:?\s*)*\|?\s*$")
 ALERT = re.compile(r"^\[!(\w+)\]\s*(.*)$")
 SOURCE = re.compile(r"^(資料來源|来源|來源|參考資料|Sources?|Ref(?:erences?)?)\s*[:：]", re.I)
-COMPONENT_TYPES = {"cards", "steps", "timeline", "flow", "stats", "compare", "chart"}
-ATTR = re.compile(r"^(tag|img|icon|color)\s*[:：]\s*(.+)$", re.I)
+COMPONENT_TYPES = {"cards", "steps", "timeline", "flow", "stats", "compare", "chart", "diagram", "lanes",
+                   "mapping", "stack", "matrix", "pyramid", "funnel", "cycle", "progress"}
+ATTR = re.compile(r"^(tag|img|icon|color|lane|note|tone)\s*[:：]\s*(.+)$", re.I)
 
 
 def is_cjk(ch: str) -> bool:
@@ -174,7 +175,7 @@ def parse_component(kind: str, info: str, body: str):
             if "->" in ln or "→" in ln:
                 items += [make_item(x) for x in re.split(r"\s*(?:->|→)\s*", ln) if x.strip()]
     rows = [split_row(l) for l in free if l.startswith("|") and not TABLE_SEP.match(l)]
-    return {"type": kind, "args": info.split(), "items": items, "lines": free, "rows": rows}
+    return {"type": kind, "args": info.split(), "info": info, "items": items, "lines": free, "rows": rows}
 
 
 def parse_markdown(text: str) -> Doc:

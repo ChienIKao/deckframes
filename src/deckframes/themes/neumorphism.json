@@ -1,0 +1,57 @@
+{
+  "name": "neumorphism",
+  "engine": "canvas",
+  "description": "新擬物：同色系浮雕，亮暗雙陰影讓卡片從背景凸起，低對比柔和",
+  "colors": {
+    "white": "E4E8EF",
+    "ground": "E4E8EF",
+    "text": "3D4451",
+    "muted": "8A93A6",
+    "palette": [
+      "6C8CF5",
+      "F59E8C",
+      "5CC8A8",
+      "F2C46D",
+      "B18CF5"
+    ],
+    "black": "3D4451"
+  },
+  "fonts": {
+    "ea": "Microsoft JhengHei",
+    "code": "Consolas",
+    "display": "Segoe UI Semibold",
+    "heading": "Segoe UI Semibold",
+    "body": "Segoe UI",
+    "label": "Segoe UI"
+  },
+  "stroke": {
+    "border": 0,
+    "shadow": 0,
+    "thin": 0,
+    "thin_shadow": 0,
+    "image": 0.75
+  },
+  "decorations": true,
+  "tilt": false,
+  "style": {
+    "surface": "neu",
+    "radius": 0.3,
+    "cover": "centered",
+    "divider": "centered",
+    "nav": "underline",
+    "outline": "grid",
+    "callout": "tint",
+    "closing": "centered",
+    "decor": [
+      "neu"
+    ],
+    "stat_color": true
+  },
+  "sizes": {
+    "title": 28,
+    "subtitle": 16,
+    "body_max": 20,
+    "body_min": 12,
+    "split_below": 14
+  }
+}

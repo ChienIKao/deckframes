@@ -1,0 +1,54 @@
+{
+  "name": "minimalism",
+  "engine": "canvas",
+  "description": "極簡：大量留白、單一藍色重點、細字重，沒有裝飾",
+  "colors": {
+    "white": "F4F5F7",
+    "ground": "FFFFFF",
+    "text": "222222",
+    "muted": "9A9A9A",
+    "palette": [
+      "2563EB",
+      "222222",
+      "9A9A9A",
+      "D9D9D9",
+      "4A4A4A"
+    ],
+    "black": "222222"
+  },
+  "fonts": {
+    "ea": "Microsoft JhengHei",
+    "code": "Consolas",
+    "display": "Segoe UI Light",
+    "heading": "Segoe UI Semibold",
+    "body": "Segoe UI",
+    "label": "Segoe UI"
+  },
+  "stroke": {
+    "border": 0,
+    "shadow": 0,
+    "thin": 0,
+    "thin_shadow": 0,
+    "image": 0.75
+  },
+  "decorations": false,
+  "tilt": false,
+  "style": {
+    "surface": "flat",
+    "radius": 0.06,
+    "cover": "minimal",
+    "divider": "minimal",
+    "nav": "breadcrumb",
+    "outline": "list",
+    "callout": "tint",
+    "closing": "centered",
+    "decor": []
+  },
+  "sizes": {
+    "title": 28,
+    "subtitle": 16,
+    "body_max": 20,
+    "body_min": 12,
+    "split_below": 14
+  }
+}

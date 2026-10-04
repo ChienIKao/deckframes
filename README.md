@@ -15,9 +15,13 @@
 </details>
 
 <details>
-<summary>主題一覽（14 個）</summary>
+<summary>主題一覽（24 個內建）</summary>
 
-內建 `blockframe`、`default`，以及 12 套可一行匯入的 HyperFrames 設計。用 `deckframes themes gallery --presets` 產生：
+24 個內建主題不只換顏色，連卡片質感、封面／章節頁／導覽列／提示框的版型、背景與裝飾都不同：
+`academic`（學術 lab meeting）、`minimalism`、`swiss`、`editorial`、`bento`、`luxury`、`claymorphism`、
+`neumorphism`、`glassmorphism`、`y2k`、`ethereal`、`synthwave`、`cyberpunk`、`cybercore`、`pixel-art`、
+`maximalism`、`scrapbook`、`sketch`、`surrealism`、`bohemian`、`victorian`、`wabi-sabi`、`blockframe`、`default`。
+另外還能一行匯入 HyperFrames 設計。用 `deckframes themes gallery` 產生：
 
 ![主題一覽](docs/themes-gallery.jpg)
 
@@ -184,6 +188,18 @@ date: 2026 / 07 / 08
 | `stats` | 關鍵數字 | `- 30% \| 標籤 \| 補充` |
 | `compare` | 方案對比 | `- 方案 \| 副標`，縮排子項目為條列 |
 | `chart` | 實驗數據 | 在 ```` ```chart column 標題 ```` 區塊內放 Markdown 表格 |
+| `diagram` | 系統／模型架構 | `- A -> B` 連線；`group 名稱: a, b` 虛線群組；`focus=節點` 逐頁聚焦講解 |
+| `lanes` | 相關研究演進（多條路線） | ```` ```lanes 2017-2026 ````，`- 2021 \| 方法名 \| lane: 路線 \| note: 會議` |
+| `mapping` | 問題 ↔ 解法對照 | `- 問題 -> 解法` |
+| `stack` | 網路層級、技術堆疊 | `- 層 \| 說明` |
+| `matrix` | 2×2 象限 | ```` ```matrix x=成本 y=效果 ````，四項依序為左上、右上、左下、右下 |
+| `pyramid`／`funnel` | 層級／逐步篩選 | `- 層 \| 說明` |
+| `cycle` | 迭代循環 | ```` ```cycle 中心文字 ````，`- 階段 \| 說明` |
+| `progress` | 進度 | `- 項目 \| 80%` |
+
+另外 `compare tone` 會用綠／紅色欄呈現「優點 vs 限制」，`> [!PROBLEM]`／`> [!RESULT]` 是紅／綠結論色帶。所有元件的示範：[`examples/components.md`](examples/components.md)。
+
+`deckframes build` 會檢查版面是否單調：同一種呈現方式連續超過 3 頁，或佔內容頁 45% 以上，就會印出 `monotony:` 警告，提醒 AI 換別的元件。
 
 內容型態與元件的對照規則：[`skills/deckframes-infographics/SKILL.md`](skills/deckframes-infographics/SKILL.md)
 
@@ -315,7 +331,7 @@ pytest -q
 
 ## English
 
-**deckframes** turns a Markdown script into an editable PowerPoint deck: cover, outline, chapter dividers with a section list, content slides with a chapter/section nav bar, and native infographics (cards, flow, steps, timeline, stats, compare, charts, tables, callouts). It ships as a Python CLI plus a set of [Agent Skills](https://agentskills.io) that any skills-capable coding agent (Claude Code, Codex, Cursor, …) can follow.
+**deckframes** turns a Markdown script into an editable PowerPoint deck: cover, outline, chapter dividers with a section list, content slides with a chapter/section nav bar, and native infographics (cards, flow, steps, timeline, stats, compare, charts, architecture diagrams, swim-lane timelines, problem→solution mappings, stacks, 2×2 matrices, pyramids, funnels, cycles, progress bars, tables, callouts) in 24 structurally different built-in themes. The build warns when a deck leans on one presentation pattern. It ships as a Python CLI plus a set of [Agent Skills](https://agentskills.io) that any skills-capable coding agent (Claude Code, Codex, Cursor, …) can follow.
 
 ```bash
 uv tool install git+https://github.com/ChienIKao/deckframes      # CLI

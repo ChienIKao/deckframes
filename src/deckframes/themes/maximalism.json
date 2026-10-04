@@ -1,0 +1,61 @@
+{
+  "name": "maximalism",
+  "engine": "canvas",
+  "description": "極繁：撞色、星爆、斜紋、點陣、光球全部疊上，越滿越好",
+  "colors": {
+    "white": "FFFFFF",
+    "ground": "FFF4E0",
+    "text": "1A0933",
+    "muted": "6B5B7B",
+    "palette": [
+      "FF3D7F",
+      "3DDC97",
+      "FFB400",
+      "3D5AFE",
+      "9D4EDD"
+    ],
+    "black": "1A0933"
+  },
+  "fonts": {
+    "ea": "Microsoft JhengHei",
+    "code": "Consolas",
+    "display": "Showcard Gothic",
+    "heading": "Cooper Black",
+    "body": "Segoe UI",
+    "label": "Bahnschrift SemiBold"
+  },
+  "stroke": {
+    "border": 2.5,
+    "shadow": 6,
+    "thin": 1.75,
+    "thin_shadow": 3.5,
+    "image": 1.5
+  },
+  "decorations": true,
+  "tilt": true,
+  "style": {
+    "surface": "brutal",
+    "radius": 0.12,
+    "cover": "split",
+    "divider": "band",
+    "nav": "band",
+    "outline": "grid",
+    "callout": "pill",
+    "closing": "poster",
+    "texture": "dots",
+    "decor": [
+      "blocks",
+      "stars",
+      "stripes",
+      "sparkles",
+      "orbs"
+    ]
+  },
+  "sizes": {
+    "title": 28,
+    "subtitle": 16,
+    "body_max": 20,
+    "body_min": 12,
+    "split_below": 14
+  }
+}

@@ -1,0 +1,65 @@
+{
+  "name": "y2k",
+  "engine": "canvas",
+  "description": "Y2K：千禧年粉紫漸層、透明泡泡、閃光星、圓潤字型與玻璃卡片",
+  "colors": {
+    "white": "FFFFFF",
+    "ground": "EEF0FF",
+    "text": "1D1B3A",
+    "muted": "6E6A99",
+    "palette": [
+      "FF6AD5",
+      "8E7CFF",
+      "4DE1FF",
+      "C6FF4D",
+      "FFC94D"
+    ],
+    "black": "1D1B3A"
+  },
+  "fonts": {
+    "ea": "Microsoft JhengHei",
+    "code": "Consolas",
+    "display": "Eras Bold ITC",
+    "heading": "Eras Bold ITC",
+    "body": "Segoe UI",
+    "label": "Eras Demi ITC"
+  },
+  "stroke": {
+    "border": 0,
+    "shadow": 0,
+    "thin": 0,
+    "thin_shadow": 0,
+    "image": 0.75
+  },
+  "decorations": true,
+  "tilt": false,
+  "style": {
+    "surface": "glass",
+    "radius": 0.36,
+    "cover": "centered",
+    "divider": "band",
+    "nav": "pills",
+    "outline": "grid",
+    "callout": "tint",
+    "closing": "centered",
+    "ground": {
+      "type": "gradient",
+      "colors": [
+        "E3ECFF",
+        "FFE0FA"
+      ],
+      "angle": 45
+    },
+    "decor": [
+      "bubbles",
+      "sparkles"
+    ]
+  },
+  "sizes": {
+    "title": 28,
+    "subtitle": 16,
+    "body_max": 20,
+    "body_min": 12,
+    "split_below": 14
+  }
+}
