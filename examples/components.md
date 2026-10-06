@@ -57,6 +57,30 @@ closing: Q&A
 
 ## 研究方法 | Methodology
 
+### 資料準備
+
+#### 前處理四步驟 | 從原始紀錄到訓練樣本
+
+```steps
+- 蒐集 | 匯出一個月的逐筆紀錄 | icon: database
+- 清理 | 去除重複與缺漏 | icon: broom
+- 對齊 | 轉成 500 公尺格網 | icon: table-cells
+- 切分 | 切成 15 分鐘一格 | icon: scissors
+```
+
+> [!TIP] 每一步的輸出都存檔，方便回頭重跑。
+
+#### 前處理檢查點 | 每一步都能單獨重跑
+
+- 輸出檔名帶日期
+- 失敗時從上一步接續
+
+```steps vertical
+- 蒐集 | 匯出一個月的逐筆紀錄 | icon: database
+- 清理 | 去除重複與缺漏 | icon: broom
+- 對齊 | 轉成 500 公尺格網 | icon: table-cells
+```
+
 ### 模型架構
 
 #### 整體架構 | 條件式擴散 + 一層交叉注意力

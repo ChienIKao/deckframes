@@ -171,6 +171,13 @@ date: 2026 / 07 / 08
 
 ## 資訊圖表
 
+<details>
+<summary>元件總覽（每種元件的實際樣子）</summary>
+
+![元件總覽](docs/components.jpg)
+
+</details>
+
 在程式碼區塊標上元件名稱，裡面每一項用 ` | ` 分欄：
 
 ````markdown

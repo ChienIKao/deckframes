@@ -138,6 +138,12 @@ deckframes build talk.md --template my-school
 
 完成後用 `deckframes themes gallery` 確認各主題都正常，特別是深色與淺色的 palette。
 
+最後在 `scripts/components_overview.py` 的 `GROUPS` 加一列（示範投影片上獨有的一段文字＋元件名稱＋用途），重新產生 README 的元件總覽：
+
+```bash
+python scripts/components_overview.py
+```
+
 ---
 
 ## 新增工作流 skill
