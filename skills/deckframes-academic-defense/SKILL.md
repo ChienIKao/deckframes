@@ -52,7 +52,13 @@ Put timing and talking points in `<!-- -->` per slide. Budget ≈ 1 slide per mi
 talk; if the deck runs long, tell the user which sections to compress rather than cutting content
 yourself.
 
-## 4. Build, check, review
+## 4. Polish and approve
+
+`deckframes status --set draft`, then follow the entry skill's gates: sepia refactor over slide
+text and speaker notes (citations, formulas, numbers and figure captions stay protected),
+`--set polished`; show deck.md to the user and wait for their go-ahead, `--set approved`.
+
+## 5. Build, check, review
 
 Follow `deckframes-cli`. Additional checks for defenses:
 - every chapter divider lists its sections; nav bar labels fit

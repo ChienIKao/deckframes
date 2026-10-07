@@ -13,7 +13,7 @@ import shutil
 from pathlib import Path
 
 STATE = "deck.json"
-STAGES = ["brief", "draft", "built", "checked", "reviewed"]
+STAGES = ["brief", "draft", "polished", "approved", "built", "checked", "reviewed"]
 
 STARTER = """---
 theme: {theme}
@@ -53,11 +53,13 @@ This folder is a deckframes deck (Markdown → editable PowerPoint). Any coding 
 1. Run `deckframes status` — it prints the theme, workflow, content mode, finished stages and the next step.
 2. Edit only `deck.md` (`source.md` is the untouched original). Never hand-edit the .pptx.
 3. Loop: `deckframes build` → `deckframes check` (fix until 0 issues) → `deckframes preview` (inspect grid.png).
-4. Record progress: `deckframes status --set draft|reviewed`.
-5. Never invent numbers; in `verbatim` mode never reword the user's text.
-6. No emoji anywhere (the build rejects them). For pictograms use `icon: <font-awesome-name>` or an SVG
+4. Before the first build: run a de-AI pass over deck.md (slide text and speaker notes) with the `sepia`
+   skill, then show deck.md to the user and wait for their go-ahead. Never build an unapproved draft.
+5. Record progress: `deckframes status --set draft|polished|approved|reviewed`.
+6. Never invent numbers; in `verbatim` mode never reword the user's text.
+7. No emoji anywhere (the build rejects them). For pictograms use `icon: <font-awesome-name>` or an SVG
    (`deckframes icons search <word>`).
-7. Vary the infographic blocks across the deck (diagram, lanes, mapping, stack, matrix, cycle, …);
+8. Vary the infographic blocks across the deck (diagram, lanes, mapping, stack, matrix, cycle, …);
    resolve every `monotony:` build warning.
 
 If the deckframes skills are installed, load `deckframes` for the full workflow.
@@ -94,7 +96,12 @@ def mark(root: Path, stage: str, value: bool = True) -> None:
     save_state(root, st)
 
 
-def init(root: Path, source: Path | None, theme: str, template: str | None, workflow: str, mode: str) -> dict:
+def polish_scope(state: dict) -> str:
+    return state.get("polish") or ("all" if state.get("mode") == "refine" else "written")
+
+
+def init(root: Path, source: Path | None, theme: str, template: str | None, workflow: str, mode: str,
+         polish: str | None = None) -> dict:
     root.mkdir(parents=True, exist_ok=True)
     if (root / STATE).exists():
         raise SystemExit(f"{root / STATE} already exists — use `deckframes status` to resume")
@@ -121,6 +128,7 @@ def init(root: Path, source: Path | None, theme: str, template: str | None, work
         "theme": None if template else theme,
         "template": template,
         "mode": mode,
+        "polish": polish or ("all" if mode == "refine" else "written"),
         "source": "source.md" if source else None,
         "deck": "deck.md",
         "output": f"output/{slug}.pptx",
@@ -136,6 +144,14 @@ def next_step(state: dict) -> str:
     if not st.get("draft"):
         return ("draft: normalise deck.md (hierarchy, English chapter subtitles, infographic blocks), "
                 "then `deckframes status --set draft`")
+    if not st.get("polished"):
+        scope = ("all prose, the user's text included" if polish_scope(state) == "all"
+                 else "only text you wrote; the user's sentences stay as-is")
+        return (f"polish: de-AI pass over slide text and speaker notes (sepia refactor; {scope}), "
+                "then `deckframes status --set polished`")
+    if not st.get("approved"):
+        return ("approve: show deck.md to the user and wait for their go-ahead; apply requested edits, "
+                "then `deckframes status --set approved`")
     if not st.get("built"):
         return "build: `deckframes build`"
     if not st.get("checked"):

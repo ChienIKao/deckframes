@@ -21,8 +21,8 @@ deckframes status --set reviewed
 
 | Command | Purpose |
 |---|---|
-| `deckframes init DIR --from script.md [--theme T \| --template T] [--workflow W] [--mode verbatim\|refine]` | create a project |
-| `deckframes status [--set STAGE] [--unset STAGE] [--json]` | stages `brief draft built checked reviewed` + suggested next step |
+| `deckframes init DIR --from script.md [--theme T \| --template T] [--workflow W] [--mode verbatim\|refine] [--polish written\|all]` | create a project |
+| `deckframes status [--set STAGE] [--unset STAGE] [--json]` | stages `brief draft polished approved built checked reviewed` + suggested next step |
 | `deckframes build [deck.md] [-o out.pptx] [--theme T] [--template T] [--assets DIR]` | render |
 | `deckframes check [file.pptx] [--json] [--no-outline]` | structural QA + slide outline |
 | `deckframes preview [file.pptx] [--backend auto\|powerpoint\|libreoffice] [--cols N]` | render images |

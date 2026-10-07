@@ -55,14 +55,18 @@ Ask **once, in one message**, only what the request doesn't already answer. Offe
    (`deckframes themes import <preset>`) or give a company .pptx/.potx (`deckframes-templates`).
 3. **Content mode** → `verbatim` (default: fix structure, convert to infographics, never reword)
    or `refine` (long paragraphs become bullets; original text moves to speaker notes).
+4. **De-AI scope** → `written` (sepia polishes only text you write: notes, card blurbs, subtitles)
+   or `all` (the user's own text too — pick this when their script is itself AI-written).
+   Default: `written` with `verbatim`, `all` with `refine`.
 
 Then create the project (one folder per deck, `<YYYYMMDD-slug>/` in the working directory):
 
 ```bash
-deckframes init <YYYYMMDD-slug> --from <script.md> --theme <theme> --workflow <workflow> --mode <mode>
+deckframes init <YYYYMMDD-slug> --from <script.md> --theme <theme> --workflow <workflow> --mode <mode> --polish <scope>
 ```
 
-`<workflow>` is `deckframes-general` or `deckframes-academic-defense`; `<mode>` is `verbatim` or `refine`.
+`<workflow>` is `deckframes-general` or `deckframes-academic-defense`; `<mode>` is `verbatim` or `refine`;
+`<scope>` is `written` or `all`.
 
 `init` copies the script to `source.md` (never edited) and `deck.md` (your working copy), copies a
 sibling `assets/` folder, and writes `deck.json` and an `AGENTS.md` hand-off note.
@@ -84,6 +88,30 @@ Domain skills, loaded by the workflows as needed:
 | Commands, QA loop, reading `check` output | `deckframes-cli` |
 | Corporate / school .pptx templates | `deckframes-templates` |
 
+## Draft → polish → approve → build
+
+Every workflow passes two gates between writing deck.md and the first `deckframes build`:
+
+1. **Polish (de-AI).** Once the draft is structured, run the `sepia` skill's **refactor** operation
+   over deck.md — slide text *and* `<!-- notes -->`. Do this without being asked. Scope:
+   - Pass the Markdown structure as protected: headings, front matter, fenced block syntax,
+     `key: value` fields, `icon:` names, `==highlight==` / callout markers, `Source:` lines, numbers.
+     Only the prose inside them is in scope.
+   - Scope comes from `polish` in deck.json (`deckframes status` shows it; if missing, `all` for
+     `refine` and `written` for `verbatim`). `written`: also protect every sentence taken from
+     `source.md`; polish only text you wrote (speaker notes, card blurbs, takeaways, subtitles).
+     `all`: polish the user's text as well — an explicit opt-in that overrides the verbatim
+     no-rewording rule for this pass only.
+   - If `sepia` is not installed, say so and skip the pass; don't imitate it.
+   Then `deckframes status --set polished`.
+2. **Approve.** Show the user deck.md (or a slide-by-slide outline with notes for long decks) and
+   **stop**. Do not build until they say go. Apply any requested edits to deck.md, re-polish the
+   changed prose, and show it again. On a clear yes: `deckframes status --set approved`, then build.
+
+Re-entering an earlier stage (`--set draft`) resets `polished` and `approved`, so a reworked draft
+goes through both gates again. Small fixes during the build → check → review loop (overflow,
+splitting a slide) don't need a new approval round; rewording does.
+
 ## Non-negotiables
 
 - **Edit `deck.md`, never the .pptx.** Every fix goes back into the Markdown and is rebuilt.
@@ -93,11 +121,12 @@ Domain skills, loaded by the workflows as needed:
   `deckframes icons search <word>`) or an SVG file (`icon: assets/x.svg`, `![caption](assets/x.svg)`).
 - **Never invent numbers.** `stats` and `chart` values come from the user's material only; missing
   values become `— value —` placeholders listed in your report.
-- **Don't reword in verbatim mode.** Restructuring, splitting slides, converting to infographic
+- **Don't reword in verbatim mode** (except the opted-in `polish: all` pass). Restructuring, splitting slides, converting to infographic
   blocks and adding English chapter subtitles are fine; deleting or rewriting sentences needs a yes.
 - **One visual idea per slide.** ≤ 5 bullets beside a visual; move detail to `<!-- notes -->`.
 - **Vary the presentation.** Plan blocks across the whole deck — 16 infographic blocks exist; don't
   ride one or two. Resolve every `monotony:` warning from `deckframes build`.
+- **No build before approval.** `deckframes status` must show `approved` before the first build.
 - **Record progress** with `deckframes status --set <stage>` so another agent can resume.
 
 ## Done means

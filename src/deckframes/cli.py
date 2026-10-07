@@ -1,6 +1,6 @@
 """deckframes command-line interface.
 
-  deckframes init [DIR] [--from SOURCE.md] [--theme T | --template T] [--workflow W] [--mode M]
+  deckframes init [DIR] [--from SOURCE.md] [--theme T | --template T] [--workflow W] [--mode M] [--polish P]
   deckframes build [DECK.md] [-o OUT.pptx] [--theme T] [--template T] [--assets DIR]
   deckframes check [DECK.pptx] [--json] [--no-outline]
   deckframes preview [DECK.pptx] [--out DIR] [--cols N] [--backend auto|powerpoint|libreoffice]
@@ -55,7 +55,7 @@ def cmd_init(a):
     src = Path(a.source).resolve() if a.source else None
     if src and not src.exists():
         raise SystemExit(f"source not found: {src}")
-    state = proj.init(root, src, a.theme, a.template, a.workflow, a.mode)
+    state = proj.init(root, src, a.theme, a.template, a.workflow, a.mode, a.polish)
     print(f"✔ project {root}")
     print(f"  deck:     {root / state['deck']}")
     print(f"  output:   {root / state['output']}")
@@ -152,7 +152,7 @@ def cmd_status(a):
         print(json.dumps({**state, "root": str(root), "next": proj.next_step(state)}, ensure_ascii=False, indent=2))
         return
     print(f"project  {root}")
-    for k in ("workflow", "theme", "template", "mode", "deck", "output"):
+    for k in ("workflow", "theme", "template", "mode", "polish", "deck", "output"):
         if state.get(k):
             print(f"{k:9}{state[k]}")
     print("status   " + "  ".join(f"{'✔' if v else '·'} {k}" for k, v in state["status"].items()))
@@ -275,6 +275,8 @@ def main(argv=None):
     p.add_argument("--workflow", default="deckframes-general",
                    help="deckframes-general | deckframes-academic-defense")
     p.add_argument("--mode", choices=["verbatim", "refine"], default="verbatim")
+    p.add_argument("--polish", choices=["written", "all"],
+                   help="de-AI scope: only agent-written text, or the user's text too (default: by mode)")
     p.set_defaults(fn=cmd_init)
 
     p = sub.add_parser("build", help="deck.md → .pptx")

@@ -278,11 +278,11 @@ deckframes build talk.md --theme my-lab
 
 | 指令 | 說明 |
 |---|---|
-| `deckframes init DIR --from script.md [--theme T] [--workflow W] [--mode verbatim\|refine]` | 建立專案 |
+| `deckframes init DIR --from script.md [--theme T] [--workflow W] [--mode verbatim\|refine] [--polish written\|all]` | 建立專案（`--polish`：sepia 去 AI 化範圍，只改 AI 寫的文字或連原稿一起改） |
 | `deckframes build [deck.md] [-o out.pptx] [--theme T] [--template T]` | 建置 |
 | `deckframes check [out.pptx] [--json]` | 檢查溢出與超出邊界（有問題時結束代碼為 1） |
 | `deckframes preview [out.pptx]` | 每頁 PNG ＋ 總覽 grid.png |
-| `deckframes status [--set STAGE] [--json]` | 進度：brief → draft → built → checked → reviewed |
+| `deckframes status [--set STAGE] [--json]` | 進度：brief → draft → polished（sepia 去 AI 化）→ approved（使用者確認草稿）→ built → checked → reviewed |
 | `deckframes themes list\|show\|import\|gallery\|new` | 主題管理、主題一覽圖、建立新主題 |
 | `deckframes icons search WORDS` / `icons get NAME` | 找 Font Awesome 圖示名稱／預先下載 |
 | `deckframes template inspect FILE.pptx [--write-config]` | 分析模版版面 |

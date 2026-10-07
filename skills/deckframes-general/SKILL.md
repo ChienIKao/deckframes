@@ -19,6 +19,8 @@ description: >
    placements to the user when the script doesn't say.
 5. **Mode.** In `refine` mode shorten long paragraphs into bullets and move the original wording
    to `<!-- notes -->`; in `verbatim` mode never reword.
-6. **Build → check → review** per `deckframes-cli`, then `deckframes status --set draft` /
-   `reviewed` as you go.
-7. **Report**: output path, slide count, theme, infographic conversions, other edits, placeholders.
+6. **Draft done** → `deckframes status --set draft`.
+7. **Polish and approve** per the entry skill: sepia refactor over slides and notes
+   (`--set polished`), then show deck.md to the user and wait for a go-ahead (`--set approved`).
+8. **Build → check → review** per `deckframes-cli`, then `deckframes status --set reviewed`.
+9. **Report**: output path, slide count, theme, infographic conversions, other edits, placeholders.
