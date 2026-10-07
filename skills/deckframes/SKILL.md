@@ -57,7 +57,8 @@ Ask **once, in one message**, only what the request doesn't already answer. Offe
    or `refine` (long paragraphs become bullets; original text moves to speaker notes).
 4. **De-AI scope** → `written` (sepia polishes only text you write: notes, card blurbs, subtitles)
    or `all` (the user's own text too — pick this when their script is itself AI-written).
-   Default: `written` with `verbatim`, `all` with `refine`.
+   Default: `written` with `verbatim`, `all` with `refine`. Skip this question when `sepia` is
+   not installed.
 
 Then create the project (one folder per deck, `<YYYYMMDD-slug>/` in the working directory):
 
@@ -102,7 +103,9 @@ Every workflow passes two gates between writing deck.md and the first `deckframe
      `source.md`; polish only text you wrote (speaker notes, card blurbs, takeaways, subtitles).
      `all`: polish the user's text as well — an explicit opt-in that overrides the verbatim
      no-rewording rule for this pass only.
-   - If `sepia` is not installed, say so and skip the pass; don't imitate it.
+   - **sepia is optional.** If the `sepia` skill is not installed, tell the user once (it lives at
+     https://github.com/Nanako0129/sepia), skip the pass without imitating it, and still run
+     `deckframes status --set polished` so the workflow continues to approval.
    Then `deckframes status --set polished`.
 2. **Approve.** Show the user deck.md (or a slide-by-slide outline with notes for long decks) and
    **stop**. Do not build until they say go. Apply any requested edits to deck.md, re-polish the

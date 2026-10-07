@@ -54,7 +54,8 @@ This folder is a deckframes deck (Markdown → editable PowerPoint). Any coding 
 2. Edit only `deck.md` (`source.md` is the untouched original). Never hand-edit the .pptx.
 3. Loop: `deckframes build` → `deckframes check` (fix until 0 issues) → `deckframes preview` (inspect grid.png).
 4. Before the first build: run a de-AI pass over deck.md (slide text and speaker notes) with the `sepia`
-   skill, then show deck.md to the user and wait for their go-ahead. Never build an unapproved draft.
+   skill if it is installed (skip it otherwise), then show deck.md to the user and wait for their
+   go-ahead. Never build an unapproved draft.
 5. Record progress: `deckframes status --set draft|polished|approved|reviewed`.
 6. Never invent numbers; in `verbatim` mode never reword the user's text.
 7. No emoji anywhere (the build rejects them). For pictograms use `icon: <font-awesome-name>` or an SVG
@@ -147,8 +148,8 @@ def next_step(state: dict) -> str:
     if not st.get("polished"):
         scope = ("all prose, the user's text included" if polish_scope(state) == "all"
                  else "only text you wrote; the user's sentences stay as-is")
-        return (f"polish: de-AI pass over slide text and speaker notes (sepia refactor; {scope}), "
-                "then `deckframes status --set polished`")
+        return (f"polish: de-AI pass over slide text and speaker notes (sepia refactor; {scope}; "
+                "skip if sepia is not installed), then `deckframes status --set polished`")
     if not st.get("approved"):
         return ("approve: show deck.md to the user and wait for their go-ahead; apply requested edits, "
                 "then `deckframes status --set approved`")

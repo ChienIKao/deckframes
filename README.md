@@ -282,7 +282,7 @@ deckframes build talk.md --theme my-lab
 | `deckframes build [deck.md] [-o out.pptx] [--theme T] [--template T]` | 建置 |
 | `deckframes check [out.pptx] [--json]` | 檢查溢出與超出邊界（有問題時結束代碼為 1） |
 | `deckframes preview [out.pptx]` | 每頁 PNG ＋ 總覽 grid.png |
-| `deckframes status [--set STAGE] [--json]` | 進度：brief → draft → polished（sepia 去 AI 化）→ approved（使用者確認草稿）→ built → checked → reviewed |
+| `deckframes status [--set STAGE] [--json]` | 進度：brief → draft → polished（sepia 去 AI 化；未安裝 sepia 時略過）→ approved（使用者確認草稿）→ built → checked → reviewed |
 | `deckframes themes list\|show\|import\|gallery\|new` | 主題管理、主題一覽圖、建立新主題 |
 | `deckframes icons search WORDS` / `icons get NAME` | 找 Font Awesome 圖示名稱／預先下載 |
 | `deckframes template inspect FILE.pptx [--write-config]` | 分析模版版面 |
