@@ -793,6 +793,18 @@ class Canvas(StyleMixin, ChromeMixin, DiagramMixin):
             out.update(mode="visual", visual=(x, body_y, w, vb - body_y))
             return out
 
+        below = (single and info and "below" in single.data.get("opts", [])) or \
+            str(self.meta.get("visual_below", "")).lower() in ("true", "yes", "1")
+        if visuals and paras and below:
+            # text across the full width on top, visual underneath (long-sentence languages)
+            vb = stack_callouts(x, w, bottom) if callouts else bottom
+            size = self.sizes["body_max"] - 2
+            th = estimate_height_pt(paras, size * 1.08, E(w)) / 72 + 0.1
+            th = min(th, 0.45 * (vb - body_y))
+            vy = body_y + th + 0.15
+            out.update(mode="split", text=(x, body_y, w, th), visual=(x, vy, w, vb - vy))
+            return out
+
         if single and info and paras:
             a, opts = info[0], single.data.get("opts", [])
             cap = 0.5 if single.data.get("alt") else 0.0
