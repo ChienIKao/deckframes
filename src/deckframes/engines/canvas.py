@@ -797,16 +797,18 @@ class Canvas(StyleMixin, ChromeMixin, DiagramMixin):
             str(self.meta.get("visual_below", "")).lower() in ("true", "yes", "1")
         if visuals and paras and below:
             # text across the full width on top, visual underneath (long-sentence languages)
-            vb = stack_callouts(x, w, bottom) if callouts else bottom
+            # the visual may run down to the source line (or near the slide edge when there is none)
+            low = H - (0.62 if has_sources else 0.25)
+            vb = stack_callouts(x, w, low) if callouts else low
             size = self.sizes["body_max"] - 4
-            th = 0.05
+            th = -size * 0.55 / 72  # no space after the last paragraph
             for pd in paras:  # wrap estimate with real per-character widths (the CJK estimate overshoots Latin text)
                 txt = re.sub(r"==|\*\*|`", "", pd["text"])
                 line_w = sum(self.measure(ch, size) for ch in txt)
                 avail = w - 0.4 - 0.3 * pd.get("level", 0)
                 th += max(1, math.ceil(line_w / avail)) * size * 1.25 / 72 + size * 0.55 / 72
-            th = min(th, 0.4 * (vb - body_y))
-            vy = body_y + th + 0.1
+            th = min(th + 0.1, 0.4 * (vb - body_y))
+            vy = body_y - 0.1 + th + 0.05
             out.update(mode="below", text=(x, body_y - 0.1, w, th), visual=(x, vy, w, vb - vy))
             return out
 
