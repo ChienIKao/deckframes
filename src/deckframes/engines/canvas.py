@@ -808,8 +808,9 @@ class Canvas(StyleMixin, ChromeMixin, DiagramMixin):
                 avail = w - 0.4 - 0.3 * pd.get("level", 0)
                 th += max(1, math.ceil(line_w / avail)) * size * 1.25 / 72 + size * 0.55 / 72
             th = min(th + 0.1, 0.4 * (vb - body_y))
-            vy = body_y - 0.1 + th + 0.05
-            out.update(mode="below", text=(x, body_y - 0.1, w, th), visual=(x, vy, w, vb - vy))
+            ty = body_y - 0.25
+            vy = ty + th + 0.05
+            out.update(mode="below", text=(x, ty, w, th), visual=(x, vy, w, vb - vy))
             return out
 
         if single and info and paras:
