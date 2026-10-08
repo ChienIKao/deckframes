@@ -798,11 +798,11 @@ class Canvas(StyleMixin, ChromeMixin, DiagramMixin):
         if visuals and paras and below:
             # text across the full width on top, visual underneath (long-sentence languages)
             vb = stack_callouts(x, w, bottom) if callouts else bottom
-            size = self.sizes["body_max"] - 2
-            th = estimate_height_pt(paras, size * 1.08, E(w)) / 72 + 0.1
-            th = min(th, 0.45 * (vb - body_y))
-            vy = body_y + th + 0.15
-            out.update(mode="split", text=(x, body_y, w, th), visual=(x, vy, w, vb - vy))
+            size = self.sizes["body_max"] - 4
+            th = estimate_height_pt(paras, size * 1.08, E(w)) / 72 + 0.05
+            th = min(th, 0.4 * (vb - body_y))
+            vy = body_y + th + 0.1
+            out.update(mode="below", text=(x, body_y - 0.1, w, th), visual=(x, vy, w, vb - vy))
             return out
 
         if single and info and paras:
@@ -871,7 +871,8 @@ class Canvas(StyleMixin, ChromeMixin, DiagramMixin):
         elif not paras:
             self.draw_visuals(s, visuals, *lay["visual"], pg.title)
         else:
-            self.draw_text(s, paras, x, y, w, h, pg.title)
+            self.draw_text(s, paras, x, y, w, h, pg.title,
+                           max_size=self.sizes["body_max"] - 4 if lay["mode"] == "below" else None)
             self.draw_visuals(s, visuals, *lay["visual"], pg.title)
 
         for c, (cx, cy, cw, ch) in zip(callouts, lay["callouts"]):
