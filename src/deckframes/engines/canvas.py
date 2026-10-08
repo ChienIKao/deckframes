@@ -799,7 +799,12 @@ class Canvas(StyleMixin, ChromeMixin, DiagramMixin):
             # text across the full width on top, visual underneath (long-sentence languages)
             vb = stack_callouts(x, w, bottom) if callouts else bottom
             size = self.sizes["body_max"] - 4
-            th = estimate_height_pt(paras, size * 1.08, E(w)) / 72 + 0.05
+            th = 0.05
+            for pd in paras:  # wrap estimate with real per-character widths (the CJK estimate overshoots Latin text)
+                txt = re.sub(r"==|\*\*|`", "", pd["text"])
+                line_w = sum(self.measure(ch, size) for ch in txt)
+                avail = w - 0.4 - 0.3 * pd.get("level", 0)
+                th += max(1, math.ceil(line_w / avail)) * size * 1.25 / 72 + size * 0.55 / 72
             th = min(th, 0.4 * (vb - body_y))
             vy = body_y + th + 0.1
             out.update(mode="below", text=(x, body_y - 0.1, w, th), visual=(x, vy, w, vb - vy))
