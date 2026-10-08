@@ -44,6 +44,16 @@ def test_build_and_check(tmp_path):
     assert report["ok"], json.dumps(report["pages"], ensure_ascii=False)[:500]
 
 
+def test_canvas_master_is_widescreen(tmp_path):
+    from pptx import Presentation
+    out = tmp_path / "demo.pptx"
+    main(["build", str(DEMO), "-o", str(out)])
+    prs = Presentation(str(out))
+    title = prs.slide_master.placeholders[0]
+    # default python-pptx master is 4:3; its placeholders must be stretched to the 16:9 slide
+    assert title.left + title.width > prs.slide_width * 0.9
+
+
 def test_template_engine(tmp_path):
     out = tmp_path / "plain.pptx"
     main(["build", str(DEMO), "-o", str(out), "--theme", "default"])

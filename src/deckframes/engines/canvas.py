@@ -27,6 +27,7 @@ from ..icons import IconError, add_svg_picture, parse_ref, recolor, svg_aspect
 from .chrome import ChromeMixin
 from .diagrams import DiagramMixin
 from .style import StyleMixin
+from .template import scale_to_widescreen
 from ..icons import resolve as resolve_icon
 from .style import mix
 from ..layout import TEXT_KINDS, estimate_height_pt, merge_bullets, text_units
@@ -130,7 +131,7 @@ class Canvas(StyleMixin, ChromeMixin, DiagramMixin):
         self.sizes = {"title": 28, "subtitle": 16, "body_max": 20, "body_min": 12, "split_below": 14,
                       **theme.get("sizes", {})}
         self.prs = Presentation()
-        self.prs.slide_width, self.prs.slide_height = E(W), E(H)
+        scale_to_widescreen(self.prs)
         self.blank = self.prs.slide_layouts[6]
         # highlighter: prefer the 4th accent (yellow in BlockFrame) but only if ink stays readable on it
         light = [p for p in self.palette[3:] + self.palette[:3] if self.luminance(p) >= 0.55]
