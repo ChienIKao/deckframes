@@ -730,6 +730,15 @@ class Canvas(StyleMixin, ChromeMixin, DiagramMixin):
             self._img_cache[key] = info
         return self._img_cache[key]
 
+    def wrapped_lines(self, paras, w, size):
+        """Lines the paragraphs need in a box of width w at size (per-character widths, Latin-friendly)."""
+        n = 0
+        for pd in paras:
+            txt = re.sub(r"==|\*\*|`", "", pd["text"])
+            line_w = sum(self.measure(ch, size) for ch in txt)
+            n += max(1, math.ceil(line_w / max(0.5, w - 0.4 - 0.3 * pd.get("level", 0))))
+        return n
+
     def callout_height(self, d, w):
         need = self.lines_height([{"text": d["text"], "size": 15}], max(1.0, w - 1.6)) + 0.3
         return min(1.6, max(0.85, need))
@@ -793,8 +802,20 @@ class Canvas(StyleMixin, ChromeMixin, DiagramMixin):
             out.update(mode="visual", visual=(x, body_y, w, vb - body_y))
             return out
 
-        below = (single and info and "below" in single.data.get("opts", [])) or \
-            str(self.meta.get("visual_below", "")).lower() in ("true", "yes", "1")
+        mode_below = str(self.meta.get("visual_below", "")).lower()
+        opts0 = single.data.get("opts", []) if single else []
+        bleed = float(self.meta.get("visual_bleed", 0) or 0)
+        below = "below" in opts0 or (mode_below in ("true", "yes", "1") and "side" not in opts0)
+        if visuals and paras and not below and mode_below == "auto" and "side" not in opts0:
+            # try the side-by-side split; go below only when its text column would keep wrapping
+            if single and info:
+                cap = 0.5 if single.data.get("alt") else 0.0
+                nat = (bottom - body_y - cap - 0.05) * info[0] + 0.05
+                lo, hi = (0.55 * w, 0.75 * w) if "wide" in opts0 else (0.3 * w, 0.66 * w)
+                side_tw = w - max(lo, min(hi, nat)) - gap
+            else:
+                side_tw = w * self.text_ratio(visuals)
+            below = self.wrapped_lines(paras, side_tw, self.sizes["body_max"] - 2) - len(paras) > 1
         if visuals and paras and below:
             # text across the full width on top, visual underneath (long-sentence languages)
             # the visual may run down to the source line (or near the slide edge when there is none)
@@ -810,7 +831,7 @@ class Canvas(StyleMixin, ChromeMixin, DiagramMixin):
             th = min(th + 0.1, 0.4 * (vb - body_y))
             ty = body_y - 0.25
             vy = ty + th + 0.05
-            out.update(mode="below", text=(x, ty, w, th), visual=(x, vy, w, vb - vy))
+            out.update(mode="below", text=(x, ty, w, th), visual=(x - bleed, vy, w + 2 * bleed, vb - vy))
             return out
 
         if single and info and paras:
@@ -834,6 +855,7 @@ class Canvas(StyleMixin, ChromeMixin, DiagramMixin):
             vx = x if left else x + tw + gap
             if callouts:
                 stack_callouts(tx, tw, bottom)
+            vx, img_w = (vx - bleed, img_w + bleed) if left else (vx, img_w + bleed)
             out.update(mode="split", text=(tx, body_y, tw, text_bottom - body_y), visual=(vx, body_y, img_w, full_h))
             return out
 
@@ -845,7 +867,7 @@ class Canvas(StyleMixin, ChromeMixin, DiagramMixin):
             out.update(mode="visual", visual=(x, body_y, w, h))
         else:
             tw = w * self.text_ratio(visuals)
-            out.update(mode="split", text=(x, body_y, tw, h), visual=(x + tw + gap, body_y, w - tw - gap, h))
+            out.update(mode="split", text=(x, body_y, tw, h), visual=(x + tw + gap, body_y, w - tw - gap + bleed, h))
         return out
 
     def render_content(self, pg):
