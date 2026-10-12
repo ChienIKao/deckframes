@@ -15,12 +15,12 @@
 </details>
 
 <details>
-<summary>主題一覽（24 個內建）</summary>
+<summary>主題一覽（25 個內建）</summary>
 
-24 個內建主題不只換顏色，連卡片質感、封面／章節頁／導覽列／提示框的版型、背景與裝飾都不同：
+25 個內建主題不只換顏色，連卡片質感、封面／章節頁／導覽列／提示框的版型、背景與裝飾都不同：
 `academic`（學術 lab meeting）、`minimalism`、`swiss`、`editorial`、`bento`、`luxury`、`claymorphism`、
 `neumorphism`、`glassmorphism`、`y2k`、`ethereal`、`synthwave`、`cyberpunk`、`cybercore`、`pixel-art`、
-`maximalism`、`scrapbook`、`sketch`、`surrealism`、`bohemian`、`victorian`、`wabi-sabi`、`blockframe`、`default`。
+`maximalism`、`scrapbook`、`sketch`、`surrealism`、`bohemian`、`victorian`、`wabi-sabi`、`aws`、`blockframe`、`default`。
 另外還能一行匯入 HyperFrames 設計。用 `deckframes themes gallery` 產生：
 
 ![主題一覽](docs/themes-gallery.jpg)
@@ -117,10 +117,18 @@ AI 會：
 1. 問你用途、主題、要照稿直出還是幫你精煉
 2. 建立專案資料夾
 3. 整理 `deck.md`：修正階層、補英文章名、把適合的內容轉成資訊圖表
-4. 建置、檢查、看預覽圖，修正後重建
-5. 回報做了哪些調整
+4. 用 sepia 去 AI 化（有安裝 sepia 才會跑），再把草稿給你確認
+5. 建置、檢查、看預覽圖，修正後重建
+6. 回報做了哪些調整
 
 原稿存成 `source.md`，不會被修改。
+
+主題和去 AI 化範圍可以一次講清楚，AI 就不用再問：
+
+> 用 deckframes 把 `thesis.md` 做成口試簡報，主題用 `academic`，原稿也一起用 sepia 去 AI 化
+
+- 「主題用 `academic`」只決定外觀。口試的章節結構由用途決定，所以要說「口試簡報」或「研究報告」。只說「academic style」的話，AI 不一定知道你指的是主題。
+- sepia 去 AI 化會自動跑，不用另外交代。預設只改 AI 補寫的文字（講者備註、卡片說明、副標）；要連你的原稿一起改，才需要說「原稿也一起去 AI 化」。
 
 ### 自己用 CLI
 
@@ -338,7 +346,7 @@ pytest -q
 
 ## English
 
-**deckframes** turns a Markdown script into an editable PowerPoint deck: cover, outline, chapter dividers with a section list, content slides with a chapter/section nav bar, and native infographics (cards, flow, steps, timeline, stats, compare, charts, architecture diagrams, swim-lane timelines, problem→solution mappings, stacks, 2×2 matrices, pyramids, funnels, cycles, progress bars, tables, callouts) in 24 structurally different built-in themes. The build warns when a deck leans on one presentation pattern. It ships as a Python CLI plus a set of [Agent Skills](https://agentskills.io) that any skills-capable coding agent (Claude Code, Codex, Cursor, …) can follow.
+**deckframes** turns a Markdown script into an editable PowerPoint deck: cover, outline, chapter dividers with a section list, content slides with a chapter/section nav bar, and native infographics (cards, flow, steps, timeline, stats, compare, charts, architecture diagrams, swim-lane timelines, problem→solution mappings, stacks, 2×2 matrices, pyramids, funnels, cycles, progress bars, tables, callouts) in 25 structurally different built-in themes. The build warns when a deck leans on one presentation pattern. It ships as a Python CLI plus a set of [Agent Skills](https://agentskills.io) that any skills-capable coding agent (Claude Code, Codex, Cursor, …) can follow.
 
 ```bash
 uv tool install git+https://github.com/ChienIKao/deckframes      # CLI

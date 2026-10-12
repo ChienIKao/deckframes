@@ -3,7 +3,7 @@ name: deckframes-design
 description: >
   Choose or create the visual theme of a deckframes deck: list built-in themes, import any
   HyperFrames design preset (FRAME.md) as a PowerPoint theme, and edit theme JSON tokens (palette,
-  ground, ink, fonts, border/shadow weights, surface / cover / nav variants, decorations). 24
+  ground, ink, fonts, border/shadow weights, surface / cover / nav variants, decorations). 25
   built-ins from academic, minimalism and swiss to claymorphism, glassmorphism and synthwave. Use when the user asks for a style,
   a colour scheme, a HyperFrames look, or to restyle an existing deck.
 ---
@@ -52,6 +52,7 @@ divider / nav / outline / callout / closing variant, a background, a texture and
 | `bohemian` | earth tones, rainbow arches, sun circle, paper texture |
 | `victorian` | parchment, burgundy and forest green, ornate double frames, serif |
 | `wabi-sabi` | greige and earth, imperfect ink circle, stones, paper grain |
+| `aws` | AWS look: white, squid-ink navy, orange title rule and chapter numbers, console-grey cards, architecture-icon category colours |
 | `default` | plain navy/white (template engine, no nav bar) |
 
 Match the theme to the audience: `academic` / `minimalism` / `swiss` / `editorial` for lab meetings,

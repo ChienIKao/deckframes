@@ -1,0 +1,46 @@
+{
+  "name": "aws",
+  "engine": "canvas",
+  "description": "AWS 風格：白底、Squid Ink 深藍、橘色重點細線、Console 淺灰卡片、架構圖分類色",
+  "colors": {
+    "black": "232F3E",
+    "white": "F2F3F3",
+    "ground": "FFFFFF",
+    "text": "16191F",
+    "title": "232F3E",
+    "muted": "5F6B7A",
+    "palette": ["232F3E", "FF9900", "0972D3", "7AA116", "8C4FFF"],
+    "chapter_cycle": ["FF9900", "0972D3", "7AA116", "8C4FFF", "DD344C"],
+    "negative": "D91515",
+    "positive": "037F0C",
+    "info": "0972D3",
+    "highlight": "FFD8A0"
+  },
+  "fonts": {
+    "display": "Arial Black",
+    "heading": "Arial",
+    "label": "Arial",
+    "body": "Arial",
+    "ea": "Microsoft JhengHei",
+    "ea_heading": "Microsoft JhengHei",
+    "code": "Consolas"
+  },
+  "stroke": {"border": 0, "shadow": 0, "thin": 0, "thin_shadow": 0, "image": 0.75},
+  "decorations": false,
+  "tilt": false,
+  "style": {
+    "surface": "flat",
+    "radius": 0.08,
+    "cover": "poster",
+    "divider": "hero",
+    "nav": "underline",
+    "outline": "list",
+    "callout": "tint",
+    "closing": "poster",
+    "texture": "none",
+    "accent_line": "FF9900",
+    "decor": [],
+    "stat_color": true
+  },
+  "sizes": {"title": 28, "subtitle": 16, "body_max": 20, "body_min": 12, "split_below": 14}
+}
