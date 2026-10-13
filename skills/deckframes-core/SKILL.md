@@ -55,6 +55,8 @@ max_table_rows: 9            # longer tables split, header repeated
 section_level: 2
 subsection_level: 3
 slide_level: 4
+visual_below: auto           # text + image slides: true = text on top, image below; auto = only when the side text column keeps wrapping
+visual_bleed: 0.35          # inches the image may extend into the side margins
 ---
 ```
 
@@ -123,6 +125,8 @@ gets 55–75% of the width — use for maps, floor plans, dense diagrams), `cent
 
 So, for screenshots and photos: give the slide a `#### Title | one-line message` (or a caption) and no
 bullets, and the image is shown big. Detailed figures beside text: add `"wide"` and keep ≤ 3 bullets.
+Long sentences (English decks) next to a wide figure: add `"below"` to put the text on top and the image
+underneath at full width, or set `visual_below: auto` in the front matter; `"side"` keeps one slide side by side.
 A build warning `image is low resolution (~N dpi)` means the source is too small for the space it
 gets — ask the user for a larger export.
 
