@@ -123,10 +123,11 @@ AI 會：
 
 主題和去 AI 化範圍可以一次講清楚，AI 就不用再問：
 
-> 用 deckframes 把 `thesis.md` 做成口試簡報，主題用 `academic`，原稿也一起用 sepia 去 AI 化
+> 用 deckframes 把 `thesis.md` 做成口試簡報，主題用 `academic`，原稿是我自己寫的，只去 AI 化你補寫的部分
 
 - 「主題用 `academic`」只決定外觀。口試的章節結構由用途決定，所以要說「口試簡報」或「研究報告」。只說「academic style」的話，AI 不一定知道你指的是主題。
-- sepia 去 AI 化會自動跑，不用另外交代。預設只改 AI 補寫的文字（講者備註、卡片說明、副標）；要連你的原稿一起改，才需要說「原稿也一起去 AI 化」。
+- sepia 去 AI 化會自動跑，不用另外交代。預設連原稿一起去 AI 化（多數原稿是跟 AI 討論產生的）；原稿是你親手寫、一字不能動的話，說「只去 AI 化你補寫的部分」（`--polish written`）。
+- AI 不會加防禦性註明（「結果僅供參考」「仍需進一步研究」「視情況而定」之類），除非你的原稿本來就有。
 
 ### 自己用 CLI
 
@@ -285,7 +286,7 @@ deckframes build talk.md --theme my-lab
 
 | 指令 | 說明 |
 |---|---|
-| `deckframes init DIR --from script.md [--theme T] [--workflow W] [--mode verbatim\|refine] [--polish written\|all]` | 建立專案（`--polish`：sepia 去 AI 化範圍，只改 AI 寫的文字或連原稿一起改） |
+| `deckframes init DIR --from script.md [--theme T] [--workflow W] [--mode verbatim\|refine] [--polish written\|all]` | 建立專案（`--polish`：sepia 去 AI 化範圍，預設 `all` 連原稿一起改，`written` 只改 AI 寫的文字） |
 | `deckframes build [deck.md] [-o out.pptx] [--theme T] [--template T]` | 建置 |
 | `deckframes check [out.pptx] [--json]` | 檢查溢出與超出邊界（有問題時結束代碼為 1） |
 | `deckframes preview [out.pptx]` | 每頁 PNG ＋ 總覽 grid.png |

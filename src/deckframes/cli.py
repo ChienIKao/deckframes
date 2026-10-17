@@ -276,7 +276,7 @@ def main(argv=None):
                    help="deckframes-general | deckframes-academic-defense")
     p.add_argument("--mode", choices=["verbatim", "refine"], default="verbatim")
     p.add_argument("--polish", choices=["written", "all"],
-                   help="de-AI scope: only agent-written text, or the user's text too (default: by mode)")
+                   help="de-AI scope: the user's script too (default: all), or only agent-written text")
     p.set_defaults(fn=cmd_init)
 
     p = sub.add_parser("build", help="deck.md → .pptx")
