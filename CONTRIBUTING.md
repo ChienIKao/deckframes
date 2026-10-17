@@ -59,7 +59,7 @@ deckframes themes new my-lab --project        # 寫到目前資料夾的 themes/
 | `style.cover`／`divider`／`nav`／`outline`／`callout`／`closing` | 各種頁面的版型變化（例如 `nav: pills`、`callout: banner`） |
 | `style.ground`、`texture`、`decor` | 漸層背景、底紋（格線、掃描線、紙紋…）、裝飾清單 |
 
-`style` 的完整選項見 [`skills/deckframes-design/SKILL.md`](skills/deckframes-design/SKILL.md)。想要新風格時，先從結構最接近的內建主題複製（`--from swiss`），只換顏色字型；真的需要不同結構才改 `style`。新的裝飾或質感寫在 `engines/style.py`（`deco_*`、`surface_block`），新的封面／導覽列版型寫在 `engines/chrome.py`。
+`style` 的完整選項見 [`skills/deckframes-design/SKILL.md`](skills/deckframes-design/SKILL.md)。想要新風格時，先從結構最接近的內建主題複製（`--from academic`），只換顏色字型；真的需要不同結構才改 `style`。新的裝飾或質感寫在 `engines/style.py`（`deco_*`、`surface_block`），新的封面／導覽列版型寫在 `engines/chrome.py`。
 
 - 色碼不用加 `#`。
 - 色塊上的文字會自動在深色與白色間切換，不用擔心對比。

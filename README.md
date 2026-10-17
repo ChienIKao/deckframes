@@ -15,12 +15,10 @@
 </details>
 
 <details>
-<summary>主題一覽（25 個內建）</summary>
+<summary>主題一覽（3 個內建）</summary>
 
-25 個內建主題不只換顏色，連卡片質感、封面／章節頁／導覽列／提示框的版型、背景與裝飾都不同：
-`academic`（學術 lab meeting）、`minimalism`、`swiss`、`editorial`、`bento`、`luxury`、`claymorphism`、
-`neumorphism`、`glassmorphism`、`y2k`、`ethereal`、`synthwave`、`cyberpunk`、`cybercore`、`pixel-art`、
-`maximalism`、`scrapbook`、`sketch`、`surrealism`、`bohemian`、`victorian`、`wabi-sabi`、`aws`、`blockframe`、`default`。
+3 個內建主題不只換顏色，連卡片質感、封面／章節頁／導覽列／提示框的版型、背景與裝飾都不同：
+`blockframe`（預設，Neo-Brutalism）、`academic`（學術 lab meeting）、`aws`（技術／雲端架構）。
 另外還能一行匯入 HyperFrames 設計。用 `deckframes themes gallery` 產生：
 
 ![主題一覽](docs/themes-gallery.jpg)
@@ -346,7 +344,7 @@ pytest -q
 
 ## English
 
-**deckframes** turns a Markdown script into an editable PowerPoint deck: cover, outline, chapter dividers with a section list, content slides with a chapter/section nav bar, and native infographics (cards, flow, steps, timeline, stats, compare, charts, architecture diagrams, swim-lane timelines, problem→solution mappings, stacks, 2×2 matrices, pyramids, funnels, cycles, progress bars, tables, callouts) in 25 structurally different built-in themes. The build warns when a deck leans on one presentation pattern. It ships as a Python CLI plus a set of [Agent Skills](https://agentskills.io) that any skills-capable coding agent (Claude Code, Codex, Cursor, …) can follow.
+**deckframes** turns a Markdown script into an editable PowerPoint deck: cover, outline, chapter dividers with a section list, content slides with a chapter/section nav bar, and native infographics (cards, flow, steps, timeline, stats, compare, charts, architecture diagrams, swim-lane timelines, problem→solution mappings, stacks, 2×2 matrices, pyramids, funnels, cycles, progress bars, tables, callouts) in three structurally different built-in themes. The build warns when a deck leans on one presentation pattern. It ships as a Python CLI plus a set of [Agent Skills](https://agentskills.io) that any skills-capable coding agent (Claude Code, Codex, Cursor, …) can follow.
 
 ```bash
 uv tool install git+https://github.com/ChienIKao/deckframes      # CLI

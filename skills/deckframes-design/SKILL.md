@@ -3,8 +3,8 @@ name: deckframes-design
 description: >
   Choose or create the visual theme of a deckframes deck: list built-in themes, import any
   HyperFrames design preset (FRAME.md) as a PowerPoint theme, and edit theme JSON tokens (palette,
-  ground, ink, fonts, border/shadow weights, surface / cover / nav variants, decorations). 25
-  built-ins from academic, minimalism and swiss to claymorphism, glassmorphism and synthwave. Use when the user asks for a style,
+  ground, ink, fonts, border/shadow weights, surface / cover / nav variants, decorations). Three
+  built-ins: blockframe, academic and aws. Use when the user asks for a style,
   a colour scheme, a HyperFrames look, or to restyle an existing deck.
 ---
 
@@ -31,32 +31,11 @@ divider / nav / outline / callout / closing variant, a background, a texture and
 |---|---|
 | `blockframe` (default) | Neo-Brutalism: thick black outlines, hard shadows, candy colours per chapter, star bursts |
 | `academic` | Lab-meeting / thesis style: white, blue pill nav bar, gold rule, serif titles, red/green problem/result banners, editorial cover with authors and affiliations |
-| `minimalism` | lots of white space, one blue accent, no decoration |
-| `swiss` | Swiss grid: bold sans, red/black/white, big circle and rules, flush left |
-| `editorial` | magazine: off-white paper, Bodoni headlines, hairline rules, vermilion accent |
-| `bento` | rounded tiles of mixed sizes, product-launch clean |
-| `luxury` | black and gold, Bodoni, double hairline frames |
-| `claymorphism` | pastel clay blocks with soft outer shadow + inner highlight |
-| `neumorphism` | same-colour embossed cards, light/dark double shadows |
-| `glassmorphism` | frosted translucent cards on a vivid gradient with glowing orbs |
-| `y2k` | pink/purple gradient, bubbles, sparkles, glossy cards |
-| `ethereal` | pale gradient, soft-focus orbs, sparkles, thin type |
-| `synthwave` | 80s neon, purple night gradient, striped sun, perspective grid floor |
-| `cyberpunk` | black, neon yellow/cyan, chamfered panels, hazard stripes, glow |
-| `cybercore` | terminal green on black, scan lines, pixel noise, mono font |
-| `pixel-art` | 8-bit palette, blocky hard shadows, grid ground, pixel hearts |
-| `maximalism` | clashing colours with every decoration layered |
-| `scrapbook` | kraft paper, polaroid cards, washi tape, handwriting, slight tilt |
-| `sketch` | conceptual sketch: grid paper, handwritten titles, dashed boxes, doodle arrows |
-| `surrealism` | sunset gradient sky, floating spheres and arches, dream-like |
-| `bohemian` | earth tones, rainbow arches, sun circle, paper texture |
-| `victorian` | parchment, burgundy and forest green, ornate double frames, serif |
-| `wabi-sabi` | greige and earth, imperfect ink circle, stones, paper grain |
 | `aws` | AWS look: white, squid-ink navy, orange title rule and chapter numbers, console-grey cards, architecture-icon category colours |
-| `default` | plain navy/white (template engine, no nav bar) |
 
-Match the theme to the audience: `academic` / `minimalism` / `swiss` / `editorial` for lab meetings,
-defenses and reports; the expressive ones for pitches, classes and events.
+Match the theme to the audience: `academic` for lab meetings, defenses and reports; `aws` for
+technical and cloud-architecture talks; `blockframe` for pitches, classes and events. For any other
+look, import a HyperFrames design or scaffold a new theme (below).
 
 ## Importing a HyperFrames design
 
@@ -122,7 +101,7 @@ or `--from` another theme) → edit the tokens below (the file's `_edit` key rep
 | `stat_color` | colour stat numbers with the palette |
 | `title_upper` | upper-case Latin titles |
 
-Start from the built-in closest to what the user wants (`themes new my-look --from swiss`) and
+Start from the built-in closest to what the user wants (`themes new my-look --from academic`) and
 change colours / fonts first; change `style` only when the structure itself should differ.
 
 Text on coloured fills automatically switches between ink and white for contrast, so any palette

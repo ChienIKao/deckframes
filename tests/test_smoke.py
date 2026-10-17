@@ -56,7 +56,9 @@ def test_canvas_master_is_widescreen(tmp_path):
 
 def test_template_engine(tmp_path):
     out = tmp_path / "plain.pptx"
-    main(["build", str(DEMO), "-o", str(out), "--theme", "default"])
+    tfile = tmp_path / "plain.json"
+    tfile.write_text(json.dumps({"name": "plain", "fonts": {"heading": "Arial", "body": "Arial"}}), encoding="utf-8")
+    main(["build", str(DEMO), "-o", str(out), "--theme", str(tfile)])
     assert check(out)["slides"] > 10
 
 
@@ -196,7 +198,7 @@ def test_new_components_parse():
 
 
 def test_components_render_on_many_themes(tmp_path):
-    for theme in ["academic", "claymorphism", "cybercore", "glassmorphism", "swiss", "victorian", "pixel-art"]:
+    for theme in ["academic", "aws", "blockframe"]:
         out = tmp_path / f"{theme}.pptx"
         try:
             main(["build", str(COMPONENTS), "--theme", theme, "-o", str(out)])
@@ -211,9 +213,9 @@ def test_builtin_themes_have_distinct_styles():
 
     themes = [json.loads(Path(t["path"]).read_text(encoding="utf-8")) for t in list_themes()
               if t["engine"] == "canvas" and t["source"] == "builtin"]
-    assert len(themes) >= 20
+    assert {t["name"] for t in themes} == {"academic", "aws", "blockframe"}
     sigs = {(t["style"]["surface"], t["style"].get("cover"), t["style"].get("nav")) for t in themes if "style" in t}
-    assert len(sigs) >= 12
+    assert len(sigs) == len(themes)
 
 
 def test_monotony_warning():
