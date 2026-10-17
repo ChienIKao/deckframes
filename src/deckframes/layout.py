@@ -126,6 +126,8 @@ def degrade(blocks):
             out.append(Block("quote", b.data["text"]))
         elif b.kind == "source":
             out.append(Block("para", b.data))
+        elif b.kind == "step":  # build steps are canvas-only: templates show the finished slide
+            continue
         else:
             out.append(b)
     return out

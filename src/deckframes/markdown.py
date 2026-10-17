@@ -63,6 +63,9 @@ SOURCE = re.compile(r"^(資料來源|来源|來源|參考資料|Sources?|Ref(?:e
 COMPONENT_TYPES = {"cards", "steps", "timeline", "flow", "stats", "compare", "chart", "diagram", "lanes",
                    "mapping", "stack", "matrix", "pyramid", "funnel", "cycle", "progress"}
 ATTR = re.compile(r"^(tag|img|icon|color|lane|note|tone)\s*[:：]\s*(.+)$", re.I)
+STEP = re.compile(r"^\+{3,}\s*(.*)$")
+BUILD_ARG = re.compile(r"(?:^|\s)build(?:=(\w+))?(?=\s|$)")
+FOCUS_ARG = re.compile(r"(?:^|\s)focus=(\S+)")
 
 
 def is_cjk(ch: str) -> bool:
@@ -158,7 +161,24 @@ def make_item(text: str):
             "extra": pos[2:], "attrs": attrs, "children": []}
 
 
+def parse_step(args: str) -> dict:
+    """`+++ [dim] [overlay] [focus=2,3]` → build-step marker data."""
+    m = re.search(r"(?:^|\s)focus=(.+?)(?=\s+(?:dim|overlay)(?:\s|$)|$)", args)
+    words = re.sub(r"(?:^|\s)focus=.+?(?=\s+(?:dim|overlay)(?:\s|$)|$)", " ", args).lower().split()
+    return {"dim": "dim" in words, "overlay": "overlay" in words, "focus": m.group(1).strip() if m else None,
+            "notes": []}
+
+
 def parse_component(kind: str, info: str, body: str):
+    build = focus = None
+    bm = BUILD_ARG.search(info)
+    if bm:  # `build` / `build=dim` / `build=focus`: reveal the items one slide at a time
+        build = (bm.group(1) or "").lower()
+        info = (info[:bm.start()] + " " + info[bm.end():]).strip()
+    fm = FOCUS_ARG.search(info)
+    if fm and kind != "diagram":  # diagrams parse their own `focus=` (node names may contain spaces)
+        focus = fm.group(1)
+        info = (info[:fm.start()] + " " + info[fm.end():]).strip()
     items, free = [], []
     for line in body.split("\n"):
         m = LIST_ITEM.match(line.replace("\t", "    "))
@@ -175,7 +195,8 @@ def parse_component(kind: str, info: str, body: str):
             if "->" in ln or "→" in ln:
                 items += [make_item(x) for x in re.split(r"\s*(?:->|→)\s*", ln) if x.strip()]
     rows = [split_row(l) for l in free if l.startswith("|") and not TABLE_SEP.match(l)]
-    return {"type": kind, "args": info.split(), "info": info, "items": items, "lines": free, "rows": rows}
+    return {"type": kind, "args": info.split(), "info": info, "items": items, "lines": free, "rows": rows,
+            "build": build, "focus": focus}
 
 
 def parse_markdown(text: str) -> Doc:
@@ -228,7 +249,8 @@ def parse_markdown(text: str) -> Doc:
             note = "\n".join(chunk).split("-->")[0].strip()
             note = re.sub(r"^(notes?|備註|讲稿|講稿)\s*[:：]\s*", "", note, flags=re.I)
             if note:
-                cur.notes.append(note)
+                steps = [b for b in cur.blocks if b.kind == "step"]
+                (steps[-1].data["notes"] if steps else cur.notes).append(note)
             i += 1
             continue
 
@@ -272,6 +294,13 @@ def parse_markdown(text: str) -> Doc:
                 (cur_sub.slides if cur_sub else cur_section.slides).append(cur)
             else:
                 cur.blocks.append(Block("sub", hm.group(2).strip()))
+            i += 1
+            continue
+
+        sm = STEP.match(stripped)
+        if sm and cur is not doc.cover:
+            flush()
+            cur.blocks.append(Block("step", parse_step(sm.group(1))))
             i += 1
             continue
 

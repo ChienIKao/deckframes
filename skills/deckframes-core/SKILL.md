@@ -3,8 +3,8 @@ name: deckframes-core
 description: >
   The deck.md contract for deckframes: heading hierarchy (cover, chapters, sections, slides),
   `Title | Subtitle` headings, front-matter keys, inline marks (==highlight==, callouts, sources,
-  speaker notes), automatic layout selection and pagination. Read before writing or editing any
-  deck.md.
+  speaker notes), build steps (`+++` reveal / dim / focus / overlay), automatic layout selection
+  and pagination. Read before writing or editing any deck.md.
 ---
 
 # deck.md contract
@@ -19,6 +19,7 @@ description: >
 | `#### Slide title \| subtitle` | one content slide |
 | `#####` and deeper | bold sub-heading inside a slide |
 | `---` inside a slide | force a page break (same title continues) |
+| `+++` inside a slide | build step: the next slide repeats this one and adds what follows (see Build steps) |
 
 - Any heading takes ` | ` + subtitle. Chapters use it for the English name (`## 緒論 | Introduction`);
   slides use it for a grey subtitle line.
@@ -130,11 +131,48 @@ underneath at full width, or set `visual_below: auto` in the front matter; `"sid
 A build warning `image is low resolution (~N dpi)` means the source is too small for the space it
 gets — ask the user for a larger export.
 
+## Build steps (`+++`)
+
+A presenter often shows one slide in stages: the same slide again with one more element, the earlier
+part greyed out, or the whole slide faded behind a new layer. `+++` on its own line splits a slide
+into steps; each step becomes its own slide. A layer is laid out once with all of its steps, so
+nothing moves from one slide to the next and clicking through looks like an animation (decks stay
+plain slides — no PowerPoint animations to break).
+
+| Write | The next slide |
+|---|---|
+| `+++` | repeats everything so far and adds the content below the marker (space for it was reserved) |
+| `+++ dim` | same, but everything from the earlier steps turns pale grey |
+| `+++ focus=2` | greys out the earlier steps except item 2 of their visual (`focus=2,3`; a diagram node or the first cell of a table row also works: `focus=知識圖譜`) |
+| `+++ overlay` | lays a translucent veil over the slide so far and draws the content below as a new layer on top (text gets a lifted panel) |
+| `+++ overlay focus=3` | the veil leaves item / table row 3 uncovered (spotlight); callouts in that layer sit right next to it |
+
+```markdown
+#### Results | values are illustrative
+
+| Model | Accuracy |
+|---|---|
+| Baseline | 0.61 |
+| Ours | 0.82 |
+
++++ overlay focus=2
+
+> [!RESULT] Ours wins at the same model size.
+```
+
+- Speaker notes written after a `+++` belong to that step's slide.
+- Item-by-item reveals need no markers: add `build` to the component (`build`, `build=dim`,
+  `build=focus` — see deckframes-infographics).
+- Use builds for the slides you talk through in stages (architecture walk-throughs, problem →
+  solution, the key row of a results table) — not on every slide; each step is one more slide.
+- Template decks (`--template`) ignore the markers and show the finished slide.
+
 ## Pagination
 
 Text is measured against the real box: if it doesn't fit at 14 pt the slide is halved at a
 top-level bullet boundary and the next page gets `（續）`. Extra visuals get their own slides.
-Control breaks yourself with `---`.
+Control breaks yourself with `---`. Slides with build steps are never split (each layer keeps
+all of its visuals side by side): keep them short.
 
 ## Assets
 
