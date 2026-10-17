@@ -732,12 +732,8 @@ class Canvas(StyleMixin, ChromeMixin, DiagramMixin):
 
     def wrapped_lines(self, paras, w, size):
         """Lines the paragraphs need in a box of width w at size (per-character widths, Latin-friendly)."""
-        n = 0
-        for pd in paras:
-            txt = re.sub(r"==|\*\*|`", "", pd["text"])
-            line_w = sum(self.measure(ch, size) for ch in txt)
-            n += max(1, math.ceil(line_w / max(0.5, w - 0.4 - 0.3 * pd.get("level", 0))))
-        return n
+        return sum(max(1, math.ceil(self.measure(pd["text"], size) / max(0.5, w - 0.4 - 0.3 * pd.get("level", 0))))
+                   for pd in paras)
 
     def callout_height(self, d, w):
         need = self.lines_height([{"text": d["text"], "size": 15}], max(1.0, w - 1.6)) + 0.3
@@ -821,14 +817,9 @@ class Canvas(StyleMixin, ChromeMixin, DiagramMixin):
             # the visual may run down to the source line (or near the slide edge when there is none)
             low = H - (0.62 if has_sources else 0.25)
             vb = stack_callouts(x, w, low) if callouts else low
-            size = self.sizes["body_max"] - 4
-            th = -size * 0.55 / 72  # no space after the last paragraph
-            for pd in paras:  # wrap estimate with real per-character widths (the CJK estimate overshoots Latin text)
-                txt = re.sub(r"==|\*\*|`", "", pd["text"])
-                line_w = sum(self.measure(ch, size) for ch in txt)
-                avail = w - 0.4 - 0.3 * pd.get("level", 0)
-                th += max(1, math.ceil(line_w / avail)) * size * 1.25 / 72 + size * 0.55 / 72
-            th = min(th + 0.1, 0.4 * (vb - body_y))
+            # same estimate draw_text fits with, so the text keeps its body_max - 4 size
+            th = estimate_height_pt(paras, (self.sizes["body_max"] - 4) * 1.08, E(w)) / 72 + 0.01  # + rounding slack
+            th = min(th, 0.4 * (vb - body_y))
             ty = body_y - 0.25
             vy = ty + th + 0.05
             out.update(mode="below", text=(x, ty, w, th), visual=(x - bleed, vy, w + 2 * bleed, vb - vy))
