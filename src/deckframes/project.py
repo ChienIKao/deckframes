@@ -57,10 +57,13 @@ This folder is a deckframes deck (Markdown → editable PowerPoint). Any coding 
    skill if it is installed (skip it otherwise), then show deck.md to the user and wait for their
    go-ahead. Never build an unapproved draft.
 5. Record progress: `deckframes status --set draft|polished|approved|reviewed`.
-6. Never invent numbers; in `verbatim` mode never reword the user's text.
-7. No emoji anywhere (the build rejects them). For pictograms use `icon: <font-awesome-name>` or an SVG
+6. Never invent numbers; in `verbatim` mode never reword the user's text (the `polish: all` de-AI pass
+   is the exception).
+7. No defensive disclaimers: no "this may vary", "results are for reference only", "further study is
+   needed", "it is worth noting" and the like on slides or in notes, unless the user's material says it.
+8. No emoji anywhere (the build rejects them). For pictograms use `icon: <font-awesome-name>` or an SVG
    (`deckframes icons search <word>`).
-8. Vary the infographic blocks across the deck (diagram, lanes, mapping, stack, matrix, cycle, …);
+9. Vary the infographic blocks across the deck (diagram, lanes, mapping, stack, matrix, cycle, …);
    resolve every `monotony:` build warning.
 
 If the deckframes skills are installed, load `deckframes` for the full workflow.
@@ -98,7 +101,7 @@ def mark(root: Path, stage: str, value: bool = True) -> None:
 
 
 def polish_scope(state: dict) -> str:
-    return state.get("polish") or ("all" if state.get("mode") == "refine" else "written")
+    return state.get("polish") or "all"
 
 
 def init(root: Path, source: Path | None, theme: str, template: str | None, workflow: str, mode: str,
@@ -129,7 +132,7 @@ def init(root: Path, source: Path | None, theme: str, template: str | None, work
         "theme": None if template else theme,
         "template": template,
         "mode": mode,
-        "polish": polish or ("all" if mode == "refine" else "written"),
+        "polish": polish or "all",
         "source": "source.md" if source else None,
         "deck": "deck.md",
         "output": f"output/{slug}.pptx",
@@ -146,10 +149,11 @@ def next_step(state: dict) -> str:
         return ("draft: normalise deck.md (hierarchy, English chapter subtitles, infographic blocks), "
                 "then `deckframes status --set draft`")
     if not st.get("polished"):
-        scope = ("all prose, the user's text included" if polish_scope(state) == "all"
+        scope = ("all prose, the user's script included" if polish_scope(state) == "all"
                  else "only text you wrote; the user's sentences stay as-is")
         return (f"polish: de-AI pass over slide text and speaker notes (sepia refactor; {scope}; "
-                "skip if sepia is not installed), then `deckframes status --set polished`")
+                "cut defensive disclaimers and hedges; skip sepia if it is not installed), "
+                "then `deckframes status --set polished`")
     if not st.get("approved"):
         return ("approve: show deck.md to the user and wait for their go-ahead; apply requested edits, "
                 "then `deckframes status --set approved`")
