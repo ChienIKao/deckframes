@@ -71,8 +71,20 @@ class DiagramMixin:
         return sp
 
     # ------------------------------------------------------------------ diagram
-    def comp_diagram(self, s, d, x, y, w, h):
-        info = d.get("info", "")
+    @staticmethod
+    def item_count(d):
+        """How many build units a component reveals: nodes for a diagram, drawn pairs for a mapping."""
+        if d["type"] == "diagram":
+            return len(DiagramMixin.graph(d)[0])
+        if d["type"] == "mapping":
+            return sum(1 for it in d["items"] if len(ARROW_SPLIT.split(it["title"])) > 1 or it["desc"])
+        if d["type"] == "matrix":
+            return min(4, len(d["items"]))
+        return len(d["items"])
+
+    @staticmethod
+    def graph(d):
+        """(nodes in order of first mention, captions, edges, groups) of a diagram block."""
         nodes, captions, edges, groups = [], {}, [], []
 
         def add(n):
@@ -103,6 +115,11 @@ class DiagramMixin:
                     add(a)
                     add(b)
                     edges.append((a, b))
+        return nodes, captions, edges, groups
+
+    def comp_diagram(self, s, d, x, y, w, h):
+        info = d.get("info", "")
+        nodes, captions, edges, groups = self.graph(d)
         if not nodes:
             return
         focus = {f.strip() for f in (arg_value(info, "focus") or "").split(",") if f.strip()}

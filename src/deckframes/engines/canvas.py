@@ -970,8 +970,7 @@ class Canvas(StyleMixin, ChromeMixin, DiagramMixin):
                 layers[-1][-1]["blocks"].append(b)
         return layers
 
-    @staticmethod
-    def layer_frames(steps):
+    def layer_frames(self, steps):
         """[(View, notes)] — one per slide of the layer. A `build` component expands its step into one slide
         per item; `+++ dim` / `+++ focus=` grey out everything from the earlier steps."""
         frames = []
@@ -983,11 +982,11 @@ class Canvas(StyleMixin, ChromeMixin, DiagramMixin):
             notes = m.get("notes") or []
             base = {"step": k, "fade_before": fade_before, "focus": focus}
             build = next((b for b in st["blocks"] if b.kind == "component" and b.data.get("build") is not None
-                          and b.data["items"]), None)
+                          and self.item_count(b.data)), None)
             if build is None:
                 frames.append((View(**base), notes))
                 continue
-            n, mode = len(build.data["items"]), build.data["build"]
+            n, mode = self.item_count(build.data), build.data["build"]
             if mode == "focus":  # overview first, then each item in turn
                 frames.append((View(**base), notes))
                 frames += [(View(**base, items={id(build): (n, j, None)}), notes) for j in range(n)]
@@ -1270,7 +1269,8 @@ class Canvas(StyleMixin, ChromeMixin, DiagramMixin):
         faded = view is not None and step < view.fade_before
         st = view.items.get(id(v)) if view is not None else None
         if v.kind == "component" and d["type"] == "diagram" and faded and view.focus:
-            d = dict(d, info=f"{d.get('info', '')} focus={view.focus}")  # diagrams draw their own focus
+            info = re.sub(r"(?:^|\s)focus=.+?(?=\s+\w+=|$)", "", d.get("info", ""))  # the step's focus wins
+            d = dict(d, info=f"{info} focus={view.focus}")  # diagrams draw their own focus
             faded = False
         start = len(s.shapes._spTree)
         if v.kind == "component":

@@ -72,6 +72,15 @@ def test_component_build_reveals_items(tmp_path):
     assert _box(slides[0], "甲") == _box(slides[2], "甲")
 
 
+def test_diagram_build_reveals_every_node(tmp_path):
+    prs, _ = _deck(tmp_path, "#### 架構\n\n```diagram build focus=甲\n- 甲 -> 乙\n- 乙 -> 丙\n- 丁 -> 丙\n```\n\n"
+                             "+++ focus=丙\n\n> [!NOTE] 丙\n")
+    slides = _content(prs)
+    assert len(slides) == 5                                            # 4 nodes (not 3 edge lines) + focus step
+    assert any(t.startswith("丁") for t in _texts(slides[3]))
+    assert _run_color(slides[4], "丙") != _run_color(slides[4], "甲")   # the step's focus overrides focus=甲
+
+
 def test_focus_greys_out_the_other_items(tmp_path):
     prs, _ = _deck(tmp_path, "#### 對照\n\n```mapping focus=2\n- 問題一 -> 解法一\n- 問題二 -> 解法二\n```\n")
     s = _content(prs)[0]
