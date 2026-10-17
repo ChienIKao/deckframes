@@ -17,7 +17,7 @@ closing: Q&A
 
 #### 兩條研究路線 | 生成模型與時空圖模型各自演進
 
-```lanes 2017-2026
+```lanes 2017-2026 focus=本研究
 - 2017 | DCRNN | lane: 時空圖模型 | note: ICLR
 - 2019 | GWN | lane: 時空圖模型 | note: IJCAI
 - 2021 | STGIN | lane: 時空圖模型 | note: NeurIPS

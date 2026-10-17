@@ -115,6 +115,12 @@ def degrade(blocks):
             if d["type"] == "chart" and d["rows"]:
                 out.append(Block("table", {"rows": d["rows"], "aligns": []}))
                 continue
+            if d["type"] == "lanes":
+                rows = [["Year", "Lane", "Method", "Note"]]
+                rows += [[it["title"], it["attrs"].get("lane", ""), it["desc"] or it["title"],
+                          it["attrs"].get("note", "")] for it in d["items"]]
+                out.append(Block("table", {"rows": rows, "aligns": []}))
+                continue
             items = []
             for it in d["items"]:
                 t = f"**{it['title']}**" + (f"：{it['desc']}" if it["desc"] else "")

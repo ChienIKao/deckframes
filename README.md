@@ -202,7 +202,7 @@ date: 2026 / 07 / 08
 | `compare` | 方案對比 | `- 方案 \| 副標`，縮排子項目為條列 |
 | `chart` | 實驗數據 | 在 ```` ```chart column 標題 ```` 區塊內放 Markdown 表格 |
 | `diagram` | 系統／模型架構 | `- A -> B` 連線；`group 名稱: a, b` 虛線群組；`focus=節點` 逐頁聚焦講解 |
-| `lanes` | 相關研究演進（多條路線） | ```` ```lanes 2017-2026 ````，`- 2021 \| 方法名 \| lane: 路線 \| note: 會議` |
+| `lanes` | 相關研究／比較方法的分類時間軸 | ```` ```lanes 2017-2026 ````，`- 2021 \| 方法名 \| lane: 路線 \| note: 會議` |
 | `mapping` | 問題 ↔ 解法對照 | `- 問題 -> 解法` |
 | `stack` | 網路層級、技術堆疊 | `- 層 \| 說明` |
 | `matrix` | 2×2 象限 | ```` ```matrix x=成本 y=效果 ````，四項依序為左上、右上、左下、右下 |
@@ -215,6 +215,25 @@ date: 2026 / 07 / 08
 `deckframes build` 會檢查版面是否單調：同一種呈現方式連續超過 3 頁，或佔內容頁 45% 以上，就會印出 `monotony:` 警告，提醒 AI 換別的元件。
 
 內容型態與元件的對照規則：[`skills/deckframes-infographics/SKILL.md`](skills/deckframes-infographics/SKILL.md)
+
+### 按年份與方法類型比較模型
+
+`lanes` 可將比較方法放進不同色帶，按年份排列成可編輯的膠囊標籤，並在下方保留會議或出處。
+同年或相鄰模型會自動堆疊，較擁擠的類別會分到更多高度；`focus=方法名` 可標示本研究。
+
+~~~~markdown
+```lanes ticks=2018,2022,2023,2024,2025 focus=Proposed
+- 2012 | Earlier method | lane: Sequence models | note: Venue A · 2012
+- 2024 | Baseline | lane: Language models | note: Venue B
+- 2025 | Proposed | lane: Language models | note: This work
+```
+~~~~
+
+`ticks=` 指定等距刻度，跳過的年份以斷軸表示；早於首刻度的模型歸到「≤年份」，適合壓縮較早期的研究。
+沿用 `lanes 2017-2026` 則保持年份比例。
+完整範例：[`examples/model-timeline.md`](examples/model-timeline.md)（名稱、會議與年份皆為示意）。
+
+![模型分類時間軸](docs/model-timeline.jpg)
 
 ### 圖片
 
