@@ -154,13 +154,14 @@ def test_svg_embedded_as_vector(tmp_path):
     assert "image/svg+xml" in z.read("[Content_Types].xml").decode()
 
 
-def _image_layout(tmp_path, size, body, title="#### 截圖 | 一句話說明這張圖"):
+def _image_layout(tmp_path, size, body, title="#### 截圖 | 一句話說明這張圖", front=""):
     from PIL import Image
     from deckframes.engines.canvas import Canvas
     from deckframes.markdown import parse_markdown
     from deckframes.themes import resolve_theme
     Image.new("RGB", size, "white").save(tmp_path / "img.png")
-    doc = parse_markdown(f"# T\n\n## 章 | Ch\n\n### 節\n\n{title}\n\n{body}\n")
+    head = f"---\n{front}---\n\n" if front else ""
+    doc = parse_markdown(f"{head}# T\n\n## 章 | Ch\n\n### 節\n\n{title}\n\n{body}\n")
     theme, _ = resolve_theme("blockframe")
     c = Canvas(theme, doc.meta, tmp_path)
     c.chapters = [s for s in doc.sections if s.title]
@@ -184,6 +185,30 @@ def test_text_and_image_split_follows_aspect(tmp_path):
     assert wide["visual"][2] > tall["visual"][2]       # landscape image gets the wider column
     left = _image_layout(tmp_path, (1754, 1241), '- 一點\n\n![](img.png "left")')
     assert left["visual"][0] < left["text"][0]         # "left" puts the image first
+
+
+LONG = "- " + "A fairly long English sentence that would wrap many times in a narrow column. " * 3
+
+
+def test_visual_below_puts_text_on_top(tmp_path):
+    hint = _image_layout(tmp_path, (1754, 1241), '- one point\n\n![](img.png "below")')
+    assert hint["mode"] == "below"
+    assert hint["text"][1] < hint["visual"][1]         # text above the image
+    assert hint["visual"][2] > 10                      # image spans the content width
+    whole = _image_layout(tmp_path, (1754, 1241), "- one point\n\n![](img.png)", front="visual_below: true\n")
+    assert whole["mode"] == "below"
+    side = _image_layout(tmp_path, (1754, 1241), '- one point\n\n![](img.png "side")', front="visual_below: true\n")
+    assert side["mode"] == "split"                     # "side" opts one slide out
+
+
+def test_visual_below_auto_follows_wrapping(tmp_path):
+    short = _image_layout(tmp_path, (1754, 1241), "- one point\n\n![](img.png)", front="visual_below: auto\n")
+    long = _image_layout(tmp_path, (1754, 1241), f"{LONG}\n\n![](img.png)", front="visual_below: auto\n")
+    assert short["mode"] == "split"                    # short text stays beside the image
+    assert long["mode"] == "below"                     # text that keeps wrapping goes on top
+    bled = _image_layout(tmp_path, (1754, 1241), f"{LONG}\n\n![](img.png)",
+                         front="visual_below: auto\nvisual_bleed: 0.35\n")
+    assert abs(bled["visual"][2] - long["visual"][2] - 0.7) < 1e-6   # bleed widens the image on both sides
 
 
 COMPONENTS = ROOT / "examples" / "components.md"
