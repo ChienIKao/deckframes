@@ -176,63 +176,134 @@ class DiagramMixin:
             return
         info = d.get("info", "")
 
-        def year(t):
-            m = re.search(r"\d{4}(?:\.\d+)?", t)
-            return float(m.group(0)) if m else None
+        def year(text):
+            match = re.search(r"\d{4}(?:\.\d+)?", text)
+            return float(match.group(0)) if match else None
 
-        lanes = []
-        for it in items:
-            ln = it["attrs"].get("lane", "")
-            if ln not in lanes:
-                lanes.append(ln)
-        years = [year(it["title"]) for it in items if year(it["title"]) is not None]
-        rng = re.search(r"(\d{4})\s*[-–~]\s*(\d{4})", info or "")
-        y0, y1 = (float(rng.group(1)), float(rng.group(2))) if rng else (min(years), max(years))
+        years = [value for it in items if (value := year(it["title"])) is not None]
+        ticks = None
+        raw_ticks = arg_value(info, "ticks")
+        if raw_ticks:
+            try:
+                ticks = [float(value.strip()) for value in raw_ticks.split(",")]
+                if (len(ticks) < 2 or any(not math.isfinite(v) for v in ticks)
+                        or any(a >= b for a, b in zip(ticks, ticks[1:]))):
+                    raise ValueError
+            except ValueError:
+                self.warnings.append("lanes: ticks must be an increasing list of at least two years")
+                ticks = None
+        rng = re.search(r"(\d{4})\s*[-–~]\s*(\d{4})", info)
+        if ticks:
+            y0, y1 = ticks[0], ticks[-1]
+        elif rng:
+            y0, y1 = float(rng.group(1)), float(rng.group(2))
+        elif years:
+            y0, y1 = min(years), max(years)
+        else:
+            self.warnings.append("lanes: provide a year range or dated items")
+            return
         if y1 <= y0:
             y1 = y0 + 1
-        label_w = 1.5
-        axis_h = 0.45
-        lane_h = (h - axis_h - 0.15 * (len(lanes) - 1)) / len(lanes)
-        tx0, tx1 = x + label_w + 0.35, x + w - 0.5
-        X = lambda v: tx0 + (v - y0) / (y1 - y0) * (tx1 - tx0)  # noqa: E731
-        for k, lane in enumerate(lanes):
-            ly = y + k * (lane_h + 0.15)
-            band = self.shape(s, MSO_SHAPE.ROUNDED_RECTANGLE if self.radius > 0 else MSO_SHAPE.RECTANGLE, x, ly, w,
-                              lane_h, fill=mix(self.pal(k), self.ground, 0.7))
-            if self.radius > 0:
-                band.adjustments[0] = 0.08
-            self.text(s, x + 0.15, ly, label_w, lane_h, lane, 14, bold=True,
-                      color=mix(self.pal(k), "000000", 0.35) if self.luminance(self.pal(k)) > 0.5 else self.pal(k),
-                      anchor=MSO_ANCHOR.MIDDLE, font="heading")
-            rows: list[list[tuple[float, float]]] = []
+        focus = {name.strip() for name in (arg_value(info, "focus") or "").split(",") if name.strip()}
+        lanes = list(dict.fromkeys(it["attrs"].get("lane", "") for it in items))
+        label_w = min(1.65, w * .22)
+        axis_h, lane_gap = .48, .08
+        tx0, tx1 = x + label_w + .25, x + w - .15
+        rail_w = tx1 - tx0
+
+        def position(value):
+            value = max(y0, min(y1, value))
+            if ticks:
+                index = next((i for i in range(len(ticks) - 1) if value <= ticks[i + 1]), len(ticks) - 2)
+                fraction = (index + (value - ticks[index]) / (ticks[index + 1] - ticks[index])) / (len(ticks) - 1)
+            else:
+                fraction = (value - y0) / (y1 - y0)
+            return tx0 + fraction * rail_w
+
+        # Pack complete lanes before drawing: later collisions must not move only some rows.
+        plans = []
+        for lane in lanes:
+            rows, entries = [], []
             lane_items = [it for it in items if it["attrs"].get("lane", "") == lane]
-            for it in sorted(lane_items, key=lambda i: year(i["title"]) or y0):
+            for it in sorted(lane_items, key=lambda it: year(it["title"]) or y0):
                 name = it["desc"] or it["title"]
-                pw = self.measure(name, 12) + 0.45
-                cx = X(year(it["title"]) or y0)
-                left = min(max(tx0 - 0.2, cx - pw / 2), tx1 + 0.3 - pw)
-                r = next((i for i, row in enumerate(rows) if all(left > b + 0.08 or left + pw < a - 0.08
-                                                                   for a, b in row)), len(rows))
-                if r == len(rows):
+                note = it["attrs"].get("note", "")
+                pw = min(rail_w, max(.65, self.measure(name, 14) + .28, self.measure(note, 10) + .1))
+                left = max(tx0, min(tx1 - pw, position(year(it["title"]) or y0) - pw / 2))
+                row = next((i for i, intervals in enumerate(rows)
+                            if all(left >= b + .1 or left + pw + .1 <= a for a, b in intervals)), len(rows))
+                if row == len(rows):
                     rows.append([])
-                rows[r].append((left, left + pw))
-                slot = min(0.66, lane_h / max(2, len(rows) + 0.5))
-                py = ly + 0.18 + r * slot
-                sp = self.shape(s, MSO_SHAPE.ROUNDED_RECTANGLE, left, py, pw, 0.34, fill=self.white,
-                                line=mix(self.muted, self.ground, 0.2), lw=0.75)
-                self.text(s, 0, 0, 0, 0, name, 12, bold=True, color=self.on(self.white), align=PP_ALIGN.CENTER,
-                          anchor=MSO_ANCHOR.MIDDLE, target=sp)
-                if it["attrs"].get("note"):
-                    self.text(s, left, py + 0.34, pw, 0.22, it["attrs"]["note"], 9, color=self.muted,
-                              align=PP_ALIGN.CENTER)
-        ay = y + h - axis_h + 0.1
-        self.line(s, tx0 - 0.2, ay, tx1 + 0.2, ay, color=self.muted, width=1)
-        step = max(1, round((y1 - y0) / 10))
-        v = y0
-        while v <= y1 + 0.01:
-            self.line(s, X(v), ay - 0.05, X(v), ay + 0.05, color=self.muted, width=1)
-            self.text(s, X(v) - 0.4, ay + 0.05, 0.8, 0.25, f"{int(v)}", 9, color=self.muted, align=PP_ALIGN.CENTER)
-            v += step
+                rows[row].append((left, left + pw))
+                entries.append((name, note, left, pw, row))
+            plans.append((lane, rows, entries))
+
+        available = h - axis_h - lane_gap * (len(lanes) - 1)
+        total_units = sum(len(rows) + .5 for _, rows, _ in plans)
+        ly = y
+        for k, (lane, rows, entries) in enumerate(plans):
+            lane_h = available * (len(rows) + .5) / total_units
+            fill = mix(self.pal(k), self.ground, .78)
+            band = self.shape(s, MSO_SHAPE.ROUNDED_RECTANGLE if self.radius > 0 else MSO_SHAPE.RECTANGLE,
+                              x, ly, w, lane_h, fill=fill)
+            band.name = f"lanes:band:{lane}"
+            if self.radius > 0:
+                band.adjustments[0] = .08
+            self.text(s, x + .12, ly, label_w, lane_h, lane, 14, bold=True, color=self.on(fill),
+                      anchor=MSO_ANCHOR.MIDDLE, font="heading")
+            slot = (lane_h - .12) / len(rows)
+            for name, note, left, pw, row in entries:
+                pill_h = min(.36, slot * (.61 if note else .82))
+                note_h = min(.22, slot * .32) if note else 0
+                py = ly + .06 + row * slot + (slot - pill_h - note_h) / 2
+                selected = name in focus
+                edge = self.tones["positive"] if selected else self.pal(k)
+                pill_fill = mix(edge, self.white, .82) if selected else self.white
+                sp = self.shape(s, MSO_SHAPE.ROUNDED_RECTANGLE, left, py, pw, pill_h,
+                                fill=pill_fill, line=edge, lw=1.5 if selected else 1)
+                sp.name = f"lanes:item:{name}"
+                size = min(14, max(8, int(pill_h * 72 * .7)))
+                while size > 8 and self.measure(name, size) > pw - .12:
+                    size -= 1
+                self.text(s, 0, 0, 0, 0, name, size, bold=True, color=self.on(pill_fill), align=PP_ALIGN.CENTER,
+                          anchor=MSO_ANCHOR.MIDDLE, target=sp, margin=.02)
+                if note:
+                    note_size = min(10, max(7, int(note_h * 72 * .82)))
+                    while note_size > 7 and self.measure(note, note_size) > pw - .04:
+                        note_size -= 1
+                    tb = self.text(s, left, py + pill_h, pw, note_h, note, note_size, color=self.on(fill),
+                                   align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE)
+                    tb.name = f"lanes:note:{name}"
+            ly += lane_h + lane_gap
+
+        ay = y + h - axis_h + .08
+        if ticks:
+            for a, b in zip(ticks, ticks[1:]):
+                if b - a <= 1:
+                    self.line(s, position(a), ay, position(b), ay, color=self.muted, width=1)
+                else:
+                    middle = (position(a) + position(b)) / 2
+                    self.line(s, position(a), ay, middle - .1, ay, color=self.muted, width=1)
+                    self.line(s, middle + .1, ay, position(b), ay, color=self.muted, width=1)
+                    for dx in (-.04, .04):
+                        self.line(s, middle + dx - .025, ay - .045, middle + dx + .025, ay + .045,
+                                  color=self.muted, width=1)
+            axis_ticks = ticks
+        else:
+            self.line(s, tx0, ay, tx1, ay, color=self.muted, width=1)
+            step = max(1, math.ceil((y1 - y0) / 10))
+            axis_ticks = [y0 + i * step for i in range(int((y1 - y0) / step) + 1)]
+            if axis_ticks[-1] != y1:
+                axis_ticks.append(y1)
+        for value in axis_ticks:
+            self.line(s, position(value), ay - .05, position(value), ay + .05, color=self.muted, width=1)
+            label = f"{value:g}"
+            if value == y0 and years and min(years) < y0:
+                label = f"≤{label}"
+            if value == y1 and years and max(years) > y1:
+                label = f"≥{label}"
+            left = max(x, min(x + w - .8, position(value) - .4))
+            self.text(s, left, ay + .06, .8, .25, label, 9, color=self.muted, align=PP_ALIGN.CENTER)
 
     # ------------------------------------------------------------------ mapping
     def comp_mapping(self, s, d, x, y, w, h):
