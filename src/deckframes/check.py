@@ -57,7 +57,7 @@ def check(path: str | Path) -> dict:
                             item["issues"].append({"type": "emoji", "shape": shp.name, "chars": "".join(found),
                                                    "excerpt": txt[:30]})
                 need, avail = text_need(shp)
-                if need > avail * 1.1 + 4:
+                if need > avail * 1.1 + 4 and shp.text_frame.text.strip():
                     item["issues"].append({"type": "text_overflow", "shape": shp.name,
                                            "needed_pt": round(need), "available_pt": round(avail),
                                            "excerpt": shp.text_frame.text[:30]})

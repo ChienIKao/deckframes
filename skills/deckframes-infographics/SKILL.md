@@ -30,7 +30,10 @@ a visual.
 | Screenshots, architecture, plots | `![caption](assets/x.png)` — one per slide; for app screenshots use `#### Feature \| one-line message` and no bullets (showcase layout) |
 | The core message | a lone `> quote` → quote card |
 | System / model architecture, data flow with branches | ```` ```diagram ```` (`A -> B` edges, `group`, `focus=`) |
-| Walking through one architecture part by part | the same ```` ```diagram focus=Part ```` on consecutive slides |
+| Walking through one architecture part by part | ```` ```diagram build ```` (nodes appear one by one), then `+++ focus=Part` |
+| Items that should appear one at a time while you talk | add `build` to the block (` ```steps build `) |
+| Overview first, then each item in turn | add `build=focus` (` ```mapping build=focus `) |
+| Coming back to one item later in the deck | the same block again with `focus=2` |
 | Related work over the years, two research lines | ```` ```lanes 2017-2026 ```` |
 | Problems ↔ the fix for each | ```` ```mapping ```` (`Problem -> Solution`) |
 | Model layers, tech stack, pipeline stages top → bottom | ```` ```stack ```` |
@@ -54,6 +57,21 @@ failure. Before writing, list each slide's content shape and assign blocks acros
   or `diagram`; a list of items is `cards`, `mapping`, `matrix` or a table; numbers are `stats`,
   `chart` or `progress`. Pick the one that matches the *relationship* between items.
 - Repeating a `diagram` with a moving `focus=` across a sequence is fine — it is one visual story.
+  So are `build` sequences: lint counts the block once.
+
+## Reveal and focus (every block)
+
+These options work on every block except `chart` (they go after the block name, like `cols=3`):
+
+| Option | Effect |
+|---|---|
+| `build` | one slide per item: item 1, items 1–2, … all items. Positions never change between slides; connectors and arrows appear with the item they lead to |
+| `build=dim` | same, but the items already discussed turn pale grey |
+| `build=focus` | all items on every slide: an overview first, then one slide per item with only that item in colour |
+| `focus=2` / `focus=2,3` / `focus=Title` | this slide only: the named items keep their colour, the rest is greyed out |
+
+For whole-slide stages (add a callout, fade the slide behind a new layer, spotlight one table row)
+use `+++` steps — see deckframes-core.
 
 ## Composition rules
 
@@ -86,7 +104,7 @@ SVG path. Pick icons that carry meaning (clock = waiting time, database = data) 
 | `chart` | — | — | body is a Markdown table: first column = categories, other columns = series | type, then title |
 | `diagram` | `A -> B` edge, or a node | node caption (node lines only) | free lines `group Label: a, b` | `focus=A,B`, `dir=tb` |
 | `lanes` | year (`2021`) | item name | `lane: …`, `note: …` | year range `2017-2026` |
-| `mapping` | `Problem -> Solution` | — | — | `neutral` (palette colours instead of red/green) |
+| `mapping` | `Problem -> Solution` | — | `icon:` (disc on the arrow, themes with `legend`) | `neutral` (palette colours instead of red/green), `left=問題 right=解法` (legend labels) |
 | `stack` / `pyramid` / `funnel` | level name | description | — | — |
 | `matrix` | quadrant title (TL, TR, BL, BR) | description | — | `x=label y=label` |
 | `cycle` | stage | description | — | centre label |
@@ -107,7 +125,8 @@ group Denoiser: Encoder, Cross-attention, Decoder
 ~~~
 
 Nodes are laid out left → right by dependency (`dir=tb` for top → bottom). `focus=` highlights
-nodes and dims the rest; groups draw a dashed frame with a label.
+nodes and dims the rest (names, or 1-based positions in order of appearance); groups draw a dashed
+frame with a label. With `build`, nodes appear in the order they are first mentioned.
 
 ### lanes
 

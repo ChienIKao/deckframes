@@ -363,6 +363,8 @@ class ChromeMixin:
             cur = k == ci
             fill = self.pal(0) if cur else mix(self.muted, self.ground, 0.72)
             sp = self.shape(s, MSO_SHAPE.ROUNDED_RECTANGLE, x + k * (pw + gap), 0.2, pw, 0.34, fill=fill)
+            if cur:
+                self.lift(sp, small=True)
             self.text(s, 0, 0, 0, 0, ch.title, 12, bold=True, color=self.on(fill) if cur else mix(self.on(fill), fill,
                                                                                                      0.35),
                       align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE, target=sp)
@@ -376,6 +378,8 @@ class ChromeMixin:
             w = self.measure(sub.title, 10) + 0.36
             fill = self.pal(0) if cur else mix(self.muted, self.ground, 0.78)
             sp = self.shape(s, MSO_SHAPE.ROUNDED_RECTANGLE, sx, y - 0.13, w, 0.26, fill=fill)
+            if cur:
+                self.lift(sp, small=True)
             self.text(s, 0, 0, 0, 0, sub.title, 10, bold=cur, color=self.on(fill) if cur else mix(self.on(fill), fill, 0.4),
                       align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE, target=sp)
             sx += w + 0.12
@@ -430,6 +434,28 @@ class ChromeMixin:
             size -= 1
         self.text(s, 0, 0, 0, 0, d["text"], size, bold=True, color=self.on(fill), align=PP_ALIGN.CENTER,
                   anchor=MSO_ANCHOR.MIDDLE, target=sp, margin=0.12)
+
+    def callout_card(self, s, d, x, y, w, h):
+        """Tinted note card with an accent outline, a soft lift and its icon in a disc on the top-right corner."""
+        base = self.tone_fill(d["kind"]) or self.card_accent
+        fill = mix(base, self.ground, 0.85)
+        sp = self.shape(s, MSO_SHAPE.ROUNDED_RECTANGLE if self.radius > 0 else MSO_SHAPE.RECTANGLE, x, y, w, h,
+                        fill=fill, line=base, lw=1.5)
+        if self.radius > 0:
+            sp.adjustments[0] = min(0.5, self.radius * 1.5 / max(0.05, h))
+        self.soft_shadow(sp, blur=6, dist=3, angle=45, alpha=0.3)
+        dd = min(0.62, h * 0.75)
+        disc = self.shape(s, MSO_SHAPE.OVAL, x + w - dd * 0.75, y - dd * 0.35, dd, dd, fill="FFFFFF", line=base,
+                          lw=1.5)
+        self.soft_shadow(disc, blur=4, dist=2, angle=45, alpha=0.3)
+        ink = base if self.luminance(base) < 0.5 else mix(base, "000000", 0.35)
+        self.glyph(s, CALLOUT_ICONS.get(d["kind"], "circle-info"), x + w - dd * 0.75, y - dd * 0.35, dd, dd, ink,
+                   scale=0.55)
+        size = 15
+        while size > 11 and self.lines_height([{"text": d["text"], "size": size}], w - 1.1) + 0.2 > h:
+            size -= 1
+        self.text(s, x + 0.3, y, w - 1.0, h, d["text"], size, bold=True, color=self.card_ink,
+                  anchor=MSO_ANCHOR.MIDDLE)
 
     def callout_tint(self, s, d, x, y, w, h):
         base = self.tone_fill(d["kind"]) or self.pal(1)
