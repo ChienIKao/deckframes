@@ -10,6 +10,8 @@
   funnel    narrowing stages, wide top → narrow bottom
   cycle     items around a loop
   progress  labelled progress bars (`- Label | 80%`)
+  gantt     column schedules with windows and milestones
+  annotate  cards beside a fitted image with focusable regions
 """
 from __future__ import annotations
 
@@ -22,7 +24,7 @@ from pptx.enum.text import MSO_ANCHOR, PP_ALIGN
 from pptx.oxml.ns import qn
 from pptx.util import Pt
 
-from ..markdown import plain
+from ..markdown import gantt_label, gantt_span, plain
 from .style import E, mix, rgb
 
 ARROW_SPLIT = re.compile(r"\s*(?:->|→)\s*")
@@ -34,6 +36,110 @@ def arg_value(info: str, key: str):
 
 
 class DiagramMixin:
+    # ------------------------------------------------------------------ gantt / annotation
+    def comp_gantt(self, s, d, x, y, w, h):
+        items, cols = d["items"], d["columns"]
+        if not items or not cols:
+            return
+        lw, gh, hh = w * 0.24, 0.4 if d["groups"] else 0, 0.48
+        tx, cw = x + lw, w * 0.76 / len(cols)
+        top = y + gh + hh
+        rh = (h - gh - hh) / len(items)
+        grid = mix(self.muted, self.ground, 0.76)
+        for k, group in enumerate(d["groups"]):
+            a, b = group["span"]
+            fill = self.card_accent if k == len(d["groups"]) - 1 else mix(self.card_accent, self.ground, 0.88)
+            self.shape(s, MSO_SHAPE.RECTANGLE, tx + a * cw, y, (b - a + 1) * cw - 0.02, gh, fill=fill)
+            self.text(s, tx + a * cw, y, (b - a + 1) * cw, gh, group["title"], 13, bold=True,
+                      color=self.on(fill), align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE)
+        for k, label in enumerate(cols):
+            self.text(s, tx + k * cw, y + gh + 0.12, cw, hh - 0.12, gantt_label(label), 12, color=self.muted,
+                      align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE)
+        now = next((a[4:] for a in d["args"] if a.startswith("now=")), None)
+        if now:
+            a, _ = gantt_span(cols, now)
+            self.shape(s, MSO_SHAPE.ISOSCELES_TRIANGLE, tx + (a + 0.5) * cw - 0.07, y + gh,
+                       0.14, 0.12, fill=self.card_accent)
+        for k in range(len(items)):
+            if k % 2 == 0:
+                with self.tag(s, item=k, name=plain(items[k]["title"])):
+                    self.shape(s, MSO_SHAPE.RECTANGLE, x, top + k * rh, w, rh,
+                               fill=mix(self.card_accent, self.ground, 0.94))
+        for k in range(len(cols) + 1):
+            self.line(s, tx + k * cw, top, tx + k * cw, y + h, color=grid, width=0.5)
+        for k, it in enumerate(items):
+            ry = top + k * rh
+            with self.tag(s, item=k, name=plain(it["title"])):
+                lines = [{"text": it["title"], "size": 16, "bold": True, "color": self.title_ink}]
+                if it["desc"]:
+                    lines.append({"text": it["desc"], "size": 12, "color": self.muted})
+                self.text(s, x + 0.1, ry, lw - 0.2, rh, lines, 16, anchor=MSO_ANCHOR.MIDDLE)
+                fill = it["attrs"].get("color", self.color_for(k)).lstrip("#")
+                bh = min(0.34, rh * 0.62)
+                by = ry + (rh - bh) / 2
+                if "window" in it:
+                    a, b = it["window"]
+                    wx, ww = tx + a * cw, (b - a + 1) * cw
+                    sp = self.shape(s, MSO_SHAPE.ROUNDED_RECTANGLE, wx, by, ww, bh, line=fill, lw=1.5)
+                    self.dash(sp, "dash")
+                    label = re.sub(r"'\d+", "", it["attrs"]["window"]).replace("-", " – ")
+                    tw = self.measure(label, 9) + 0.1
+                    outside = wx - tx > tw + 0.08
+                    self.text(s, wx - tw - 0.08 if outside else wx, by, tw if outside else ww, bh,
+                              label, 9, color=self.muted, anchor=MSO_ANCHOR.MIDDLE, align=PP_ALIGN.CENTER)
+                if "span" in it:
+                    a, b = it["span"]
+                    sp = self.shape(s, MSO_SHAPE.ROUNDED_RECTANGLE, tx + a * cw, by, (b - a + 1) * cw,
+                                    bh, fill=fill)
+                    label = it["attrs"].get("note") or re.sub(r"'\d+", "", it["extra"][0]).replace("-", " – ")
+                    size = 13
+                    while size > 8 and self.measure(label, size) > (b - a + 1) * cw - 0.1:
+                        size -= 1
+                    self.text(s, 0, 0, 0, 0, label, size, color=self.on(fill), align=PP_ALIGN.CENTER,
+                              anchor=MSO_ANCHOR.MIDDLE, target=sp, margin=0.03)
+                if "at" in it:
+                    a, _ = it["at"]
+                    cx = tx + (a + 0.5) * cw
+                    dd = min(0.2, cw * 0.6)
+                    self.shape(s, MSO_SHAPE.DIAMOND, cx - dd / 2, ry + rh / 2 - dd / 2, dd, dd, fill=fill)
+                    self.text(s, tx, ry, max(0.1, cx - tx - dd), rh, it["attrs"].get("note", ""), 10,
+                              color=self.accent_ink(fill), align=PP_ALIGN.RIGHT, anchor=MSO_ANCHOR.MIDDLE)
+
+    def comp_annotate(self, s, d, x, y, w, h):
+        items = d["items"]
+        if not items:
+            return
+        iw, gap = w * 0.45, 0.4
+        left = "left" in d["args"]
+        ix = x if left else x + w - iw
+        cx = x + iw + gap if left else x
+        cw = w - iw - gap
+        path = next((a[4:] for a in d["args"] if a.startswith("img=")), None)
+        with self.tag(s, fixed=True):
+            pic = self.picture(s, path, ix, y, iw, h) if path else None
+            if pic:
+                self.outline(pic[0])
+        ch = (h - 0.2 * (len(items) - 1)) / len(items)
+        for k, it in enumerate(items):
+            cy = y + k * (ch + 0.2)
+            with self.tag(s, item=k, name=plain(it["title"])):
+                self.card(s, it, k, cx, cy, cw, ch, horizontal=True)
+                with self.tag(s, region=True, focus_only=True):
+                    frame = self.shape(s, MSO_SHAPE.RECTANGLE, cx, cy, cw, ch, line=self.card_accent, lw=3)
+                    frame.name = f"annotate-card-{k + 1}"
+                    if self.elevation:
+                        self.glow(frame, self.card_accent, radius=4, alpha=0.3)
+                if pic and it.get("area"):
+                    px, py, pw, ph = pic[1]
+                    a, b, aw, ah = it["area"]
+                    rx, ry, rw, rh = px + pw * a / 100, py + ph * b / 100, pw * aw / 100, ph * ah / 100
+                    with self.tag(s, region=True):
+                        frame = self.shape(s, MSO_SHAPE.RECTANGLE, rx, ry, rw, rh, line=self.card_accent, lw=3)
+                        frame.name = f"annotate-region-{k + 1}"
+                        if self.elevation:
+                            self.glow(frame, self.card_accent, radius=4, alpha=0.3)
+                        self.badge_at(s, rx + 0.13, ry + 0.13, 0.26, str(k + 1), size=9)
+
     # ------------------------------------------------------------------ shared
     def arrow(self, s, x1, y1, x2, y2, color=None, width=1.5, elbow=False, begin=None, end=None, begin_idx=3,
               end_idx=1):

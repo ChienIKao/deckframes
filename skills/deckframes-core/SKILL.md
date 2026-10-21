@@ -52,6 +52,7 @@ recap: false                 # replay the chapter divider before each section, c
 title_format: "{sub} – {title}"
 closing: Q&A                 # closing slide text; false = none
 closing_label: THANK YOU
+closing_image: assets/night.jpg # full-bleed cropped photo behind the closing title
 max_table_rows: 9            # longer tables split, header repeated
 section_level: 2
 subsection_level: 3
@@ -70,12 +71,12 @@ visual_bleed: 0.35          # inches the image may extend into the side margins
 | `**bold**`, `*italic*`, `` `code` ``, `[text](url)` | inline formatting |
 | `==key phrase==` | highlighter mark + bold |
 | `> quote` | quote; a slide holding only one quote becomes a quote card |
-| `> [!NOTE] text` | bottom callout. Kinds: NOTE, TIP, IMPORTANT, WARNING, CAUTION, SUMMARY, PROBLEM (negative tone), RESULT / SUCCESS (positive tone) |
+| `> [!NOTE] text` | bottom callout. Kinds: NOTE, TIP, HINT (compact sticky note), IMPORTANT, WARNING, CAUTION, SUMMARY, PROBLEM (negative tone), RESULT / SUCCESS (positive tone) |
 | paragraph starting `Source:` / `資料來源：` / `來源：` / `Ref:` | footer citation |
 | `![caption](assets/x.png)` on its own line | image with a thin outline + caption tag below (PNG, JPG or SVG — SVG stays vector); layout hints in the title: `![caption](x.png "left wide")` |
 | Markdown table | native table; ○ × ✓ and numbers auto-centred |
 | ```` ```lang ```` code fence | dark code card |
-| ```` ```cards ```` `steps` `timeline` `flow` `stats` `compare` `chart` `diagram` `lanes` `mapping` `stack` `matrix` `pyramid` `funnel` `cycle` `progress` | infographics → `deckframes-infographics` (vary them across the deck) |
+| ```` ```cards ```` `steps` `timeline` `flow` `stats` `compare` `chart` `diagram` `lanes` `mapping` `stack` `matrix` `pyramid` `funnel` `cycle` `progress` `gantt` `annotate` | infographics → `deckframes-infographics` (vary them across the deck) |
 | `<!-- text -->` | speaker notes (multi-line OK) |
 
 ## No emoji — use icons

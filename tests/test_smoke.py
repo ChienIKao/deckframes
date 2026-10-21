@@ -233,6 +233,156 @@ def test_components_render_on_many_themes(tmp_path):
         assert report["ok"], (theme, report["issues"][:3])
 
 
+def test_gantt_columns_and_spans():
+    from deckframes.markdown import gantt_columns, gantt_label, parse_component
+
+    d = parse_component("gantt", "Jul'25-Sep'26 now=Sep", "group Study: Jul-Jan\n"
+                        "- Draft | Plan | nov-May | window: Feb-May\n- Intern | | Jul'26-Aug'26\n"
+                        "- Offer | | at: Sep'26")
+    assert [gantt_label(c) for c in d["columns"]] == \
+        "Jul Aug Sep Oct Nov Dec Jan Feb Mar Apr May Jun Jul Aug Sep".split()
+    assert d["groups"] == [{"title": "Study", "span": (0, 6)}]
+    assert d["items"][0]["span"] == (4, 10)
+    assert d["items"][0]["window"] == (7, 10)
+    assert d["items"][1]["span"] == (12, 13)
+    assert d["items"][2]["at"] == (14, 14)
+    assert len(gantt_columns(["Jan-Dec"])) == 12 and len(gantt_columns(["Oct-Mar"])) == 6
+    for rng, expected in [("1-12", list(map(str, range(1, 13)))), ("2017-2026", list(map(str, range(2017, 2027))))]:
+        d = parse_component("gantt", rng, f"- Work | Plan | {rng}")
+        assert d["columns"] == expected
+        assert d["items"][0]["span"] == (0, len(expected) - 1)
+    d = parse_component("gantt", "cols=Q1,Q2,Q3,Q4", "- Work | Plan | Q2-Q3")
+    assert d["columns"] == ["Q1", "Q2", "Q3", "Q4"] and d["items"][0]["span"] == (1, 2)
+
+
+def test_steps_detail_panels_parse():
+    from deckframes.markdown import parse_component
+
+    d = parse_component("steps", "horizontal", "- Invitation | | Day + 0\n- Interviews\n"
+                        "  - Prepare\n  > Technical\n    1. Project\n    2. Tradeoffs\n"
+                        "  > Team\n    1. Collaboration")
+    assert d["items"][0]["desc"] == "" and d["items"][0]["extra"] == ["Day + 0"]
+    assert d["items"][1]["children"] == ["Prepare"]
+    assert d["items"][1]["panels"] == [{"title": "Technical", "lines": ["Project", "Tradeoffs"]},
+                                          {"title": "Team", "lines": ["Collaboration"]}]
+
+
+def test_annotate_area_parse():
+    from deckframes.markdown import parse_component
+
+    d = parse_component("annotate", "img=assets/chart.png left build=focus",
+                        "- Grade | Summary | area: 0,22,26,20\n- Project | Detail | area: 26,25,74,75")
+    assert d["items"][0]["area"] == [0, 22, 26, 20]
+    assert d["items"][1]["area"] == [26, 25, 74, 75]
+    assert d["build"] == "focus" and d["args"] == ["img=assets/chart.png", "left"]
+
+
+def test_annotate_focus_preserves_picture(tmp_path):
+    from pptx import Presentation
+    from pptx.oxml.ns import qn
+
+    img = (ROOT / "examples/assets/chart.png").as_posix()
+    src = tmp_path / "focus.md"
+    src.write_text("---\noutline: false\nclosing: false\n---\n# Test\n## Part\n### Detail\n#### Image\n"
+                   f"```annotate img={img} build=focus\n"
+                   "- Summary | Overview | area: 0,0,100,25\n- Plot | Detail | area: 10,30,80,60\n```\n"
+                   "+++ dim\n\nA final note.\n", encoding="utf-8")
+    for theme in ["blockframe", "academic", "aws"]:
+        out = tmp_path / f"focus-{theme}.pptx"
+        main(["build", str(src), "--theme", theme, "-o", str(out)])
+        slides = list(Presentation(str(out)).slides)[2:]
+        assert len(slides) == 4
+        for i, slide in enumerate(slides[:3]):
+            names = {sh.name for sh in slide.shapes}
+            regions = {name for name in names if name.startswith("annotate-region-")}
+            assert regions == ({"annotate-region-1", "annotate-region-2"} if i == 0 else {f"annotate-region-{i}"})
+            frames = {name for name in names if name.startswith("annotate-card-")}
+            assert frames == (set() if i == 0 else {f"annotate-card-{i}"})
+            picture = next(sh for sh in slide.shapes if sh._element.tag == qn("p:pic"))
+            assert not list(picture._element.iter(qn("a:alphaModFix")))
+        picture = next(sh for sh in slides[-1].shapes if sh._element.tag == qn("p:pic"))
+        assert list(picture._element.iter(qn("a:alphaModFix")))
+        assert check(out)["ok"]
+
+
+def test_presentation_patterns_reveal_on_builtin_themes(tmp_path):
+    from pptx import Presentation
+    from pptx.oxml.ns import qn
+
+    assets = (ROOT / "examples/assets").as_posix()
+    src = tmp_path / "patterns.md"
+    src.write_text(f"""---
+outline: false
+closing: Q&A
+closing_image: {assets}/photo.png
+---
+# Patterns
+## Part
+### Details
+#### Roadmap
+```gantt 1-12 build=dim
+group Plan: 1-6
+group Deliver: 7-12
+- Research | First draft | 1-5
+- Launch | Release | at: 12 | note: Ready
+```
+#### Annotation
+```annotate img={assets}/chart.png left build
+- Overview | Read the summary | area: 0,0,100,20
+  - Compare the series
+- Evidence | Check the values | area: 0,20,50,80
+- Detail | Inspect the scale | area: 50,20,50,80
+```
+#### Process
+```steps horizontal build=focus
+- Invitation | | Day + 0
+- Interviews
+  - Prepare a demo
+  > Technical
+    1. Project
+    2. Tradeoffs
+  > Team
+    1. Collaboration
+- Review
+- Decision
+```
+#### Follow-up
+```steps vertical
+- Interview
+  > Discussion
+    1. Share a project
+- Decision
+```
+#### Day
+```timeline axis build
+- 08:30 | Arrive | By bus | img: {assets}/photo.png
+- 12:00 | Lunch | Shared break | img: {assets}/photo.png
+```
+#### Partners
+```stats build=focus
+- Invitations | img: {assets}/brand-a.svg, {assets}/brand-a.svg
+- Pilot | img: {assets}/brand-a.svg
+```
+> [!HINT] Keep a working example ready.
+""", encoding="utf-8")
+    for theme in ["blockframe", "academic", "aws"]:
+        out = tmp_path / f"patterns-{theme}.pptx"
+        main(["build", str(src), "--theme", theme, "-o", str(out)])
+        report = check(out)
+        assert report["ok"], (theme, report["issues"][:3])
+        slides = list(Presentation(str(out)).slides)
+        annotations = [s for s in slides if any(sh.name.startswith("annotate-region-") for sh in s.shapes)]
+        assert [sum(sh.name.startswith("annotate-region-") for sh in s.shapes) for s in annotations] == [1, 2, 3]
+        for s in slides:
+            text = "\n".join(sh.text for sh in s.shapes if sh.has_text_frame)
+            assert text.count("Day + 0") <= 1
+        closing = slides[-1]
+        pic = next(sh for sh in closing.shapes if sh._element.tag == qn("p:pic"))
+        prs = Presentation(str(out))
+        assert (pic.left, pic.top, pic.width, pic.height) == (0, 0, prs.slide_width, prs.slide_height)
+        assert pic.crop_top > 0 and pic.crop_top == pic.crop_bottom
+
+
 def test_builtin_themes_have_distinct_styles():
     from deckframes.themes import list_themes
 
