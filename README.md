@@ -210,6 +210,12 @@ date: 2026 / 07 / 08
 | `pyramid`／`funnel` | 層級／逐步篩選 | `- 層 \| 說明` |
 | `cycle` | 迭代循環 | ```` ```cycle 中心文字 ````，`- 階段 \| 說明` |
 | `progress` | 進度 | `- 項目 \| 80%` |
+| `gantt` | 月份／數字欄位時程 | `gantt Jan-Dec` 或跨年 `gantt Jul'25-Sep'26`，每列第三欄填區間，可加 `window:`、`at:` |
+| `annotate` | 圖片區域解說 | `annotate img=assets/screen.png`，每項加 `area: x,y,w,h` |
+| `steps horizontal` detail panels | 步驟分支面板 | 子項 `> Panel title`，其後為面板內容 |
+| `timeline axis` | 附照片的日程 | 時間、活動、說明，可加 `img:` |
+| `stats` with logos | 標誌統計卡 | `- Label \| img: a.svg, b.png` |
+| `[!HINT]` / `closing_image` | 便利貼提示／照片結尾 | `> [!HINT] text`；front matter `closing_image: assets/night.jpg` |
 
 另外 `compare tone` 會用綠／紅色欄呈現「優點 vs 限制」，`> [!PROBLEM]`／`> [!RESULT]` 是紅／綠結論色帶。所有元件的示範：[`examples/components.md`](examples/components.md)。
 
@@ -346,7 +352,7 @@ pytest -q
 
 ## English
 
-**deckframes** turns a Markdown script into an editable PowerPoint deck: cover, outline, chapter dividers with a section list, content slides with a chapter/section nav bar, and native infographics (cards, flow, steps, timeline, stats, compare, charts, architecture diagrams, swim-lane timelines, problem→solution mappings, stacks, 2×2 matrices, pyramids, funnels, cycles, progress bars, tables, callouts) in three structurally different built-in themes. The build warns when a deck leans on one presentation pattern. It ships as a Python CLI plus a set of [Agent Skills](https://agentskills.io) that any skills-capable coding agent (Claude Code, Codex, Cursor, …) can follow.
+**deckframes** turns a Markdown script into an editable PowerPoint deck: cover, outline, chapter dividers with a section list, content slides with a chapter/section nav bar, and native infographics (cards, flow, steps, timeline, stats, compare, charts, architecture diagrams, swim-lane timelines, Gantt schedules, image annotations, problem→solution mappings, stacks, 2×2 matrices, pyramids, funnels, cycles, progress bars, tables, callouts) in three structurally different built-in themes. The build warns when a deck leans on one presentation pattern. It ships as a Python CLI plus a set of [Agent Skills](https://agentskills.io) that any skills-capable coding agent (Claude Code, Codex, Cursor, …) can follow.
 
 ```bash
 uv tool install git+https://github.com/ChienIKao/deckframes      # CLI

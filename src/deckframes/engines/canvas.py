@@ -1235,7 +1235,7 @@ class Canvas(StyleMixin, ChromeMixin, DiagramMixin):
 
     CALLOUT = {"note": ("註", 1), "tip": ("TIP", 2), "important": ("重點", 0), "warning": ("注意", 3),
                "caution": ("注意", 0), "summary": ("小結", 2), "problem": ("問題", 0), "result": ("結果", 2),
-               "success": ("結果", 2)}
+               "success": ("結果", 2), "hint": ("HINT", 3)}
 
     def callout_pill(self, s, d, x, y, w, h):
         label, ci = self.CALLOUT.get(d["kind"], (d["kind"].upper(), 1))
@@ -1298,6 +1298,12 @@ class Canvas(StyleMixin, ChromeMixin, DiagramMixin):
         rows = self.table_rows(v, spec) if v.kind == "table" else set()
         charts = []
         for el, tg in els:
+            if tg.get("region") and ((spec and not in_focus(tg, idx, names)) or
+                                     (tg.get("focus_only") and not spec)):
+                el.getparent().remove(el)
+                continue
+            if tg.get("fixed") and not dim_all:
+                continue
             if v.kind == "table" and spec and not dim_all:
                 tbl = el.find(".//" + qn("a:tbl"))
                 if tbl is not None:
@@ -1316,7 +1322,8 @@ class Canvas(StyleMixin, ChromeMixin, DiagramMixin):
         if v.kind == "table":  # exact row band: padding would cut into the neighbouring rows
             return self.row_box(els, self.table_rows(v, want_box))
         w_idx, w_names = parse_focus(want_box)
-        box = self.union(self.el_box(el) for el, tg in els if in_focus(tg, w_idx, w_names))
+        box = self.union(self.el_box(el) for el, tg in els if el.getparent() is not None and
+                         in_focus(tg, w_idx, w_names))
         return (box[0] - 0.12, box[1] - 0.12, box[2] + 0.24, box[3] + 0.24) if box else None
 
     @staticmethod
@@ -1582,6 +1589,13 @@ class Canvas(StyleMixin, ChromeMixin, DiagramMixin):
             return
         horizontal = d["type"] == "timeline" or "horizontal" in d["args"] or (w > 8 and n <= 5
                                                                                 and "vertical" not in d["args"])
+        if "axis" in d["args"]:
+            return self.steps_axis(s, items, x, y, w, h)
+        if any(it.get("panels") for it in items):
+            if horizontal:
+                return self.steps_panels(s, d, x, y, w, h)
+            items = [dict(it, children=it["children"] + [line for p in it.get("panels", [])
+                                                       for line in [p["title"], *p["lines"]]]) for it in items]
         if self.tinted:
             return self.steps_tint(s, items, x, y, w, h, horizontal)
         if horizontal:
@@ -1609,6 +1623,66 @@ class Canvas(StyleMixin, ChromeMixin, DiagramMixin):
         for k, it in enumerate(items):
             with self.tag(s, item=k, name=plain(it["title"])):
                 self.step_row(s, it, k, x, y0 + k * step + step / 2, w, step, lx, dsz)
+
+    def steps_panels(self, s, d, x, y, w, h):
+        items = d["items"]
+        top_h, gap = h * 0.5, 0.3
+        start = len(s.shapes._spTree)
+        clean = [dict(it, panels=[], extra=[], children=it["children"] + it["extra"]) for it in items]
+        self.comp_steps(s, dict(d, items=clean), x, y, w, top_h)
+        els = self.tagged(s, start)
+        boxes = {k: self.union(self.el_box(el) for el, tg in els if tg.get("item") == k) for k in range(len(items))}
+        panels = [(k, p) for k, it in enumerate(items) for p in it.get("panels", [])]
+        pw = (w - gap * (len(panels) - 1)) / len(panels)
+        py, ph = y + top_h + gap, h - top_h - gap
+        for j, (k, panel) in enumerate(panels):
+            px = x + j * (pw + gap)
+            with self.tag(s, item=k, name=plain(items[k]["title"])):
+                box = boxes[k]
+                if box:
+                    self.line(s, box[0] + box[2] / 2, box[1] + box[3], px + pw / 2, py,
+                              color=self.muted, width=0.75)
+                fill = mix(self.card_accent, self.ground, 0.9)
+                self.shape(s, MSO_SHAPE.RECTANGLE, px, py, pw, ph, fill=fill)
+                lines = [{"text": panel["title"], "size": 16, "bold": True, "color": self.on(fill), "space_after": 6}]
+                lines += [{"text": str(i + 1) + ". " + re.sub(r"^\d+[.)]\s*", "", line), "size": 13,
+                           "color": self.on(fill)} for i, line in enumerate(panel["lines"])]
+                while self.lines_height(lines, pw - 0.4) > ph - 0.3 and lines[0]["size"] > 10:
+                    for line in lines:
+                        line["size"] -= 1
+                self.text(s, px + 0.2, py + 0.15, pw - 0.4, ph - 0.3, lines, 16)
+
+    def steps_axis(self, s, items, x, y, w, h):
+        n = len(items)
+        cw = w / n
+        ay = y + 0.6
+        photos = any(it["attrs"].get("img") for it in items)
+        lines_by_item = []
+        for it in items:
+            lines = [{"text": it["desc"], "size": 16, "bold": True, "color": self.title_ink, "space_after": 5}]
+            lines += [{"text": t, "size": 12, "color": self.muted} for t in it["extra"] + it["children"] if t]
+            lines_by_item.append(lines)
+        th = max(self.lines_height(lines, cw - 0.24) for lines in lines_by_item) + 0.16
+        photo_y = ay + 0.25 + th + 0.15
+        for k, (it, lines) in enumerate(zip(items, lines_by_item)):
+            cx = x + (k + 0.5) * cw
+            fill = self.card_accent if self.tinted else self.color_for(k)
+            with self.tag(s, item=k, name=plain(it["title"])):
+                self.line(s, x + k * cw, ay, x + (k + 1) * cw, ay,
+                          color=mix(self.card_accent, self.ground, 0.55), width=1.5)
+                self.shape(s, MSO_SHAPE.OVAL, cx - 0.075, ay - 0.075, 0.15, 0.15, fill=fill)
+                size = 18
+                while size > 10 and self.measure(it["title"], size, "display") > cw - 0.2:
+                    size -= 1
+                self.text(s, x + k * cw + 0.1, y, cw - 0.2, 0.48, it["title"], size, bold=True,
+                          color=self.accent_ink(fill), font="display", align=PP_ALIGN.CENTER,
+                          anchor=MSO_ANCHOR.MIDDLE)
+                self.text(s, x + k * cw + 0.12, ay + 0.25, cw - 0.24, th, lines, 16, align=PP_ALIGN.CENTER)
+                if photos and it["attrs"].get("img") and y + h > photo_y:
+                    pic = self.picture(s, it["attrs"]["img"], x + k * cw + 0.12, photo_y,
+                                       cw - 0.24, y + h - photo_y)
+                    if pic:
+                        self.outline(pic[0])
 
     def steps_tint(self, s, items, x, y, w, h, horizontal):
         """Tinted cards with corner number badges joined by accent arrows (or a badge column when vertical)."""
@@ -1764,6 +1838,16 @@ class Canvas(StyleMixin, ChromeMixin, DiagramMixin):
         if self.deco:
             self.shape(s, MSO_SHAPE.OVAL, cx + cw - 0.42, cy + 0.2, 0.2, 0.2, fill=self.color_for(k),
                        line=self.black, lw=self.tw)
+        if it["attrs"].get("img"):
+            paths = [p.strip() for p in it["attrs"]["img"].split(",") if p.strip()]
+            iw = (cw - 0.6) / len(paths)
+            for i, path in enumerate(paths):
+                self.picture(s, path, cx + 0.3 + i * iw, cy + 0.25, iw - 0.08, ch * 0.48)
+            lines = [{"text": it["title"], "size": 20, "bold": True, "color": self.card_ink}]
+            lines += [{"text": t, "size": 14, "color": self.card_muted}
+                      for t in [it["desc"], *it["extra"], *it["children"]] if t]
+            self.text(s, cx + 0.3, cy + ch * 0.58, cw - 0.6, ch * 0.42 - 0.15, lines, 20)
+            return
         num = it["title"]
         size = 60 if len(num) <= 5 else 44 if len(num) <= 8 else 32
         ink = self.accent_ink(self.card_accent) if self.tinted else self.stat_ink(k)
