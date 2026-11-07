@@ -104,9 +104,11 @@ def cmd_build(a):
     out.parent.mkdir(parents=True, exist_ok=True)
     prs.save(out)
     print(f"✔ {out}  ({len(prs.slides)} slides, {engine})")
-    from .lint import variety
+    from .lint import hedges, missing_notes, subtitles, variety
 
-    for w in [*eng.warnings, *variety(doc)]:
+    src = root / state["source"] if root and state.get("source") else None
+    source = src.read_text(encoding="utf-8") if src and src.exists() else None
+    for w in [*eng.warnings, *variety(doc), *hedges(doc), *subtitles(doc, source), *missing_notes(doc)]:
         print("  ⚠", w)
     if root:
         proj.mark(root, "built")

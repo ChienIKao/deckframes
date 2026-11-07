@@ -401,3 +401,33 @@ def test_monotony_warning():
     warns = variety(doc)
     assert any("consecutive" in w for w in warns)
     assert any("6/6" in w for w in warns)
+
+
+def test_hedge_warning():
+    from deckframes.lint import hedges
+
+    doc = parse_markdown("# Deck\n\n## Part\n\n### S\n\n- 結果僅供參考\n\n<!-- further research is needed -->\n")
+    warns = hedges(doc)
+    assert any("僅供參考" in w for w in warns) and any("further research" in w for w in warns)
+    allowed = parse_markdown("---\nhedges: allow\n---\n# Deck\n\n## Part\n\n### S\n\n- 僅供參考\n")
+    assert hedges(allowed) == []
+
+
+def test_subtitle_warning_only_for_invented():
+    from deckframes.lint import subtitles
+
+    deck = "# Deck\n\n## 緒論 | Introduction\n\n#### A | 原稿副標\n\n- x\n\n#### B | 補上的副標\n\n- y\n"
+    source = "# Deck\n\n## 緒論\n\n#### A | 原稿副標\n\n- x\n\n#### B\n\n- y\n"
+    warns = subtitles(parse_markdown(deck), source)
+    assert len(warns) == 1 and "補上的副標" in warns[0]
+    assert subtitles(parse_markdown(deck), None) == []
+
+
+def test_cover_and_divider_notes():
+    from deckframes.lint import missing_notes
+
+    bare = parse_markdown("# Deck\n\n## Part\n\n### S\n\n- a\n")
+    assert len(missing_notes(bare)) == 2
+    noted = parse_markdown("# Deck\n\n<!-- opening -->\n\n## Part\n\n<!-- transition -->\n\n### S\n\n- a\n")
+    assert missing_notes(noted) == []
+    assert noted.cover.notes == ["opening"] and noted.sections[0].notes == ["transition"]

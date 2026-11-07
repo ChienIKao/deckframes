@@ -56,7 +56,7 @@ Ask **once, in one message**, only what the request doesn't already answer. Offe
 3. **Content mode** → `verbatim` (default: fix structure, convert to infographics, never reword)
    or `refine` (long paragraphs become bullets; original text moves to speaker notes).
 4. **De-AI scope** → `all` (default: sepia polishes the user's script too, since most scripts are
-   drafted with an AI) or `written` (only text you write: notes, card blurbs, subtitles — pick
+   drafted with an AI) or `written` (only text you write: notes, card blurbs, takeaways — pick
    this when the user wrote the script by hand and wants every sentence kept). Skip this question
    when `sepia` is not installed.
 
@@ -101,8 +101,9 @@ Every workflow passes two gates between writing deck.md and the first `deckframe
    - Scope comes from `polish` in deck.json (`deckframes status` shows it; `all` if missing).
      `all`: polish the user's script text as well — this overrides the verbatim no-rewording rule
      for this pass only. `written`: also protect every sentence taken from `source.md`; polish
-     only text you wrote (speaker notes, card blurbs, takeaways, subtitles).
-   - Cut defensive disclaimers in the same pass (see Non-negotiables) within the polish scope.
+     only text you wrote (speaker notes, card blurbs, takeaways).
+   - Cut defensive disclaimers and invented subtitles in the same pass (see Non-negotiables) in
+     either scope — the user's script included, also under `written`.
    - **sepia is optional.** If the `sepia` skill is not installed, tell the user once (it lives at
      https://github.com/Nanako0129/sepia), skip the pass without imitating it, and still run
      `deckframes status --set polished` so the workflow continues to approval.
@@ -122,15 +123,24 @@ splitting a slide) don't need a new approval round; rewording does.
   deck.md that contains emoji and `deckframes check` flags any in the .pptx. When a visual marker
   helps, use an icon: `icon: <font-awesome-name>` on an infographic item (find names with
   `deckframes icons search <word>`) or an SVG file (`icon: assets/x.svg`, `![caption](assets/x.svg)`).
-- **No defensive disclaimers.** Don't add hedges or caveats the user didn't ask for: "results may
-  vary", "for reference only", "further research is needed", "it should be noted that", "this is
-  not a complete list", "depending on the situation". State the point plainly. A limitation stays
-  only when it comes from the user's material or is a real finding (e.g. a thesis Limitations
-  slide); then state it once, concretely, without softening the rest of the deck.
+- **No defensive disclaimers — by default, everywhere.** No hedges or caveats on slides or in notes:
+  "results may vary", "for reference only", "further research is needed", "it should be noted
+  that", "this is not a complete list", "depending on the situation", 僅供參考, 視情況而定, 有待進一步研究.
+  This covers the user's script too: cut theirs in the polish pass and state the point plainly.
+  A real limitation (a thesis Limitations slide) becomes a concrete statement of fact ("the sample
+  covers 3 stores"), not a softener. `deckframes build` warns `hedge:` for each one — resolve them
+  all. Only when the user explicitly asks to keep their caveats, set `hedges: allow` in front matter.
+- **No subtitles you made up.** A subtitle line (`#### Title | subtitle`, front-matter `subtitle:`)
+  is a defensive label: it qualifies the title instead of letting it stand. Use one only when the
+  user's script has that exact subtitle; `deckframes build` warns `subtitle:` for any not found in
+  source.md. Chapter English names (`## 緒論 | Introduction`) are labels and stay.
+- **No blank cover or dividers.** Write speaker notes for the cover (an opening line, as
+  `<!-- -->` under `# Title`) and every chapter divider (a transition line under the `##` heading,
+  before its first `###`). `deckframes build` warns `notes:` for each one missing.
 - **Never invent numbers.** `stats` and `chart` values come from the user's material only; missing
   values become `— value —` placeholders listed in your report.
 - **Don't reword in verbatim mode** (except the `polish: all` de-AI pass). Restructuring, splitting slides, converting to infographic
-  blocks and adding English chapter subtitles are fine; deleting or rewriting sentences needs a yes.
+  blocks and adding English chapter names are fine; deleting or rewriting sentences needs a yes.
 - **One visual idea per slide.** ≤ 5 bullets beside a visual; move detail to `<!-- notes -->`.
 - **Vary the presentation.** Plan blocks across the whole deck — 16 infographic blocks exist; don't
   ride one or two. Resolve every `monotony:` warning from `deckframes build`.
