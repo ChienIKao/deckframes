@@ -40,7 +40,7 @@ a visual.
 | Items that should appear one at a time while you talk | add `build` to the block (` ```steps build `) |
 | Overview first, then each item in turn | add `build=focus` (` ```mapping build=focus `) |
 | Coming back to one item later in the deck | the same block again with `focus=2` |
-| Related work over the years, two research lines | ```` ```lanes 2017-2026 ```` |
+| Related work or baseline comparison by year and model family | ```` ```lanes 2017-2026 ```` |
 | Problems ↔ the fix for each | ```` ```mapping ```` (`Problem -> Solution`) |
 | Model layers, tech stack, pipeline stages top → bottom | ```` ```stack ```` |
 | 2 × 2 positioning (effort × impact, cost × quality) | ```` ```matrix x=… y=… ```` |
@@ -114,7 +114,7 @@ SVG path. Pick icons that carry meaning (clock = waiting time, database = data) 
 | `compare` | column title | column subtitle | children = column bullets | — |
 | `chart` | — | — | body is a Markdown table: first column = categories, other columns = series | type, then title |
 | `diagram` | `A -> B` edge, or a node | node caption (node lines only) | free lines `group Label: a, b` | `focus=A,B`, `dir=tb` |
-| `lanes` | year (`2021`) | item name | `lane: …`, `note: …` | year range `2017-2026` |
+| `lanes` | year (`2021`) | item name | `lane: …`, `note: …` | year range `2017-2026`, `ticks=…`, `focus=…` |
 | `mapping` | `Problem -> Solution` | — | `icon:` (disc on the arrow, themes with `legend`) | `neutral` (palette colours instead of red/green), `left=問題 right=解法` (legend labels) |
 | `stack` / `pyramid` / `funnel` | level name | description | — | — |
 | `matrix` | quadrant title (TL, TR, BL, BR) | description | — | `x=label y=label` |
@@ -192,12 +192,38 @@ frame with a label. With `build`, nodes appear in the order they are first menti
 
 ### lanes
 
+Use a lane timeline to compare baseline methods or related work by model family and publication year.
+Each lane gets a theme-colored band; methods are native PowerPoint pills with an optional venue note.
+Colliding pills and their notes stack into rows, and crowded lanes receive more vertical space.
+
 ~~~markdown
-```lanes 2017-2026
-- 2017 | DCRNN | lane: Graph models | note: ICLR
-- 2020 | DDPM | lane: Diffusion | note: NeurIPS
+```lanes 2017-2026 focus=Our model
+- 2017 | Baseline A | lane: Graph models | note: Conference A
+- 2020 | Baseline B | lane: Diffusion models | note: Conference B
+- 2026 | Our model | lane: Diffusion models | note: This work
 ```
 ~~~
+
+The default axis is proportional to the year range (inferred from items when omitted).
+`focus=Name` uses the theme's positive tone to highlight a method without fading its peers;
+comma-separated names highlight several methods.
+
+For sparse older work and a crowded recent period, give explicit, increasing ticks:
+
+~~~markdown
+```lanes ticks=2018,2022,2023,2024,2025 focus=Our model
+- 2012 | Earlier work | lane: Sequence models | note: Conference A · 2012
+- 2024 | Recent work | lane: Language models | note: Conference B
+- 2025 | Our model | lane: Language models | note: This work
+```
+~~~
+
+Explicit ticks are equally spaced. Skipped years show an axis break; dates between ticks interpolate
+within that interval. Items older/newer than the endpoints share the first/last tick, labelled with
+≤/≥, so include their actual year in `note:` when useful. Keep a normal range when proportional
+elapsed time matters. Use one visual per slide for a dense comparison; split it if labels become small.
+The template engine preserves year, family, method and note as a table.
+See `examples/model-timeline.md` for a complete three-family example.
 
 ## Example
 

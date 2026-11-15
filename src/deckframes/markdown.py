@@ -176,7 +176,7 @@ def parse_component(kind: str, info: str, body: str):
         build = (bm.group(1) or "").lower()
         info = (info[:bm.start()] + " " + info[bm.end():]).strip()
     fm = FOCUS_ARG.search(info)
-    if fm and kind != "diagram":  # diagrams parse their own `focus=` (node names may contain spaces)
+    if fm and kind not in ("diagram", "lanes"):  # these draw their own `focus=` (names may contain spaces)
         focus = fm.group(1)
         info = (info[:fm.start()] + " " + info[fm.end():]).strip()
     items, free = [], []

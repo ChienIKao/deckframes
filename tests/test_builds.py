@@ -128,3 +128,16 @@ def test_tinted_cards_use_accent_outlines(tmp_path):
     lines = {str(sh.line.color.rgb) for sh in s.shapes
              if sh.shape_type == 1 and sh.line.fill.type == 1 and sh.top > 914400 * 1.5}
     assert "E9A23B" in lines                                           # academic: gold card outlines
+
+
+def test_lanes_build_reveals_pills_and_focus_keeps_spaces(tmp_path):
+    body = ("#### 路線\n\n```lanes 2020-2025 build focus=Our model\n- 2020 | Base A | lane: X | note: Venue A\n"
+            "- 2023 | Base B | lane: X\n- 2025 | Our model | lane: Y | note: This work\n```\n")
+    prs, _ = _deck(tmp_path, body)
+    slides = _content(prs)
+    assert len(slides) == 3
+    pills = [[sh.text_frame.text for sh in s.shapes if sh.name.startswith("lanes:item:")] for s in slides]
+    assert pills == [["Base A"], ["Base A", "Base B"], ["Base A", "Base B", "Our model"]]
+    focused = next(sh for sh in slides[2].shapes if sh.name == "lanes:item:Our model")
+    plain = next(sh for sh in slides[2].shapes if sh.name == "lanes:item:Base A")
+    assert focused.line.width > plain.line.width
