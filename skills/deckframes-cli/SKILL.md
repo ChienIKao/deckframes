@@ -59,8 +59,11 @@ Building a single file outside a project also works: `deckframes build talk.md -
 | Nav bar sections cramped | shorten section names (≤ 6 CJK chars) or split the chapter |
 | Infographic cramped or lost in whitespace | 2–4 items per `cards`/`stats`; many items → `steps`; options → `compare` |
 | Table overflow | fewer columns, or split the table |
+| `hedge:` warning | cut the disclaimer; restate the point plainly (a real limitation as a concrete fact) |
+| `subtitle:` warning | delete the ` \| subtitle` part (or front-matter `subtitle:`) — it is not in the user's script |
+| `notes:` warning | add `<!-- -->` notes under `# Title` (opening) or under the chapter's `##` heading (transition) |
 | `monotony:` warning | re-express a few of the slides with another block: process → `diagram`/`stack`/`cycle`, items → `mapping`/`matrix`, numbers → `chart`/`progress` |
-| Image too small to read | one image per slide; screenshot → `#### Title \| message` with no bullets (showcase); detailed figure → `![cap](x.png "wide")` with ≤ 3 bullets |
+| Image too small to read | one image per slide; screenshot → `![message](x.png)` with no bullets (showcase); detailed figure → `![cap](x.png "wide")` with ≤ 3 bullets |
 | `image is low resolution` warning | the source has too few pixels for its size on the slide — get a larger export |
 | Highlight not visible | `==x==` needs PowerPoint 2019 / Microsoft 365 |
 | Divider right side empty | the chapter has no `###` sections — add them or a one-line intro under `##` |

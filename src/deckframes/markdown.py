@@ -61,8 +61,8 @@ TABLE_SEP = re.compile(r"^\s*\|?\s*:?-{2,}:?\s*(\|\s*:?-{2,}:?\s*)*\|?\s*$")
 ALERT = re.compile(r"^\[!(\w+)\]\s*(.*)$")
 SOURCE = re.compile(r"^(資料來源|来源|來源|參考資料|Sources?|Ref(?:erences?)?)\s*[:：]", re.I)
 COMPONENT_TYPES = {"cards", "steps", "timeline", "flow", "stats", "compare", "chart", "diagram", "lanes",
-                   "mapping", "stack", "matrix", "pyramid", "funnel", "cycle", "progress"}
-ATTR = re.compile(r"^(tag|img|icon|color|lane|note|tone)\s*[:：]\s*(.+)$", re.I)
+                   "mapping", "stack", "matrix", "pyramid", "funnel", "cycle", "progress", "gantt", "annotate"}
+ATTR = re.compile(r"^(tag|img|icon|color|lane|note|tone|window|at|area)\s*[:：]\s*(.+)$", re.I)
 STEP = re.compile(r"^\+{3,}\s*(.*)$")
 BUILD_ARG = re.compile(r"(?:^|\s)build(?:=(\w+))?(?=\s|$)")
 FOCUS_ARG = re.compile(r"(?:^|\s)focus=(\S+)")
@@ -146,14 +146,14 @@ def split_heading(text: str):
     return text.strip(), ""
 
 
-def make_item(text: str):
+def make_item(text: str, preserve_empty=False):
     pos, attrs = [], {}
-    for part in re.split(r"\s\|\s", text):
+    for part in re.split(r"\s+\|(?=\s)" if preserve_empty else r"\s\|\s", text):
         part = part.strip()
         m = ATTR.match(part)
         if m:
             attrs[m.group(1).lower()] = m.group(2).strip()
-        elif part:
+        elif part or preserve_empty:
             pos.append(part)
     if len(pos) > 1:  # "標題： | 說明" — the separator is the pipe, drop the dangling colon
         pos[0] = pos[0].rstrip("：:").rstrip()
@@ -183,7 +183,7 @@ def parse_component(kind: str, info: str, body: str):
     for line in body.split("\n"):
         m = LIST_ITEM.match(line.replace("\t", "    "))
         if m and (not m.group(1) or not items):
-            items.append(make_item(m.group(3)))
+            items.append(make_item(m.group(3), kind in ("gantt", "steps", "timeline")))
         elif m:
             items[-1]["children"].append(m.group(3).strip())
         elif line.strip() and items and line.startswith((" ", "\t")):
@@ -194,9 +194,102 @@ def parse_component(kind: str, info: str, body: str):
         for ln in free:
             if "->" in ln or "→" in ln:
                 items += [make_item(x) for x in re.split(r"\s*(?:->|→)\s*", ln) if x.strip()]
+    if kind in ("steps", "timeline"):
+        for it in items:
+            children, panels = [], []
+            for child in it["children"]:
+                if child.startswith(">"):
+                    panels.append({"title": child[1:].strip(), "lines": []})
+                elif panels:
+                    panels[-1]["lines"].append(child)
+                else:
+                    children.append(child)
+            if panels:
+                it.update(children=children, panels=panels)
+    if kind == "annotate":
+        for it in items:
+            if "area" in it["attrs"]:
+                area = [float(v.strip()) for v in it["attrs"]["area"].split(",")]
+                if len(area) != 4 or any(v < 0 or v > 100 for v in area) or \
+                        area[0] + area[2] > 100 or area[1] + area[3] > 100:
+                    raise ValueError("annotate area must be x,y,w,h percentages inside the image")
+                it["area"] = area
     rows = [split_row(l) for l in free if l.startswith("|") and not TABLE_SEP.match(l)]
+    if kind == "gantt":
+        columns = gantt_columns(info.split())
+        groups = []
+        for line in free:
+            m = re.match(r"group\s+(.+?)\s*[:：]\s*(.+)$", line, re.I)
+            if m:
+                groups.append({"title": m[1], "span": gantt_span(columns, m[2])})
+        for it in items:
+            for key, value in (("span", next(iter(it["extra"]), "")),
+                               ("window", it["attrs"].get("window")), ("at", it["attrs"].get("at"))):
+                if value:
+                    it[key] = gantt_span(columns, value)
+        return {"type": kind, "args": info.split(), "info": info, "items": items, "lines": free, "rows": rows,
+                "build": build, "focus": focus, "columns": columns, "groups": groups}
     return {"type": kind, "args": info.split(), "info": info, "items": items, "lines": free, "rows": rows,
             "build": build, "focus": focus}
+
+
+MONTHS = "Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec".split()
+
+
+MONTH_KEY = re.compile(r"^([A-Za-z]{3})(?:'?(\d{2}|\d{4}))?$")
+
+
+def month_key(tok):
+    """`Jul` → (6, None), `Jul'26` / `Jul2026` → (6, 2026); None when `tok` is not a month."""
+    m = MONTH_KEY.match(tok.strip())
+    if not m or m[1].title() not in MONTHS:
+        return None
+    year = int(m[2]) + (2000 if m[2] and len(m[2]) == 2 else 0) if m[2] else None
+    return MONTHS.index(m[1].title()), year
+
+
+def gantt_columns(args):
+    """Column keys of a gantt: `Jan-Dec`, `Jul-Sep` (wraps into the next year), `Jul'25-Sep'26` (one column per
+    month, keys carry the year), `1-12` / `2017-2026`, or `cols=Q1,Q2`."""
+    explicit = next((a[5:] for a in args if a.startswith("cols=")), None)
+    if explicit:
+        return explicit.split(",")
+    token = next((a for a in args if "=" not in a), "1-12")
+    a, b = re.split(r"[-–]", token, maxsplit=1)
+    ma, mb = month_key(a), month_key(b)
+    if ma and mb:
+        if ma[1] and mb[1]:
+            n = (mb[1] - ma[1]) * 12 + mb[0] - ma[0]
+            return [f"{MONTHS[(ma[0] + i) % 12]}'{(ma[1] + (ma[0] + i) // 12) % 100:02d}" for i in range(n + 1)]
+        end = mb[0] + (12 if mb[0] < ma[0] else 0)
+        return [MONTHS[i % 12] for i in range(ma[0], end + 1)]
+    return [str(i) for i in range(int(a), int(b) + 1)]
+
+
+def gantt_label(key):
+    """Display label of a column key: `Jul'26` → `Jul`."""
+    return key.split("'")[0]
+
+
+def gantt_span(columns, text):
+    """`Nov-May` / `Jul'26-Aug'26` / `Sep` → (first, last) column index. A bare month names its first
+    occurrence (the end: first at or after the start); a year-qualified one names that exact column."""
+    parts = re.split(r"\s*[-–]\s*", text.strip(), maxsplit=1)
+    keys = [c.casefold() for c in columns]
+    labels = [gantt_label(c).casefold() for c in columns]
+
+    def find(tok, start=0):
+        tok = tok.strip().casefold()
+        mk = month_key(tok)
+        if mk and mk[1]:
+            tok = f"{MONTHS[mk[0]]}'{mk[1] % 100:02d}".casefold()
+        for seq in (keys, labels):
+            if tok in seq[start:]:
+                return seq.index(tok, start)
+        raise ValueError(f"gantt: '{tok}' is not a column of {columns[0]}–{columns[-1]}")
+
+    start = find(parts[0])
+    return start, find(parts[-1], start)
 
 
 def parse_markdown(text: str) -> Doc:

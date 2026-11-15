@@ -12,7 +12,9 @@ description: >
    (`deckframes-core`). Add English chapter subtitles (`## 方案 | Proposal`) unless the user
    declines. If the script is flat, pick the flatter hierarchy settings instead of inventing
    chapters.
-2. **Front matter.** `eyebrow` (event or purpose), `author`, `date`, `subtitle`; logos if supplied.
+2. **Front matter.** `eyebrow` (event or purpose), `author`, `date`; `subtitle` only if the script
+   has one; logos if supplied. Write an opening line of speaker notes under `# Title` and a
+   transition line under every `##` chapter heading so no cover or divider is left blank.
 3. **Infographics.** Walk every slide through `deckframes-infographics`; keep plain arguments as
    bullets. Pictograms come from `icon:` (Font Awesome / SVG) — never emoji.
 4. **Assets.** Put images in `assets/`, reference them where they support the point; propose

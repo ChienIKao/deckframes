@@ -22,7 +22,11 @@ description: >
 | `+++` inside a slide | build step: the next slide repeats this one and adds what follows (see Build steps) |
 
 - Any heading takes ` | ` + subtitle. Chapters use it for the English name (`## 緒論 | Introduction`);
-  slides use it for a grey subtitle line.
+  slides use it for a grey subtitle line — only when the user's script has that subtitle (an
+  invented one reads as a hedge; the build warns `subtitle:`).
+- Speaker notes (`<!-- -->`) under `# Title` go to the cover; under a `##` heading (before its
+  first `###`) to that chapter's divider. Give the cover and every divider notes — the build warns
+  `notes:` when one is blank.
 - Content directly under `###` (no `####`) becomes one slide titled with the section name, so
   3-level scripts work unchanged.
 - Slide titles render as `{section} – {slide}` (`研究背景 – 工業 4.0`); identical names show once.
@@ -36,7 +40,7 @@ description: >
 ---
 theme: blockframe            # or template: <name|path>
 eyebrow: Thesis Defense      # pill above the cover title
-subtitle: English subtitle
+subtitle: English subtitle   # only if the user's script has one
 author: Presenter: Name
 authors: Ann Lee; Bo Chen     # cover author list (shown by covers that have an author block, e.g. academic)
 affiliations: Dept. of CS; Lab X
@@ -52,6 +56,7 @@ recap: false                 # replay the chapter divider before each section, c
 title_format: "{sub} – {title}"
 closing: Q&A                 # closing slide text; false = none
 closing_label: THANK YOU
+closing_image: assets/night.jpg # full-bleed cropped photo behind the closing title
 max_table_rows: 9            # longer tables split, header repeated
 section_level: 2
 subsection_level: 3
@@ -70,13 +75,13 @@ visual_bleed: 0.35          # inches the image may extend into the side margins
 | `**bold**`, `*italic*`, `` `code` ``, `[text](url)` | inline formatting |
 | `==key phrase==` | highlighter mark + bold |
 | `> quote` | quote; a slide holding only one quote becomes a quote card |
-| `> [!NOTE] text` | bottom callout. Kinds: NOTE, TIP, IMPORTANT, WARNING, CAUTION, SUMMARY, PROBLEM (negative tone), RESULT / SUCCESS (positive tone) |
+| `> [!NOTE] text` | bottom callout. Kinds: NOTE, TIP, HINT (compact sticky note), IMPORTANT, WARNING, CAUTION, SUMMARY, PROBLEM (negative tone), RESULT / SUCCESS (positive tone) |
 | paragraph starting `Source:` / `資料來源：` / `來源：` / `Ref:` | footer citation |
 | `![caption](assets/x.png)` on its own line | image with a thin outline + caption tag below (PNG, JPG or SVG — SVG stays vector); layout hints in the title: `![caption](x.png "left wide")` |
 | Markdown table | native table; ○ × ✓ and numbers auto-centred |
 | ```` ```lang ```` code fence | dark code card |
-| ```` ```cards ```` `steps` `timeline` `flow` `stats` `compare` `chart` `diagram` `lanes` `mapping` `stack` `matrix` `pyramid` `funnel` `cycle` `progress` | infographics → `deckframes-infographics` (vary them across the deck) |
-| `<!-- text -->` | speaker notes (multi-line OK) |
+| ```` ```cards ```` `steps` `timeline` `flow` `stats` `compare` `chart` `diagram` `lanes` `mapping` `stack` `matrix` `pyramid` `funnel` `cycle` `progress` `gantt` `annotate` | infographics → `deckframes-infographics` (vary them across the deck) |
+| `<!-- text -->` | speaker notes (multi-line OK); also on the cover and chapter dividers |
 
 ## No emoji — use icons
 

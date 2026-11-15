@@ -30,26 +30,43 @@ def find_soffice() -> str | None:
     return None
 
 
+class RenderError(Exception):
+    """A renderer is installed but failed on this file."""
+
+
+def _powershell(script: str) -> subprocess.CompletedProcess:
+    # Force UTF-8 both ways: the console code page (e.g. cp950) cannot decode every message
+    script = "[Console]::OutputEncoding = [Text.Encoding]::UTF8; " + script
+    return subprocess.run(["powershell", "-NoProfile", "-Command", script],
+                          capture_output=True, encoding="utf-8", errors="replace")
+
+
+def _ps_quote(path: Path) -> str:
+    return "'" + str(path).replace("'", "''") + "'"
+
+
 def has_powerpoint() -> bool:
     if sys.platform != "win32":
         return False
-    r = subprocess.run(["powershell", "-NoProfile", "-Command",
-                        "[bool](Get-ItemProperty 'Registry::HKEY_CLASSES_ROOT\\PowerPoint.Application' -ErrorAction SilentlyContinue)"],
-                       capture_output=True, text=True)
+    r = _powershell("[bool](Get-ItemProperty 'Registry::HKEY_CLASSES_ROOT\\PowerPoint.Application' "
+                    "-ErrorAction SilentlyContinue)")
     return r.stdout.strip().lower() == "true"
 
 
 def via_powerpoint(pptx: Path, out: Path) -> bool:
-    if sys.platform != "win32":
+    if not has_powerpoint():
         return False
-    ps = ("$pp = New-Object -ComObject PowerPoint.Application; "
-          f"$p = $pp.Presentations.Open('{pptx}', $true, $false, $false); "
-          f"$p.SaveAs('{out}', 18); $p.Close(); $pp.Quit()")
-    r = subprocess.run(["powershell", "-NoProfile", "-Command", ps], capture_output=True, text=True)
+    r = _powershell("try { $pp = New-Object -ComObject PowerPoint.Application; "
+                    f"$p = $pp.Presentations.Open({_ps_quote(pptx)}, $true, $false, $false); "
+                    f"$p.SaveAs({_ps_quote(out)}, 18); $p.Close(); $pp.Quit() }} "
+                    "catch { [Console]::Error.WriteLine($_.Exception.Message); "
+                    "if ($pp) { $pp.Quit() }; exit 1 }")
     pngs = [f for f in out.iterdir() if f.suffix.lower() == ".png"]  # PowerPoint names them per UI language
     for i, f in enumerate(sorted(pngs, key=lambda f: int(re.findall(r"(\d+)", f.stem)[-1])), 1):
         f.rename(out / f"slide-{i:03d}.png")
-    return r.returncode == 0 and bool(pngs)
+    if r.returncode != 0 or not pngs:
+        raise RenderError(r.stderr.strip() or r.stdout.strip() or "PowerPoint exported no slides")
+    return True
 
 
 def via_libreoffice(pptx: Path, out: Path) -> bool:
@@ -87,8 +104,17 @@ def render(pptx: Path, out: Path | None = None, cols: int = 4, backend: str = "a
     out.mkdir(parents=True)
     order = {"auto": (via_powerpoint, via_libreoffice), "powerpoint": (via_powerpoint,),
              "libreoffice": (via_libreoffice,)}[backend]
-    used = next((fn.__name__[4:] for fn in order if fn(pptx, out)), None)
+    used, errors = None, []
+    for fn in order:
+        try:
+            if fn(pptx, out):
+                used = fn.__name__[4:]
+                break
+        except RenderError as e:
+            errors.append(f"{fn.__name__[4:]}: {e}")
     if not used:
+        if errors:
+            raise SystemExit("preview failed:\n  " + "\n  ".join(errors))
         raise SystemExit("no renderer available: install LibreOffice (+ `pip install pymupdf`) or use PowerPoint on Windows")
     files = sorted(out.glob("slide-*.png"))
     w, h, gap = 480, 270, 10

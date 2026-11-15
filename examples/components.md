@@ -7,6 +7,7 @@ affiliations: 某某大學 資訊工程學系; 智慧城市研究中心
 author: 報告者：講者姓名
 date: 2026 / 01 / 01
 closing: Q&A
+closing_image: assets/photo.png
 ---
 
 # 以語意條件強化的城市人流預測
@@ -184,4 +185,66 @@ group U-Net 去噪網路: 編碼器, 時間嵌入, 交叉注意力, 解碼器
   - 指標定義未公開
   - 資料集不公開
   - 結果只重複三次
+```
+
+## Presentation patterns
+
+### Planning and sharing
+
+#### Product roadmap
+
+```gantt Jul'25-Sep'26 now=Sep'25
+group Discovery: Jul-Jan
+group Delivery: Feb-Sep
+- Research | Explore the problem | Jul-Jan
+- Prototype | Test a first draft | Nov-May
+- Pilot | Customer window | Apr-May | window: Feb-May | note: Pilot
+- Review | Gather feedback | Feb-Jun
+- Release | Milestone | at: Sep'26 | note: Launch
+```
+
+#### Reading a chart
+
+```annotate img=assets/chart.png
+- Overview | Compare the series | area: 0,0,100,25
+- Evidence | Inspect the plotted values | area: 10,30,80,60
+  - Keep the scale in view
+```
+
+#### Hiring process
+
+```steps horizontal
+- Invitation | Confirm the date | Day + 0
+  - Meet the team
+- Interviews
+  - Prepare a short demo
+  > Technical discussion
+    1. Walk through a project
+    2. Discuss tradeoffs
+  > Team discussion
+    1. Introduce yourself
+    2. Ask about collaboration
+- Decision | Next steps
+```
+
+#### A day at the studio
+
+```timeline axis
+- 08:30 | Arrive | Morning commute | img: assets/photo.png
+- 09:00 | Team check-in
+  - Review the daily plan
+- 12:00 | Lunch | Shared break | img: assets/photo.png
+```
+
+#### A useful aside
+
+Keep a small working example ready for each review.
+
+> [!HINT] Capture feedback while it is fresh.
+
+#### Partner invitations
+
+```stats
+- Design partners | img: assets/brand-a.svg, assets/brand-a.svg
+- Pilot partner | img: assets/brand-a.svg
 ```

@@ -2,7 +2,7 @@
 name: deckframes-infographics
 description: >
   Decide which deckframes infographic block fits each slide's content (cards, steps, timeline, flow,
-  stats, compare, chart, diagram, lanes, mapping, stack, matrix, pyramid, funnel, cycle, progress,
+  stats, compare, chart, diagram, lanes, mapping, stack, matrix, pyramid, funnel, cycle, progress, gantt, annotate,
   tables, callouts, statement slides) and write its syntax. Use while shaping deck.md so slides show
   one visual idea instead of walls of bullets, and so the deck does not repeat one pattern.
 ---
@@ -21,6 +21,12 @@ a visual.
 | A pipeline / system flow | ```` ```flow ```` |
 | Method steps | ```` ```steps ```` (vertical) or ```` ```timeline ```` (horizontal) |
 | Headline numbers | ```` ```stats ```` |
+| Schedule / roadmap over months | ```` ```gantt Jan-Dec ```` |
+| Explaining parts of one screenshot / document | ```` ```annotate img=assets/screen.png ```` |
+| One step branching into sub-stages | ```` ```steps horizontal ```` with `> Panel title` children |
+| A day / event schedule with photos | ```` ```timeline axis ```` with `img:` items |
+| Logos as headline stats | ```` ```stats ```` with one or more comma-separated `img:` paths |
+| A tip that feels like an aside | `> [!HINT] …` sticky note |
 | Methods × properties matrix | Markdown table with ○ / × |
 | Two or three options side by side | ```` ```compare ```` (two columns get a VS badge) |
 | Experimental results | ```` ```chart column|bar|line|pie|doughnut|stacked Title ```` |
@@ -98,8 +104,13 @@ SVG path. Pick icons that carry meaning (clock = waiting time, database = data) 
 |---|---|---|---|---|
 | `cards` | card title | one-line description | bullet details | `stack`, `grid`, `cols=3` |
 | `steps` / `timeline` | step name | description | bullet details | `vertical`, `horizontal` |
+| `steps` detail panels | step name | description | indented `> Panel title`, then panel lines until the next `>` | `horizontal`; vertical flattens panels into children |
+| `timeline axis` | time | bold event label | 3rd field / children = detail; `img:` = photo | `axis` (also `steps horizontal axis`) |
+| `gantt` | row title | small description | 3rd field = span; `window:`, `at:`, `note:`, `color:` | range, `cols=…`, `now=…`; free `group Label: A-B` lines |
+| `annotate` | card title | description | children; `area: x,y,w,h` image percentages | `img=path`, `right` (default) / `left` |
 | `flow` | node | small caption | — | `vertical`, `horizontal`; or one line `A -> B -> C` |
 | `stats` | the number (`38`, `3.8%`, `2×`) | label | supporting note | — |
+| `stats` with logos | label | supporting note | `img: a.svg, b.png` replaces the number with fitted images | — |
 | `compare` | column title | column subtitle | children = column bullets | — |
 | `chart` | — | — | body is a Markdown table: first column = categories, other columns = series | type, then title |
 | `diagram` | `A -> B` edge, or a node | node caption (node lines only) | free lines `group Label: a, b` | `focus=A,B`, `dir=tb` |
@@ -110,6 +121,57 @@ SVG path. Pick icons that carry meaning (clock = waiting time, database = data) 
 | `cycle` | stage | description | — | centre label |
 | `progress` | label | `80%` | — | — |
 | `compare` | column title | column subtitle | children = column bullets | `tone` (positive / negative columns) |
+
+### gantt
+
+~~~markdown
+```gantt Jul'25-Sep'26 now=Sep'25
+group Research: Jul-Jan
+group Launch: Feb-Sep
+- Prototype | First draft | Jul-Jan
+- Pilot | Customer window | Apr-May | window: Feb-May | note: Pilot
+- Launch | Milestone | at: Sep'26 | note: Release
+```
+~~~
+
+`Oct-Mar` wraps into the next year (6 columns); for more than 12 months qualify the range with years: `Jul'25-Sep'26` (labels still show `Jul`). In item spans a bare month means its first occurrence; write `Jul'26` for a later one. Names are case-insensitive.
+Numeric ranges (`1-12`, `2017-2026`) are inclusive; `cols=Q1,Q2,Q3,Q4` supplies explicit labels.
+Spans use the first start label, then the first end label at or after it; a single label is one column.
+The last group uses an accent fill. `window:` is a dashed bar behind the solid span; `at:` is a diamond.
+Each row is one reveal / focus item.
+
+### annotate
+
+~~~markdown
+```annotate img=assets/screen.png build=focus
+- Overview | Start with the summary | area: 0,0,100,25
+- Detail | Explain the evidence | area: 10,30,80,60
+  - Keep the supporting text close to its region
+```
+~~~
+
+The fitted image uses about 45% of the width. `left` puts it beside cards on the right.
+`area:` values are percentages of the fitted image: x, y, width, height. The overview shows every
+region. Focus keeps the picture visible, removes other region frames and outlines the focused card.
+
+### steps detail panels
+
+~~~markdown
+```steps horizontal
+- Invitation | Confirm a date
+- Interviews
+  - Prepare a short demo
+  > Technical discussion
+    1. Walk through the project
+    2. Discuss tradeoffs
+  > Team discussion
+    1. Ask about collaboration
+- Decision
+```
+~~~
+
+Panels span the lower half, with connectors to their owning step. Their reveal / focus follows that
+step. Use `timeline axis` for times above dots, event labels and details below, and optional `img:` photos.
 
 ### diagram
 
