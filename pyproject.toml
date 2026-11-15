@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "deckframes"
-version = "0.1.0"
+version = "0.2.0"
 description = "Markdown → editable PowerPoint decks, with agent skills for Claude Code, Codex and other coding agents."
 readme = "README.md"
 license = "MIT"
