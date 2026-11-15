@@ -431,3 +431,48 @@ def test_cover_and_divider_notes():
     noted = parse_markdown("# Deck\n\n<!-- opening -->\n\n## Part\n\n<!-- transition -->\n\n### S\n\n- a\n")
     assert missing_notes(noted) == []
     assert noted.cover.notes == ["opening"] and noted.sections[0].notes == ["transition"]
+
+
+def test_stack_with_descriptions_fits_a_narrow_column(tmp_path):
+    from pptx import Presentation
+
+    src = tmp_path / "s.md"
+    src.write_text("---\ntheme: academic\noutline: false\nclosing: false\n---\n\n# T\n\n## 章 | Ch\n\n### 節\n\n"
+                   "#### Stack\n\n左側一段說明文字，讓區塊排在右側的窄欄。\n\n"
+                   "```stack\n- 觀測單位 | 人數在哪種空間單位被量測\n- 輸入範圍 | 一格要參考多遠\n```\n",
+                   encoding="utf-8")
+    out = tmp_path / "s.pptx"
+    main(["build", str(src), "-o", str(out)])
+    slide = list(Presentation(str(out)).slides)[2]
+    assert all(sh.width >= 0 and sh.height >= 0 for sh in slide.shapes)   # PowerPoint refuses negative sizes
+    block = next(sh for sh in slide.shapes if sh.has_text_frame and sh.text_frame.text == "觀測單位")
+    desc = next(sh for sh in slide.shapes if sh.has_text_frame and sh.text_frame.text.startswith("人數在哪種"))
+    assert desc.left >= block.left + block.width and desc.width > 0
+
+
+def test_preview_reports_renderer_failure(tmp_path, monkeypatch):
+    import pytest
+
+    from deckframes import preview
+
+    def via_powerpoint(pptx, out):
+        raise preview.RenderError("PowerPoint could not open the file.")
+
+    monkeypatch.setattr(preview, "via_powerpoint", via_powerpoint)
+    pptx = tmp_path / "x.pptx"
+    pptx.write_bytes(b"")
+    with pytest.raises(SystemExit) as e:
+        preview.render(pptx, tmp_path / "out", backend="powerpoint")
+    assert "powerpoint: PowerPoint could not open the file." in str(e.value)
+
+
+def test_powershell_output_is_utf8():
+    import sys
+
+    import pytest
+
+    from deckframes.preview import _powershell
+
+    if sys.platform != "win32":
+        pytest.skip("PowerShell is Windows-only here")
+    assert _powershell("Write-Output '碩論 簡報'").stdout.strip() == "碩論 簡報"

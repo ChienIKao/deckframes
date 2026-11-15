@@ -474,8 +474,10 @@ class DiagramMixin:
             return
         aw = 0.32
         bh = min(0.85, (h - aw * (n - 1)) / n)
-        bw = min(w, 7.5)
         has_desc = any(it["desc"] for it in items)
+        gap = 0.35
+        # Descriptions sit right of the blocks; in a narrow column the blocks yield width to them
+        bw = min(7.5, max(w * 0.45, w - gap - 4.0)) if has_desc else min(w, 7.5)
         bx = x + (w - bw) / 2 if not has_desc else x
         y0 = y + (h - (bh * n + aw * (n - 1))) / 2
         for k, it in enumerate(items):
@@ -490,7 +492,7 @@ class DiagramMixin:
                 self.text(s, 0, 0, 0, 0, it["title"], 17, bold=True, color=ink, align=PP_ALIGN.CENTER,
                           anchor=MSO_ANCHOR.MIDDLE, target=sp)
                 if it["desc"]:
-                    self.text(s, bx + bw + 0.35, by, w - bw - 0.35, bh, it["desc"], 14, color=self.ink,
+                    self.text(s, bx + bw + gap, by, w - bw - gap, bh, it["desc"], 14, color=self.ink,
                               anchor=MSO_ANCHOR.MIDDLE)
             if k < n - 1:
                 with self.tag(s, item=k + 1):
