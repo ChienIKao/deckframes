@@ -17,7 +17,7 @@ from .style import H, W, mix
 PAD = 0.55
 ROMAN = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII"]
 NAV_TOP = {"band": 1.3, "pills": 1.12, "underline": 1.08, "breadcrumb": 0.82, "none": 0.5}
-CALLOUT_ICONS = {"note": "circle-info", "tip": "lightbulb", "important": "circle-exclamation",
+CALLOUT_ICONS = {"note": "circle-info", "tip": "lightbulb", "hint": "lightbulb", "important": "circle-exclamation",
                  "warning": "triangle-exclamation", "caution": "triangle-exclamation", "summary": "list-check",
                  "problem": "circle-xmark", "negative": "circle-xmark", "result": "circle-check",
                  "success": "circle-check", "positive": "circle-check"}
@@ -35,6 +35,8 @@ class ChromeMixin:
         getattr(self, f"divider_{self.variants['divider']}", self.divider_panel)(pg)
 
     def render_closing(self, pg):
+        if self.meta.get("closing_image"):
+            return self.closing_photo(pg)
         getattr(self, f"closing_{self.variants['closing']}", self.closing_frame)(pg)
 
     def nav(self, s, ci, si):
@@ -43,6 +45,8 @@ class ChromeMixin:
             getattr(self, f"nav_{v}", self.nav_band)(s, ci, si)
 
     def callout(self, s, d, x, y, w, h):
+        if d["kind"] == "hint":
+            return self.callout_hint(s, d, x, y, w, h)
         getattr(self, f"callout_{self.variants['callout']}", self.callout_pill)(s, d, x, y, w, h)
 
     def content_top(self, pg):
@@ -363,6 +367,8 @@ class ChromeMixin:
             cur = k == ci
             fill = self.pal(0) if cur else mix(self.muted, self.ground, 0.72)
             sp = self.shape(s, MSO_SHAPE.ROUNDED_RECTANGLE, x + k * (pw + gap), 0.2, pw, 0.34, fill=fill)
+            if cur:
+                self.lift(sp, small=True)
             self.text(s, 0, 0, 0, 0, ch.title, 12, bold=True, color=self.on(fill) if cur else mix(self.on(fill), fill,
                                                                                                      0.35),
                       align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE, target=sp)
@@ -376,6 +382,8 @@ class ChromeMixin:
             w = self.measure(sub.title, 10) + 0.36
             fill = self.pal(0) if cur else mix(self.muted, self.ground, 0.78)
             sp = self.shape(s, MSO_SHAPE.ROUNDED_RECTANGLE, sx, y - 0.13, w, 0.26, fill=fill)
+            if cur:
+                self.lift(sp, small=True)
             self.text(s, 0, 0, 0, 0, sub.title, 10, bold=cur, color=self.on(fill) if cur else mix(self.on(fill), fill, 0.4),
                       align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE, target=sp)
             sx += w + 0.12
@@ -419,6 +427,22 @@ class ChromeMixin:
             self.shape(s, MSO_SHAPE.OVAL, x, 0.34, d, d, fill=fill)
 
     # ------------------------------------------------------------------ callouts
+    def callout_hint(self, s, d, x, y, w, h):
+        fill = mix(self.hl, self.ground, 0.7)
+        border = mix(self.hl, self.dark_ink, 0.16)
+        size = 15
+        nw = min(w, max(3.0, self.measure(d["text"], size) + 0.7))
+        nh = min(h, max(0.52, self.lines_height([{"text": d["text"], "size": size}], nw - 0.6) + 0.2))
+        while size > 10 and self.lines_height([{"text": d["text"], "size": size}], nw - 0.6) > nh - 0.18:
+            size -= 1
+        nx, ny = x + w - nw, y + (h - nh) / 2
+        sp = self.shape(s, MSO_SHAPE.RECTANGLE, nx, ny, nw, nh, fill=fill, line=border, lw=2.5)
+        self.dash(sp, "dash")
+        sp.name = "hint-note"
+        self.text(s, nx + 0.3, ny + 0.06, nw - 0.5, nh - 0.12, d["text"], size, bold=True,
+                  color=self.on(fill), anchor=MSO_ANCHOR.MIDDLE)
+        self.glyph(s, "lightbulb", nx - 0.16, ny - 0.2, 0.46, 0.46, self.on(fill), scale=0.85)
+
     def callout_banner(self, s, d, x, y, w, h):
         fill = self.tone_fill(d["kind"]) or self.pal(0)
         sp = self.shape(s, MSO_SHAPE.RECTANGLE if self.radius <= 0 else MSO_SHAPE.ROUNDED_RECTANGLE, x, y, w,
@@ -430,6 +454,28 @@ class ChromeMixin:
             size -= 1
         self.text(s, 0, 0, 0, 0, d["text"], size, bold=True, color=self.on(fill), align=PP_ALIGN.CENTER,
                   anchor=MSO_ANCHOR.MIDDLE, target=sp, margin=0.12)
+
+    def callout_card(self, s, d, x, y, w, h):
+        """Tinted note card with an accent outline, a soft lift and its icon in a disc on the top-right corner."""
+        base = self.tone_fill(d["kind"]) or self.card_accent
+        fill = mix(base, self.ground, 0.85)
+        sp = self.shape(s, MSO_SHAPE.ROUNDED_RECTANGLE if self.radius > 0 else MSO_SHAPE.RECTANGLE, x, y, w, h,
+                        fill=fill, line=base, lw=1.5)
+        if self.radius > 0:
+            sp.adjustments[0] = min(0.5, self.radius * 1.5 / max(0.05, h))
+        self.soft_shadow(sp, blur=6, dist=3, angle=45, alpha=0.3)
+        dd = min(0.62, h * 0.75)
+        disc = self.shape(s, MSO_SHAPE.OVAL, x + w - dd * 0.75, y - dd * 0.35, dd, dd, fill="FFFFFF", line=base,
+                          lw=1.5)
+        self.soft_shadow(disc, blur=4, dist=2, angle=45, alpha=0.3)
+        ink = base if self.luminance(base) < 0.5 else mix(base, "000000", 0.35)
+        self.glyph(s, CALLOUT_ICONS.get(d["kind"], "circle-info"), x + w - dd * 0.75, y - dd * 0.35, dd, dd, ink,
+                   scale=0.55)
+        size = 15
+        while size > 11 and self.lines_height([{"text": d["text"], "size": size}], w - 1.1) + 0.2 > h:
+            size -= 1
+        self.text(s, x + 0.3, y, w - 1.0, h, d["text"], size, bold=True, color=self.card_ink,
+                  anchor=MSO_ANCHOR.MIDDLE)
 
     def callout_tint(self, s, d, x, y, w, h):
         base = self.tone_fill(d["kind"]) or self.pal(1)
@@ -445,6 +491,28 @@ class ChromeMixin:
                   anchor=MSO_ANCHOR.MIDDLE)
 
     # ------------------------------------------------------------------ closings
+    def closing_photo(self, pg):
+        s = self.new_slide(role="closing")
+        pic = self.picture(s, self.meta["closing_image"], 0, 0, W, H)
+        if pic:
+            from .style import E
+            shape, (_, _, pw, ph) = pic
+            ratio, target = pw / ph, W / H
+            if ratio > target:
+                shape.crop_left = shape.crop_right = (1 - target / ratio) / 2
+            else:
+                shape.crop_top = shape.crop_bottom = (1 - ratio / target) / 2
+            shape.left, shape.top, shape.width, shape.height = E(0), E(0), E(W), E(H)
+        overlay = self.shape(s, MSO_SHAPE.RECTANGLE, 0, 0, W, H, fill=self.dark_ink)
+        self.alpha(overlay, 0.55)
+        label = self.meta.get("closing_label", "THANK YOU")
+        pw = min(W - 2, self.pill_width(label, 16))
+        self.pill(s, (W - pw) / 2, H * 0.3, label, self.pal(0), size=16, shadow=False, rot=0)
+        font = "display" if pg.title.isascii() else "heading"
+        size = self.title_size(pg.title, W - 2, max_size=96, min_size=32, max_lines=2)
+        self.text(s, 1, H * 0.4, W - 2, H * 0.3, self.heading_text(pg.title), size, bold=True,
+                  color=self.light_ink, font=font, align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE)
+
     def closing_centered(self, pg):
         s = self.new_slide(role="closing")
         self.decorate(s, (W - 3.4, 0.4, 3.0, 2.6), "outline")

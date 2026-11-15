@@ -1,7 +1,7 @@
 {
   "name": "academic",
   "engine": "canvas",
-  "description": "學術簡報（lab meeting 風格）：白底、藍色膠囊導覽、金色細線、襯線標題、紅綠結論色帶",
+  "description": "學術簡報（lab meeting 風格）：白底、藍色膠囊導覽、金色細線、襯線標題、金框淺底卡片＋角落編號、柔和陰影、便條式重點框",
   "colors": {
     "black": "1F2328",
     "white": "FFFFFF",
@@ -34,10 +34,14 @@
     "divider": "minimal",
     "nav": "pills",
     "outline": "list",
-    "callout": "banner",
+    "callout": "card",
     "closing": "centered",
     "accent_line": "E9A23B",
-    "decor": []
+    "decor": [],
+    "card": "tint",
+    "badge": "corner",
+    "elevation": true,
+    "legend": true
   },
   "sizes": {"title": 26, "subtitle": 14, "body_max": 20, "body_min": 12, "split_below": 14}
 }

@@ -9,6 +9,12 @@ A theme's `style` block decides *how* things are drawn, not just their colours:
   ground    {"type": "solid"} | {"type": "gradient", "colors": [a, b], "angle": 90}
   texture   overlay drawn on every slide: none | grid | scanlines | dots | paper | noise
   decor     decoration vocabulary used on cover / outline / divider / statement slides
+  card      box treatment inside infographics: plain (solid palette fills) | tint (light tint of an
+            accent + accent outline, dark ink — the lab-meeting look)
+  badge     item numbers / icons: inline (square inside the card) | corner (circle on the card's corner)
+  elevation soft drop shadow under cards, panels and badges on surfaces that have no shadow of their own
+  legend    tags and mapping labels sit on the card's top border like a fieldset legend
+  veil      opacity of the ground-coloured veil laid over a slide that an `+++ overlay` step covers
 
 Everything stays native PowerPoint (shapes, gradient fills, DrawingML effects), so decks stay editable.
 """
@@ -38,6 +44,13 @@ def E(x: float) -> int:
 
 def rgb(h: str) -> RGBColor:
     return RGBColor.from_string(h.lstrip("#").upper())
+
+
+def strip_style_el(shape):
+    st = shape._element.find(qn("p:style"))
+    if st is not None:
+        shape._element.remove(st)
+    return shape
 
 
 def mix(a: str, b: str, t: float) -> str:
@@ -70,6 +83,86 @@ class StyleMixin:
         self.f_heading = f.get("heading", f["body"])
         self.f_ea_heading = f.get("ea_heading", f["ea"])
         self.stat_colored = st.get("stat_color", False)
+        self.card_style = st.get("card", "plain")
+        self.badge = st.get("badge", "inline")
+        self.elevation = bool(st.get("elevation", False))
+        self.legend = bool(st.get("legend", False))
+        self.veil_opacity = float(st.get("veil", 0.84))
+        self.card_accent = st.get("card_accent") or self.accent_line or self.palette[0]
+
+    @property
+    def tinted(self):
+        return self.card_style == "tint"
+
+    def tint(self, base=None, k=None):
+        """(fill, line, ink) for a box: a solid palette fill, or with `card: tint` a light tint of the accent
+        with an accent outline and dark ink."""
+        base = base or (self.color_for(k) if k is not None else self.card_accent)
+        if not self.tinted:
+            return base, None, self.on(base)
+        return mix(base, self.ground, 0.86), base, self.card_ink
+
+    def lift(self, sp, small=False):
+        """Elevation: soft drop shadow (theme `style.elevation`) for surfaces without their own shadow."""
+        if self.elevation and self.surface in ("outline", "flat", "luxury", "ornate", "sketch"):
+            self.soft_shadow(sp, blur=4 if small else 7, dist=2 if small else 3, angle=45, alpha=0.32)
+        return sp
+
+    # ------------------------------------------------------------------ fading (build steps)
+    def fade(self, el):
+        """Recolour one slide element (and everything inside it) toward the ground, the way a presenter
+        greys out what is not being talked about: text turns light grey, fills and lines pale, shadows go,
+        pictures turn translucent. Charts live in their own part, so they get a veil instead."""
+        text_grey = mix(self.muted, self.ground, 0.45)
+        for clr in list(el.iter(qn("a:srgbClr"))):
+            parent = etree.QName(clr.getparent()).localname
+            grand = clr.getparent().getparent()
+            in_text = parent == "solidFill" and grand is not None and etree.QName(grand).localname in (
+                "rPr", "defRPr", "endParaRPr")
+            clr.set("val", text_grey if in_text else mix(clr.get("val"), self.ground, 0.8))
+            for a in clr.findall(qn("a:alpha")):
+                clr.remove(a)
+        for prst in list(el.iter(qn("a:prstClr"))):
+            prst.getparent().remove(prst)
+        for eff in list(el.iter(qn("a:effectLst"))):
+            for child in list(eff):
+                eff.remove(child)
+        for blip in el.iter(qn("a:blip")):
+            for old in blip.findall(qn("a:alphaModFix")):
+                blip.remove(old)
+            blip.insert(0, etree.Element(qn("a:alphaModFix"), amt="28000"))
+        uri = el.find(".//" + qn("a:graphicData"))
+        if uri is not None and uri.get("uri", "").endswith("/chart"):
+            return "chart"
+        return None
+
+    def ghost(self, el):
+        """Make text invisible while keeping its space (hidden build steps inside centred text)."""
+        for clr in el.iter(qn("a:srgbClr")):
+            clr.set("val", self.ground)
+        for hl in list(el.iter(qn("a:highlight"))):
+            hl.getparent().remove(hl)
+
+    def veil(self, s, box, hole=None, name="veil"):
+        """Ground-coloured translucent sheet over box=(x, y, w, h); `hole` (x, y, w, h) stays uncovered so
+        one part of the slide below keeps its full colour (spotlight)."""
+        x, y, w, h = box
+        fb = s.shapes.build_freeform(E(x), E(y), scale=1.0)
+        fb.add_line_segments([(E(x + w), E(y)), (E(x + w), E(y + h)), (E(x), E(y + h))], close=True)
+        if hole:
+            hx, hy, hw, hh = hole
+            hx, hy = max(x, hx), max(y, hy)
+            hw, hh = min(x + w, hx + hw) - hx, min(y + h, hy + hh) - hy
+            if hw > 0 and hh > 0:  # counter-clockwise inner contour cuts the hole
+                fb.move_to(E(hx), E(hy))
+                fb.add_line_segments([(E(hx), E(hy + hh)), (E(hx + hw), E(hy + hh)), (E(hx + hw), E(hy))], close=True)
+        sp = strip_style_el(fb.convert_to_shape())
+        sp.fill.solid()
+        sp.fill.fore_color.rgb = rgb(self.ground)
+        sp.line.fill.background()
+        self.alpha(sp, self.veil_opacity)
+        sp.name = name
+        return sp
 
     def stat_ink(self, k):
         return self.color_for(k) if self.stat_colored and self.luminance(self.color_for(k)) < 0.6 else self.card_ink
@@ -194,9 +287,9 @@ class StyleMixin:
                         sh.adjustments[0] = radius_adj
             return main(line_=line or self.black, lw_=lw)
         if sf == "flat":
-            return main()
+            return self.lift(main(), small=thin)
         if sf == "outline":
-            return main(line_=line or self.black, lw_=max(lw, 0.75))
+            return self.lift(main(line_=line or self.black, lw_=max(lw, 0.75)), small=thin)
         if sf == "soft":
             sp = main(line_=line, lw_=0.75 if line else None)
             self.soft_shadow(sp, blur=12 if not thin else 6, dist=4 if not thin else 2, alpha=0.18)

@@ -128,7 +128,7 @@ deckframes build talk.md --template my-school
 | 檔案 | 修改 |
 |---|---|
 | `src/deckframes/markdown.py` | 把名稱加進 `COMPONENT_TYPES`，讓 ```` ```pyramid ```` 被解析成元件（項目語法沿用 `make_item`） |
-| `src/deckframes/engines/diagrams.py` | 新增 `comp_pyramid(self, s, d, x, y, w, h)`（canvas 會依名稱呼叫 `comp_<type>`）。只能用主題 token（`self.color_for(k)`、`self.on(fill)`、`self.block(...)`），不要寫死顏色；項目的 `icon:` 用 `self.glyph(...)` 畫 |
+| `src/deckframes/engines/diagrams.py` | 新增 `comp_pyramid(self, s, d, x, y, w, h)`（canvas 會依名稱呼叫 `comp_<type>`）。只能用主題 token（`self.color_for(k)`、`self.on(fill)`、`self.block(...)`），不要寫死顏色；項目的 `icon:` 用 `self.glyph(...)` 畫；`card: tint` 主題用 `self.tint(k=k)` / `self.tint_box(...)` 畫淺底描邊方塊。每個項目的圖形包在 `with self.tag(s, item=k, name=plain(it["title"])):` 裡（連到第 k 項的箭頭標 `item=k`），`build` 逐項顯示與 `focus=` 聚焦才會作用在你的元件上 |
 | `src/deckframes/layout.py` | 在 `degrade()` 決定模版模式下要退化成什麼（條列或表格） |
 | `skills/deckframes-infographics/SKILL.md` | 在對照表和語法表加一列：什麼內容適合用它 |
 | `skills/deckframes-core/SKILL.md` | 在元件清單加上名稱 |

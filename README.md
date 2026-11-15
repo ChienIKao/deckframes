@@ -123,10 +123,13 @@ AI 會：
 
 主題和去 AI 化範圍可以一次講清楚，AI 就不用再問：
 
-> 用 deckframes 把 `thesis.md` 做成口試簡報，主題用 `academic`，原稿也一起用 sepia 去 AI 化
+> 用 deckframes 把 `thesis.md` 做成口試簡報，主題用 `academic`，原稿是我自己寫的，只去 AI 化你補寫的部分
 
 - 「主題用 `academic`」只決定外觀。口試的章節結構由用途決定，所以要說「口試簡報」或「研究報告」。只說「academic style」的話，AI 不一定知道你指的是主題。
-- sepia 去 AI 化會自動跑，不用另外交代。預設只改 AI 補寫的文字（講者備註、卡片說明、副標）；要連你的原稿一起改，才需要說「原稿也一起去 AI 化」。
+- sepia 去 AI 化會自動跑，不用另外交代。預設連原稿一起去 AI 化（多數原稿是跟 AI 討論產生的）；原稿是你親手寫、一字不能動的話，說「只去 AI 化你補寫的部分」（`--polish written`）。
+- 預設禁止任何防禦性註明（「結果僅供參考」「仍需進一步研究」「視情況而定」之類），連原稿裡的也會刪；`deckframes build` 會用 `hedge:` 警告標出來。真的要保留，在 front matter 加 `hedges: allow`。
+- 副標題也算防禦性註明：AI 不會自己加投影片副標（`#### 標題 | 副標`）或封面 `subtitle:`，只保留原稿本來就有的，多出來的會出現 `subtitle:` 警告。章節英文名（`## 緒論 | Introduction`）不受影響。
+- 封面和章節過渡頁也會有講稿：`# 標題` 底下的 `<!-- -->` 是封面講稿，`##` 章節標題底下的是過渡頁講稿，缺的話會出現 `notes:` 警告。
 
 ### 自己用 CLI
 
@@ -155,9 +158,11 @@ date: 2026 / 07 / 08
 ---
 
 # 簡報題目                          ← 封面
+<!-- 開場講稿 -->                    ← 封面講稿
 ## 緒論 | Introduction              ← 章：大綱 + 章節頁（| 後是英文名）
+<!-- 過渡講稿 -->                    ← 章節頁講稿
 ### 研究背景                         ← 子章節：章節頁子目錄 + 導覽列第二排
-#### 產業趨勢 | 副標                 ← 一張投影片，標題顯示為「研究背景 – 產業趨勢」
+#### 產業趨勢 | 副標                 ← 一張投影片，標題顯示為「研究背景 – 產業趨勢」（副標只放原稿有的）
 
 全球製造業正邁向==自動化==。        ← ==螢光筆強調==
 
@@ -209,6 +214,12 @@ date: 2026 / 07 / 08
 | `pyramid`／`funnel` | 層級／逐步篩選 | `- 層 \| 說明` |
 | `cycle` | 迭代循環 | ```` ```cycle 中心文字 ````，`- 階段 \| 說明` |
 | `progress` | 進度 | `- 項目 \| 80%` |
+| `gantt` | 月份／數字欄位時程 | `gantt Jan-Dec` 或跨年 `gantt Jul'25-Sep'26`，每列第三欄填區間，可加 `window:`、`at:` |
+| `annotate` | 圖片區域解說 | `annotate img=assets/screen.png`，每項加 `area: x,y,w,h` |
+| `steps horizontal` detail panels | 步驟分支面板 | 子項 `> Panel title`，其後為面板內容 |
+| `timeline axis` | 附照片的日程 | 時間、活動、說明，可加 `img:` |
+| `stats` with logos | 標誌統計卡 | `- Label \| img: a.svg, b.png` |
+| `[!HINT]` / `closing_image` | 便利貼提示／照片結尾 | `> [!HINT] text`；front matter `closing_image: assets/night.jpg` |
 
 另外 `compare tone` 會用綠／紅色欄呈現「優點 vs 限制」，`> [!PROBLEM]`／`> [!RESULT]` 是紅／綠結論色帶。所有元件的示範：[`examples/components.md`](examples/components.md)。
 
@@ -304,7 +315,7 @@ deckframes build talk.md --theme my-lab
 
 | 指令 | 說明 |
 |---|---|
-| `deckframes init DIR --from script.md [--theme T] [--workflow W] [--mode verbatim\|refine] [--polish written\|all]` | 建立專案（`--polish`：sepia 去 AI 化範圍，只改 AI 寫的文字或連原稿一起改） |
+| `deckframes init DIR --from script.md [--theme T] [--workflow W] [--mode verbatim\|refine] [--polish written\|all]` | 建立專案（`--polish`：sepia 去 AI 化範圍，預設 `all` 連原稿一起改，`written` 只改 AI 寫的文字） |
 | `deckframes build [deck.md] [-o out.pptx] [--theme T] [--template T]` | 建置 |
 | `deckframes check [out.pptx] [--json]` | 檢查溢出與超出邊界（有問題時結束代碼為 1） |
 | `deckframes preview [out.pptx]` | 每頁 PNG ＋ 總覽 grid.png |
@@ -364,7 +375,7 @@ pytest -q
 
 ## English
 
-**deckframes** turns a Markdown script into an editable PowerPoint deck: cover, outline, chapter dividers with a section list, content slides with a chapter/section nav bar, and native infographics (cards, flow, steps, timeline, stats, compare, charts, architecture diagrams, swim-lane timelines, problem→solution mappings, stacks, 2×2 matrices, pyramids, funnels, cycles, progress bars, tables, callouts) in three structurally different built-in themes. The build warns when a deck leans on one presentation pattern. It ships as a Python CLI plus a set of [Agent Skills](https://agentskills.io) that any skills-capable coding agent (Claude Code, Codex, Cursor, …) can follow.
+**deckframes** turns a Markdown script into an editable PowerPoint deck: cover, outline, chapter dividers with a section list, content slides with a chapter/section nav bar, and native infographics (cards, flow, steps, timeline, stats, compare, charts, architecture diagrams, swim-lane timelines, Gantt schedules, image annotations, problem→solution mappings, stacks, 2×2 matrices, pyramids, funnels, cycles, progress bars, tables, callouts) in three structurally different built-in themes. The build warns when a deck leans on one presentation pattern. It ships as a Python CLI plus a set of [Agent Skills](https://agentskills.io) that any skills-capable coding agent (Claude Code, Codex, Cursor, …) can follow.
 
 ```bash
 uv tool install git+https://github.com/ChienIKao/deckframes      # CLI

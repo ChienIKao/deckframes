@@ -1,7 +1,7 @@
 """More infographic components.
 
   diagram   node/arrow graph with automatic layering, dashed groups and `focus=` highlighting
-            (repeat the same diagram on consecutive slides, each focusing one part)
+            (repeat the same diagram on consecutive slides, each focusing one part, or use `+++ focus=`)
   lanes     swim-lane timeline: items placed by year on parallel lanes
   mapping   problem → solution pairs
   stack     layered blocks top → bottom with arrows (model layers, tech stack)
@@ -10,6 +10,8 @@
   funnel    narrowing stages, wide top → narrow bottom
   cycle     items around a loop
   progress  labelled progress bars (`- Label | 80%`)
+  gantt     column schedules with windows and milestones
+  annotate  cards beside a fitted image with focusable regions
 """
 from __future__ import annotations
 
@@ -22,6 +24,7 @@ from pptx.enum.text import MSO_ANCHOR, PP_ALIGN
 from pptx.oxml.ns import qn
 from pptx.util import Pt
 
+from ..markdown import gantt_label, gantt_span, plain
 from .style import E, mix, rgb
 
 ARROW_SPLIT = re.compile(r"\s*(?:->|→)\s*")
@@ -33,6 +36,110 @@ def arg_value(info: str, key: str):
 
 
 class DiagramMixin:
+    # ------------------------------------------------------------------ gantt / annotation
+    def comp_gantt(self, s, d, x, y, w, h):
+        items, cols = d["items"], d["columns"]
+        if not items or not cols:
+            return
+        lw, gh, hh = w * 0.24, 0.4 if d["groups"] else 0, 0.48
+        tx, cw = x + lw, w * 0.76 / len(cols)
+        top = y + gh + hh
+        rh = (h - gh - hh) / len(items)
+        grid = mix(self.muted, self.ground, 0.76)
+        for k, group in enumerate(d["groups"]):
+            a, b = group["span"]
+            fill = self.card_accent if k == len(d["groups"]) - 1 else mix(self.card_accent, self.ground, 0.88)
+            self.shape(s, MSO_SHAPE.RECTANGLE, tx + a * cw, y, (b - a + 1) * cw - 0.02, gh, fill=fill)
+            self.text(s, tx + a * cw, y, (b - a + 1) * cw, gh, group["title"], 13, bold=True,
+                      color=self.on(fill), align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE)
+        for k, label in enumerate(cols):
+            self.text(s, tx + k * cw, y + gh + 0.12, cw, hh - 0.12, gantt_label(label), 12, color=self.muted,
+                      align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE)
+        now = next((a[4:] for a in d["args"] if a.startswith("now=")), None)
+        if now:
+            a, _ = gantt_span(cols, now)
+            self.shape(s, MSO_SHAPE.ISOSCELES_TRIANGLE, tx + (a + 0.5) * cw - 0.07, y + gh,
+                       0.14, 0.12, fill=self.card_accent)
+        for k in range(len(items)):
+            if k % 2 == 0:
+                with self.tag(s, item=k, name=plain(items[k]["title"])):
+                    self.shape(s, MSO_SHAPE.RECTANGLE, x, top + k * rh, w, rh,
+                               fill=mix(self.card_accent, self.ground, 0.94))
+        for k in range(len(cols) + 1):
+            self.line(s, tx + k * cw, top, tx + k * cw, y + h, color=grid, width=0.5)
+        for k, it in enumerate(items):
+            ry = top + k * rh
+            with self.tag(s, item=k, name=plain(it["title"])):
+                lines = [{"text": it["title"], "size": 16, "bold": True, "color": self.title_ink}]
+                if it["desc"]:
+                    lines.append({"text": it["desc"], "size": 12, "color": self.muted})
+                self.text(s, x + 0.1, ry, lw - 0.2, rh, lines, 16, anchor=MSO_ANCHOR.MIDDLE)
+                fill = it["attrs"].get("color", self.color_for(k)).lstrip("#")
+                bh = min(0.34, rh * 0.62)
+                by = ry + (rh - bh) / 2
+                if "window" in it:
+                    a, b = it["window"]
+                    wx, ww = tx + a * cw, (b - a + 1) * cw
+                    sp = self.shape(s, MSO_SHAPE.ROUNDED_RECTANGLE, wx, by, ww, bh, line=fill, lw=1.5)
+                    self.dash(sp, "dash")
+                    label = re.sub(r"'\d+", "", it["attrs"]["window"]).replace("-", " – ")
+                    tw = self.measure(label, 9) + 0.1
+                    outside = wx - tx > tw + 0.08
+                    self.text(s, wx - tw - 0.08 if outside else wx, by, tw if outside else ww, bh,
+                              label, 9, color=self.muted, anchor=MSO_ANCHOR.MIDDLE, align=PP_ALIGN.CENTER)
+                if "span" in it:
+                    a, b = it["span"]
+                    sp = self.shape(s, MSO_SHAPE.ROUNDED_RECTANGLE, tx + a * cw, by, (b - a + 1) * cw,
+                                    bh, fill=fill)
+                    label = it["attrs"].get("note") or re.sub(r"'\d+", "", it["extra"][0]).replace("-", " – ")
+                    size = 13
+                    while size > 8 and self.measure(label, size) > (b - a + 1) * cw - 0.1:
+                        size -= 1
+                    self.text(s, 0, 0, 0, 0, label, size, color=self.on(fill), align=PP_ALIGN.CENTER,
+                              anchor=MSO_ANCHOR.MIDDLE, target=sp, margin=0.03)
+                if "at" in it:
+                    a, _ = it["at"]
+                    cx = tx + (a + 0.5) * cw
+                    dd = min(0.2, cw * 0.6)
+                    self.shape(s, MSO_SHAPE.DIAMOND, cx - dd / 2, ry + rh / 2 - dd / 2, dd, dd, fill=fill)
+                    self.text(s, tx, ry, max(0.1, cx - tx - dd), rh, it["attrs"].get("note", ""), 10,
+                              color=self.accent_ink(fill), align=PP_ALIGN.RIGHT, anchor=MSO_ANCHOR.MIDDLE)
+
+    def comp_annotate(self, s, d, x, y, w, h):
+        items = d["items"]
+        if not items:
+            return
+        iw, gap = w * 0.45, 0.4
+        left = "left" in d["args"]
+        ix = x if left else x + w - iw
+        cx = x + iw + gap if left else x
+        cw = w - iw - gap
+        path = next((a[4:] for a in d["args"] if a.startswith("img=")), None)
+        with self.tag(s, fixed=True):
+            pic = self.picture(s, path, ix, y, iw, h) if path else None
+            if pic:
+                self.outline(pic[0])
+        ch = (h - 0.2 * (len(items) - 1)) / len(items)
+        for k, it in enumerate(items):
+            cy = y + k * (ch + 0.2)
+            with self.tag(s, item=k, name=plain(it["title"])):
+                self.card(s, it, k, cx, cy, cw, ch, horizontal=True)
+                with self.tag(s, region=True, focus_only=True):
+                    frame = self.shape(s, MSO_SHAPE.RECTANGLE, cx, cy, cw, ch, line=self.card_accent, lw=3)
+                    frame.name = f"annotate-card-{k + 1}"
+                    if self.elevation:
+                        self.glow(frame, self.card_accent, radius=4, alpha=0.3)
+                if pic and it.get("area"):
+                    px, py, pw, ph = pic[1]
+                    a, b, aw, ah = it["area"]
+                    rx, ry, rw, rh = px + pw * a / 100, py + ph * b / 100, pw * aw / 100, ph * ah / 100
+                    with self.tag(s, region=True):
+                        frame = self.shape(s, MSO_SHAPE.RECTANGLE, rx, ry, rw, rh, line=self.card_accent, lw=3)
+                        frame.name = f"annotate-region-{k + 1}"
+                        if self.elevation:
+                            self.glow(frame, self.card_accent, radius=4, alpha=0.3)
+                        self.badge_at(s, rx + 0.13, ry + 0.13, 0.26, str(k + 1), size=9)
+
     # ------------------------------------------------------------------ shared
     def arrow(self, s, x1, y1, x2, y2, color=None, width=1.5, elbow=False, begin=None, end=None, begin_idx=3,
               end_idx=1):
@@ -70,8 +177,20 @@ class DiagramMixin:
         return sp
 
     # ------------------------------------------------------------------ diagram
-    def comp_diagram(self, s, d, x, y, w, h):
-        info = d.get("info", "")
+    @staticmethod
+    def item_count(d):
+        """How many build units a component reveals: nodes for a diagram, drawn pairs for a mapping."""
+        if d["type"] == "diagram":
+            return len(DiagramMixin.graph(d)[0])
+        if d["type"] == "mapping":
+            return sum(1 for it in d["items"] if len(ARROW_SPLIT.split(it["title"])) > 1 or it["desc"])
+        if d["type"] == "matrix":
+            return min(4, len(d["items"]))
+        return len(d["items"])
+
+    @staticmethod
+    def graph(d):
+        """(nodes in order of first mention, captions, edges, groups) of a diagram block."""
         nodes, captions, edges, groups = [], {}, [], []
 
         def add(n):
@@ -102,9 +221,15 @@ class DiagramMixin:
                     add(a)
                     add(b)
                     edges.append((a, b))
+        return nodes, captions, edges, groups
+
+    def comp_diagram(self, s, d, x, y, w, h):
+        info = d.get("info", "")
+        nodes, captions, edges, groups = self.graph(d)
         if not nodes:
             return
         focus = {f.strip() for f in (arg_value(info, "focus") or "").split(",") if f.strip()}
+        focus = {nodes[int(f) - 1] if f.isdigit() and 0 < int(f) <= len(nodes) else f for f in focus}
         vertical = (arg_value(info, "dir") or "lr").lower() in ("tb", "td", "down")
 
         # longest-path layering (cycles: later edges are ignored)
@@ -117,6 +242,11 @@ class DiagramMixin:
                     changed = True
             if not changed:
                 break
+        targets = {b for _, b in edges}
+        for n in nodes:  # a source feeding a later column sits just before it, so its arrow crosses no node
+            outs = [layer[b] for a, b in edges if a == n]
+            if n not in targets and outs:
+                layer[n] = max(layer[n], min(outs) - 1)
         n_layers = max(layer.values()) + 1
         cols = [[n for n in nodes if layer[n] == k] for k in range(n_layers)]
         most = max(len(c) for c in cols)
@@ -141,7 +271,7 @@ class DiagramMixin:
                     span = (h - 0.3) / m
                     cy = y + 0.3 + (j + 0.5) * span
                 pos[n] = (cx - nw / 2, cy - nh / 2)
-        for label, members in groups:  # dashed group frames go first (behind)
+        for gi, (label, members) in enumerate(groups):  # dashed group frames go first (behind)
             pts = [pos[mbr] for mbr in members if mbr in pos]
             if not pts:
                 continue
@@ -149,25 +279,46 @@ class DiagramMixin:
             gy0 = min(p[1] for p in pts) - 0.38
             gx1 = max(p[0] for p in pts) + nw + 0.22
             gy1 = max(p[1] for p in pts) + nh + 0.2
-            g = self.shape(s, MSO_SHAPE.ROUNDED_RECTANGLE, gx0, gy0, gx1 - gx0, gy1 - gy0, fill=None,
-                           line=self.muted, lw=1.0)
-            g.adjustments[0] = 0.05
-            self.dash(g, "dash")
-            self.text(s, gx0 + 0.12, gy0 + 0.04, gx1 - gx0, 0.3, label, 10, color=self.muted, font="label")
+            with self.tag(s, group=label):
+                self.group_frame(s, gi, label, gx0, gy0, gx1 - gx0, gy1 - gy0, dim=bool(focus) and not (
+                    set(members) & focus))
         shapes = {}
         for k, n in enumerate(nodes):
             faded = bool(focus) and n not in focus
             hot = n in focus
-            fill = self.pal(0) if hot else self.white
-            shapes[n] = self.node_box(s, *pos[n], nw, nh, n, captions.get(n, ""), fill=fill, faded=faded, focus=hot)
+            fill = self.pal(0) if hot and not self.tinted else self.white
+            with self.tag(s, item=k, name=n):
+                shapes[n] = self.node_box(s, *pos[n], nw, nh, n, captions.get(n, ""), fill=fill, faded=faded,
+                                          focus=hot)
         for a, b in edges:
             dim = bool(focus) and not (a in focus or b in focus)
             col = mix(self.muted, self.ground, 0.4) if dim else self.black
-            if vertical:
-                self.arrow(s, 0, 0, 1, 1, color=col, width=1.25, elbow=True, begin=shapes[a], end=shapes[b],
-                           begin_idx=2, end_idx=0)
-            else:
-                self.arrow(s, 0, 0, 1, 1, color=col, width=1.25, elbow=True, begin=shapes[a], end=shapes[b])
+            with self.tag(s, item=max(nodes.index(a), nodes.index(b))):
+                if vertical:
+                    self.arrow(s, 0, 0, 1, 1, color=col, width=1.25, elbow=True, begin=shapes[a], end=shapes[b],
+                               begin_idx=2, end_idx=0)
+                else:
+                    self.arrow(s, 0, 0, 1, 1, color=col, width=1.25, elbow=True, begin=shapes[a], end=shapes[b])
+
+    def group_frame(self, s, gi, label, x, y, w, h, dim=False):
+        """Dashed group region. With `card: tint` it gets a pale palette fill and its label as a tab on the
+        top-right corner (Offline / Online processing boxes of a system diagram)."""
+        if not self.tinted:
+            g = self.shape(s, MSO_SHAPE.ROUNDED_RECTANGLE, x, y, w, h, fill=None, line=self.muted, lw=1.0)
+            g.adjustments[0] = 0.05
+            self.dash(g, "dash")
+            self.text(s, x + 0.12, y + 0.04, w, 0.3, label, 10, color=self.muted, font="label")
+            return
+        base = self.pal(gi + 2)
+        fill = mix(base, self.ground, 0.95 if dim else 0.84)
+        line = mix(self.muted, self.ground, 0.5) if dim else mix(base, "000000", 0.35)
+        g = self.shape(s, MSO_SHAPE.RECTANGLE, x, y, w, h, fill=fill, line=line, lw=1.25)
+        self.dash(g, "dash")
+        tw = self.measure(label, 10) + 0.3
+        tab = self.shape(s, MSO_SHAPE.RECTANGLE, x + w - tw - 0.08, y - 0.13, tw, 0.27,
+                         fill=self.ground if dim else self.white, line=line, lw=1.0)
+        self.text(s, 0, 0, 0, 0, label, 10, bold=True, color=self.muted if dim else self.card_ink,
+                  align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE, target=tab, font="label")
 
     # ------------------------------------------------------------------ lanes
     def comp_lanes(self, s, d, x, y, w, h):
@@ -224,18 +375,18 @@ class DiagramMixin:
         plans = []
         for lane in lanes:
             rows, entries = [], []
-            lane_items = [it for it in items if it["attrs"].get("lane", "") == lane]
-            for it in sorted(lane_items, key=lambda it: year(it["title"]) or y0):
+            lane_items = [(i, it) for i, it in enumerate(items) if it["attrs"].get("lane", "") == lane]
+            for i, it in sorted(lane_items, key=lambda e: year(e[1]["title"]) or y0):
                 name = it["desc"] or it["title"]
                 note = it["attrs"].get("note", "")
                 pw = min(rail_w, max(.65, self.measure(name, 14) + .28, self.measure(note, 10) + .1))
                 left = max(tx0, min(tx1 - pw, position(year(it["title"]) or y0) - pw / 2))
-                row = next((i for i, intervals in enumerate(rows)
+                row = next((r for r, intervals in enumerate(rows)
                             if all(left >= b + .1 or left + pw + .1 <= a for a, b in intervals)), len(rows))
                 if row == len(rows):
                     rows.append([])
                 rows[row].append((left, left + pw))
-                entries.append((name, note, left, pw, row))
+                entries.append((i, name, note, left, pw, row))
             plans.append((lane, rows, entries))
 
         available = h - axis_h - lane_gap * (len(lanes) - 1)
@@ -252,28 +403,29 @@ class DiagramMixin:
             self.text(s, x + .12, ly, label_w, lane_h, lane, 14, bold=True, color=self.on(fill),
                       anchor=MSO_ANCHOR.MIDDLE, font="heading")
             slot = (lane_h - .12) / len(rows)
-            for name, note, left, pw, row in entries:
-                pill_h = min(.36, slot * (.61 if note else .82))
-                note_h = min(.22, slot * .32) if note else 0
-                py = ly + .06 + row * slot + (slot - pill_h - note_h) / 2
-                selected = name in focus
-                edge = self.tones["positive"] if selected else self.pal(k)
-                pill_fill = mix(edge, self.white, .82) if selected else self.white
-                sp = self.shape(s, MSO_SHAPE.ROUNDED_RECTANGLE, left, py, pw, pill_h,
-                                fill=pill_fill, line=edge, lw=1.5 if selected else 1)
-                sp.name = f"lanes:item:{name}"
-                size = min(14, max(8, int(pill_h * 72 * .7)))
-                while size > 8 and self.measure(name, size) > pw - .12:
-                    size -= 1
-                self.text(s, 0, 0, 0, 0, name, size, bold=True, color=self.on(pill_fill), align=PP_ALIGN.CENTER,
-                          anchor=MSO_ANCHOR.MIDDLE, target=sp, margin=.02)
-                if note:
-                    note_size = min(10, max(7, int(note_h * 72 * .82)))
-                    while note_size > 7 and self.measure(note, note_size) > pw - .04:
-                        note_size -= 1
-                    tb = self.text(s, left, py + pill_h, pw, note_h, note, note_size, color=self.on(fill),
-                                   align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE)
-                    tb.name = f"lanes:note:{name}"
+            for i, name, note, left, pw, row in entries:
+                with self.tag(s, item=i, name=plain(name)):  # build steps reveal / focus items by tag
+                    pill_h = min(.36, slot * (.61 if note else .82))
+                    note_h = min(.22, slot * .32) if note else 0
+                    py = ly + .06 + row * slot + (slot - pill_h - note_h) / 2
+                    selected = name in focus or str(i + 1) in focus
+                    edge = self.tones["positive"] if selected else self.pal(k)
+                    pill_fill = mix(edge, self.white, .82) if selected else self.white
+                    sp = self.shape(s, MSO_SHAPE.ROUNDED_RECTANGLE, left, py, pw, pill_h,
+                                    fill=pill_fill, line=edge, lw=1.5 if selected else 1)
+                    sp.name = f"lanes:item:{name}"
+                    size = min(14, max(8, int(pill_h * 72 * .7)))
+                    while size > 8 and self.measure(name, size) > pw - .12:
+                        size -= 1
+                    self.text(s, 0, 0, 0, 0, name, size, bold=True, color=self.on(pill_fill), align=PP_ALIGN.CENTER,
+                              anchor=MSO_ANCHOR.MIDDLE, target=sp, margin=.02)
+                    if note:
+                        note_size = min(10, max(7, int(note_h * 72 * .82)))
+                        while note_size > 7 and self.measure(note, note_size) > pw - .04:
+                            note_size -= 1
+                        tb = self.text(s, left, py + pill_h, pw, note_h, note, note_size, color=self.on(fill),
+                                       align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE)
+                        tb.name = f"lanes:note:{name}"
             ly += lane_h + lane_gap
 
         ay = y + h - axis_h + .08
@@ -311,11 +463,13 @@ class DiagramMixin:
         for it in d["items"]:
             parts = ARROW_SPLIT.split(it["title"])
             if len(parts) >= 2:
-                pairs.append((parts[0], parts[-1]))
+                pairs.append((parts[0], parts[-1], it))
             elif it["desc"]:
-                pairs.append((it["title"], it["desc"]))
+                pairs.append((it["title"], it["desc"], it))
         if not pairs:
             return
+        if self.legend:
+            return self.mapping_legend(s, d, pairs, x, y, w, h)
         neutral = "neutral" in d["args"]
         lf = self.pal(0) if neutral else self.tones["negative"]
         rf = self.pal(1) if neutral else self.tones["positive"]
@@ -324,22 +478,64 @@ class DiagramMixin:
         rh = min(0.72, (h - gap * (n - 1)) / n)
         y0 = y + (h - (rh * n + gap * (n - 1))) / 2
         cw = w * 0.4
-        for k, (a, b) in enumerate(pairs):
+        for k, (a, b, _) in enumerate(pairs):
             ry = y0 + k * (rh + gap)
-            for bx, txt, fill in ((x, a, lf), (x + w - cw, b, rf)):
-                sp = self.shape(s, MSO_SHAPE.ROUNDED_RECTANGLE, bx, ry, cw, rh, fill=fill)
-                if self.surface in ("brutal", "pixel"):
-                    sp.line.color.rgb = rgb(self.black)
-                    sp.line.width = Pt(self.tw)
-                elif self.surface in ("soft", "clay", "glass"):
-                    self.soft_shadow(sp, blur=8, dist=3, alpha=0.18)
-                size = 16
-                while size > 11 and self.measure(txt, size) > cw - 0.4:
-                    size -= 1
-                self.text(s, 0, 0, 0, 0, txt, size, bold=True, color=self.on(fill), align=PP_ALIGN.CENTER,
-                          anchor=MSO_ANCHOR.MIDDLE, target=sp, margin=0.1)
-            self.arrow(s, x + cw + 0.25, ry + rh / 2, x + w - cw - 0.25, ry + rh / 2, color=self.title_ink,
-                       width=1.5)
+            with self.tag(s, item=k, name=plain(a)):
+                for bx, txt, fill in ((x, a, lf), (x + w - cw, b, rf)):
+                    sp = self.shape(s, MSO_SHAPE.ROUNDED_RECTANGLE, bx, ry, cw, rh, fill=fill)
+                    if self.surface in ("brutal", "pixel"):
+                        sp.line.color.rgb = rgb(self.black)
+                        sp.line.width = Pt(self.tw)
+                    elif self.surface in ("soft", "clay", "glass"):
+                        self.soft_shadow(sp, blur=8, dist=3, alpha=0.18)
+                    size = 16
+                    while size > 11 and self.measure(txt, size) > cw - 0.4:
+                        size -= 1
+                    self.text(s, 0, 0, 0, 0, txt, size, bold=True, color=self.on(fill), align=PP_ALIGN.CENTER,
+                              anchor=MSO_ANCHOR.MIDDLE, target=sp, margin=0.1)
+                self.arrow(s, x + cw + 0.25, ry + rh / 2, x + w - cw - 0.25, ry + rh / 2, color=self.title_ink,
+                           width=1.5)
+
+    def mapping_legend(self, s, d, pairs, x, y, w, h):
+        """Outlined problem / solution boxes with ✗ / ✓ legends on their top border and an icon disc on the
+        arrow between them. `left=` / `right=` rename the legends; `neutral` drops the tones."""
+        info = d.get("info", "")
+        neutral = "neutral" in d["args"]
+        lname = arg_value(info, "left") or ("" if neutral else "Problem")
+        rname = arg_value(info, "right") or ("" if neutral else "Solution")
+        lc = self.pal(0) if neutral else self.tones["negative"]
+        rc = self.pal(1) if neutral else self.tones["positive"]
+        acc = self.card_accent
+        n = len(pairs)
+        gap = 0.5
+        rh = min(0.95, (h - gap * (n - 1) - 0.2) / n)
+        y0 = y + (h - (rh * n + gap * (n - 1))) / 2 + 0.1
+        cw = (w - 2.1) / 2
+        for k, (a, b, it) in enumerate(pairs):
+            ry = y0 + k * (rh + gap)
+            with self.tag(s, item=k, name=plain(a)):
+                for bx, txt, col, name, icon in ((x, a, lc, lname, "xmark"), (x + w - cw, b, rc, rname, "check")):
+                    sp = self.shape(s, MSO_SHAPE.ROUNDED_RECTANGLE, bx, ry, cw, rh, fill=self.white, line=acc, lw=2.0)
+                    sp.adjustments[0] = 0.18
+                    self.lift(sp)
+                    size = 17
+                    while size > 11 and self.measure(txt, size) > cw - 0.4:
+                        size -= 1
+                    self.text(s, 0, 0, 0, 0, txt, size, bold=True, color=self.card_ink, align=PP_ALIGN.CENTER,
+                              anchor=MSO_ANCHOR.MIDDLE, target=sp, margin=0.1)
+                    label = f"{name} {k + 1}" if name else ""
+                    if label:
+                        self.legend_tab(s, bx + 0.25, ry, label, col, icon=None if neutral else icon, size=11,
+                                        fill=self.white)
+                ax0, ax1 = x + cw + 0.15, x + w - cw - 0.15
+                cy = ry + rh / 2
+                self.arrow(s, ax0, cy, ax1, cy, color=acc, width=2.25)
+                dd = min(0.72, rh * 0.9)
+                disc = self.shape(s, MSO_SHAPE.OVAL, (ax0 + ax1) / 2 - dd / 2, cy - dd / 2, dd, dd,
+                                  fill=mix(acc, self.ground, 0.8), line=acc, lw=1.25)
+                self.lift(disc, small=True)
+                self.glyph(s, it["attrs"].get("icon") or "arrow-right", (ax0 + ax1) / 2 - dd / 2, cy - dd / 2, dd,
+                           dd, self.accent_ink(acc), scale=0.55)
 
     # ------------------------------------------------------------------ stack
     def comp_stack(self, s, d, x, y, w, h):
@@ -349,22 +545,30 @@ class DiagramMixin:
             return
         aw = 0.32
         bh = min(0.85, (h - aw * (n - 1)) / n)
-        bw = min(w, 7.5)
         has_desc = any(it["desc"] for it in items)
+        gap = 0.35
+        # Descriptions sit right of the blocks; in a narrow column the blocks yield width to them
+        bw = min(7.5, max(w * 0.45, w - gap - 4.0)) if has_desc else min(w, 7.5)
         bx = x + (w - bw) / 2 if not has_desc else x
         y0 = y + (h - (bh * n + aw * (n - 1))) / 2
         for k, it in enumerate(items):
             by = y0 + k * (bh + aw)
-            fill = self.pal(k)
-            sp = self.block(s, bx, by, bw, bh, fill, thin=True)
-            self.text(s, 0, 0, 0, 0, it["title"], 17, bold=True, color=self.on(fill), align=PP_ALIGN.CENTER,
-                      anchor=MSO_ANCHOR.MIDDLE, target=sp)
-            if it["desc"]:
-                self.text(s, bx + bw + 0.35, by, w - bw - 0.35, bh, it["desc"], 14, color=self.ink,
-                          anchor=MSO_ANCHOR.MIDDLE)
+            with self.tag(s, item=k, name=plain(it["title"])):
+                if self.tinted:
+                    fill, line, ink = self.tint(k=k)
+                    sp = self.tint_box(s, bx, by, bw, bh, line, lw=1.75, fill=fill)
+                else:
+                    fill = self.pal(k)
+                    sp, ink = self.block(s, bx, by, bw, bh, fill, thin=True), self.on(fill)
+                self.text(s, 0, 0, 0, 0, it["title"], 17, bold=True, color=ink, align=PP_ALIGN.CENTER,
+                          anchor=MSO_ANCHOR.MIDDLE, target=sp)
+                if it["desc"]:
+                    self.text(s, bx + bw + gap, by, w - bw - gap, bh, it["desc"], 14, color=self.ink,
+                              anchor=MSO_ANCHOR.MIDDLE)
             if k < n - 1:
-                self.shape(s, MSO_SHAPE.DOWN_ARROW, bx + bw / 2 - 0.14, by + bh + 0.04, 0.28, aw - 0.08,
-                           fill=self.title_ink)
+                with self.tag(s, item=k + 1):
+                    self.shape(s, MSO_SHAPE.DOWN_ARROW, bx + bw / 2 - 0.14, by + bh + 0.04, 0.28, aw - 0.08,
+                               fill=self.card_accent if self.tinted else self.title_ink)
 
     # ------------------------------------------------------------------ matrix
     def comp_matrix(self, s, d, x, y, w, h):
@@ -377,16 +581,23 @@ class DiagramMixin:
         cw, ch = (gw - g) / 2, (gh - g) / 2
         for k, it in enumerate(items):
             r, c = divmod(k, 2)
-            fill = mix(self.pal(k), self.ground, 0.55 if k != 1 else 0.15)
             bx, by = gx + c * (cw + g), gy + r * (ch + g)
-            self.block(s, bx, by, cw, ch, fill, thin=True)
-            if it:
-                lines = [{"text": it["title"], "size": 20, "bold": True, "color": self.on(fill), "font": "heading",
-                          "space_after": 4}]
-                if it["desc"]:
-                    lines.append({"text": it["desc"], "size": 14, "color": self.on(fill)})
-                lines += [{"text": "■ " + ch_, "size": 13, "color": self.on(fill)} for ch_ in it["children"]]
-                self.text(s, bx + 0.3, by + 0.25, cw - 0.6, ch - 0.5, lines, 20)
+            with self.tag(s, item=k, name=plain(it["title"]) if it else None):
+                if self.tinted:
+                    fill = mix(self.pal(k), self.ground, 0.84 if k != 1 else 0.72)
+                    self.tint_box(s, bx, by, cw, ch, self.pal(k), lw=1.75, fill=fill)
+                    head, ink = self.accent_ink(self.pal(k)), self.card_ink
+                else:
+                    fill = mix(self.pal(k), self.ground, 0.55 if k != 1 else 0.15)
+                    self.block(s, bx, by, cw, ch, fill, thin=True)
+                    head = ink = self.on(fill)
+                if it:
+                    lines = [{"text": it["title"], "size": 20, "bold": True, "color": head, "font": "heading",
+                              "space_after": 4}]
+                    if it["desc"]:
+                        lines.append({"text": it["desc"], "size": 14, "color": ink})
+                    lines += [{"text": "■ " + ch_, "size": 13, "color": ink} for ch_ in it["children"]]
+                    self.text(s, bx + 0.3, by + 0.25, cw - 0.6, ch - 0.5, lines, 20)
         self.arrow(s, x + 0.15, y + h - ax + 0.1, x + 0.15, y, color=self.title_ink, width=2)
         self.arrow(s, x + 0.15, y + h - 0.12, x + w, y + h - 0.12, color=self.title_ink, width=2)
         if yl:
@@ -413,31 +624,38 @@ class DiagramMixin:
             bot_w = pw * ((i + 1) / n) if not invert else pw * (i / n)
             top_w = max(top_w, pw * 0.18) if invert else top_w
             bot_w = max(bot_w, pw * 0.18) if invert else bot_w
-            ly = y + k * (lh + g)
-            big = max(top_w, bot_w)
-            bx = x + (pw - big) / 2
-            fill = self.pal(k)
-            if k == 0 and not invert:
-                sp = self.shape(s, MSO_SHAPE.ISOSCELES_TRIANGLE, bx, ly, big, lh, fill=fill)
-            else:
-                sp = self.shape(s, MSO_SHAPE.TRAPEZOID, bx, ly, big, lh, fill=fill)
-                sp.adjustments[0] = min(1.0, abs(bot_w - top_w) / 2 / max(0.05, min(big, lh)))
-                if invert:
-                    sp._element.spPr.find(qn("a:xfrm")).set("flipV", "1")
-            if self.surface in ("brutal", "pixel", "outline", "sketch"):
-                sp.line.color.rgb = rgb(self.black)
-                sp.line.width = Pt(self.tw)
-            elif self.surface in ("soft", "clay", "glass", "neu"):
-                self.soft_shadow(sp, blur=8, dist=3, alpha=0.2)
-            ty = ly + (lh * 0.25 if (k == 0 and not invert) else 0)
-            self.text(s, x, ty, pw, lh - (lh * 0.25 if (k == 0 and not invert) else 0), it["title"], 15, bold=True,
-                      color=self.on(fill), align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE)
-            if has_desc:
-                lines = [{"text": it["desc"], "size": 14, "color": self.ink}] if it["desc"] else []
-                lines += [{"text": "■ " + c, "size": 12, "color": self.muted} for c in it["children"]]
-                self.text(s, x + pw + 0.4, ly, w - pw - 0.4, lh, lines, 14, anchor=MSO_ANCHOR.MIDDLE)
-                self.line(s, x + (pw + big) / 2 + 0.05, ly + lh / 2, x + pw + 0.3, ly + lh / 2,
-                          color=mix(self.muted, self.ground, 0.3), width=0.75)
+            with self.tag(s, item=k, name=plain(it["title"])):
+                self.level(s, it, k, x, y + k * (lh + g), w, lh, pw, top_w, bot_w, invert, has_desc)
+
+    def level(self, s, it, k, x, ly, w, lh, pw, top_w, bot_w, invert, has_desc):
+        big = max(top_w, bot_w)
+        bx = x + (pw - big) / 2
+        fill, line, ink = self.tint(k=k) if self.tinted else (self.pal(k), None, self.on(self.pal(k)))
+        if k == 0 and not invert:
+            sp = self.shape(s, MSO_SHAPE.ISOSCELES_TRIANGLE, bx, ly, big, lh, fill=fill)
+        else:
+            sp = self.shape(s, MSO_SHAPE.TRAPEZOID, bx, ly, big, lh, fill=fill)
+            sp.adjustments[0] = min(1.0, abs(bot_w - top_w) / 2 / max(0.05, min(big, lh)))
+            if invert:
+                sp._element.spPr.find(qn("a:xfrm")).set("flipV", "1")
+        if line:
+            sp.line.color.rgb = rgb(line)
+            sp.line.width = Pt(1.75)
+            self.lift(sp)
+        elif self.surface in ("brutal", "pixel", "outline", "sketch"):
+            sp.line.color.rgb = rgb(self.black)
+            sp.line.width = Pt(self.tw)
+        elif self.surface in ("soft", "clay", "glass", "neu"):
+            self.soft_shadow(sp, blur=8, dist=3, alpha=0.2)
+        ty = ly + (lh * 0.25 if (k == 0 and not invert) else 0)
+        self.text(s, x, ty, pw, lh - (lh * 0.25 if (k == 0 and not invert) else 0), it["title"], 15, bold=True,
+                  color=ink, align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE)
+        if has_desc:
+            lines = [{"text": it["desc"], "size": 14, "color": self.ink}] if it["desc"] else []
+            lines += [{"text": "■ " + c, "size": 12, "color": self.muted} for c in it["children"]]
+            self.text(s, x + pw + 0.4, ly, w - pw - 0.4, lh, lines, 14, anchor=MSO_ANCHOR.MIDDLE)
+            self.line(s, x + (pw + big) / 2 + 0.05, ly + lh / 2, x + pw + 0.3, ly + lh / 2,
+                      color=mix(self.muted, self.ground, 0.3), width=0.75)
 
     def comp_pyramid(self, s, d, x, y, w, h):
         self._levels(s, d, x, y, w, h, invert=False)
@@ -464,17 +682,25 @@ class DiagramMixin:
             dx, dy = x2 - x1, y2 - y1
             dist = math.hypot(dx, dy)
             off = nd / 2 + 0.08
-            self.arrow(s, x1 + dx / dist * off, y1 + dy / dist * off, x2 - dx / dist * off, y2 - dy / dist * off,
-                       color=self.title_ink, width=2)
+            with self.tag(s, item=max(k, (k + 1) % n)):
+                self.arrow(s, x1 + dx / dist * off, y1 + dy / dist * off, x2 - dx / dist * off,
+                           y2 - dy / dist * off, color=self.card_accent if self.tinted else self.title_ink, width=2)
         for k, (px, py) in enumerate(pts):
-            fill = self.pal(k)
-            sp = self.block(s, px - nd / 2, py - nd / 2, nd, nd, fill, thin=True, kind=MSO_SHAPE.OVAL)
             it = items[k]
-            lines = [{"text": it["title"], "size": 13, "bold": True, "color": self.on(fill)}]
-            if it["desc"]:
-                lines.append({"text": it["desc"], "size": 10, "color": self.on(fill)})
-            self.text(s, 0, 0, 0, 0, lines, 13, align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE, target=sp,
-                      margin=0.08)
+            with self.tag(s, item=k, name=plain(it["title"])):
+                if self.tinted:
+                    fill, line, ink = self.tint(k=k)
+                    sp = self.tint_box(s, px - nd / 2, py - nd / 2, nd, nd, line, lw=2.0, fill=fill,
+                                       kind=MSO_SHAPE.OVAL)
+                else:
+                    fill = self.pal(k)
+                    sp = self.block(s, px - nd / 2, py - nd / 2, nd, nd, fill, thin=True, kind=MSO_SHAPE.OVAL)
+                    ink = self.on(fill)
+                lines = [{"text": it["title"], "size": 13, "bold": True, "color": ink}]
+                if it["desc"]:
+                    lines.append({"text": it["desc"], "size": 10, "color": ink})
+                self.text(s, 0, 0, 0, 0, lines, 13, align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE, target=sp,
+                          margin=0.08)
         if center:
             self.text(s, cx - r * 0.55, cy - 0.4, r * 1.1, 0.8, center, 18, bold=True, color=self.title_ink,
                       align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE, font="heading")
@@ -490,20 +716,23 @@ class DiagramMixin:
         lw = min(3.6, w * 0.35)
         track_w = w - lw - 1.2
         for k, it in enumerate(items):
-            ry = y0 + k * rh
-            m = re.search(r"([\d.]+)\s*%", it["desc"] or it["title"])
-            pct = max(0.0, min(100.0, float(m.group(1)))) if m else 0.0
-            self.text(s, x, ry, lw, rh, it["title"], 16, bold=True, color=self.title_ink, anchor=MSO_ANCHOR.MIDDLE)
-            bh = min(0.32, rh * 0.45)
-            by = ry + (rh - bh) / 2
-            track = self.shape(s, MSO_SHAPE.ROUNDED_RECTANGLE, x + lw, by, track_w, bh,
-                               fill=mix(self.muted, self.ground, 0.75))
-            track.adjustments[0] = 0.5 if self.radius > 0 or self.surface not in ("brutal", "pixel") else 0
-            if pct > 0:
-                bar = self.shape(s, MSO_SHAPE.ROUNDED_RECTANGLE, x + lw, by, track_w * pct / 100, bh, fill=self.pal(k))
-                bar.adjustments[0] = track.adjustments[0]
-                if self.surface in ("brutal", "pixel"):
-                    bar.line.color.rgb = rgb(self.black)
-                    bar.line.width = Pt(self.tw)
-            self.text(s, x + lw + track_w + 0.15, ry, 1.05, rh, f"{pct:g}%", 16, bold=True, color=self.title_ink,
-                      anchor=MSO_ANCHOR.MIDDLE, font="display")
+            with self.tag(s, item=k, name=plain(it["title"])):
+                self.progress_row(s, it, k, x, y0 + k * rh, rh, lw, track_w)
+
+    def progress_row(self, s, it, k, x, ry, rh, lw, track_w):
+        m = re.search(r"([\d.]+)\s*%", it["desc"] or it["title"])
+        pct = max(0.0, min(100.0, float(m.group(1)))) if m else 0.0
+        self.text(s, x, ry, lw, rh, it["title"], 16, bold=True, color=self.title_ink, anchor=MSO_ANCHOR.MIDDLE)
+        bh = min(0.32, rh * 0.45)
+        by = ry + (rh - bh) / 2
+        track = self.shape(s, MSO_SHAPE.ROUNDED_RECTANGLE, x + lw, by, track_w, bh,
+                           fill=mix(self.muted, self.ground, 0.75))
+        track.adjustments[0] = 0.5 if self.radius > 0 or self.surface not in ("brutal", "pixel") else 0
+        if pct > 0:
+            bar = self.shape(s, MSO_SHAPE.ROUNDED_RECTANGLE, x + lw, by, track_w * pct / 100, bh, fill=self.pal(k))
+            bar.adjustments[0] = track.adjustments[0]
+            if self.surface in ("brutal", "pixel"):
+                bar.line.color.rgb = rgb(self.black)
+                bar.line.width = Pt(self.tw)
+        self.text(s, x + lw + track_w + 0.15, ry, 1.05, rh, f"{pct:g}%", 16, bold=True, color=self.title_ink,
+                  anchor=MSO_ANCHOR.MIDDLE, font="display")

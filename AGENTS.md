@@ -36,7 +36,7 @@ src/deckframes/
   frame_import.py   HyperFrames FRAME.md → canvas theme
   themes/*.json     built-in themes
 skills/<name>/SKILL.md   agent skills (Agent Skills format; installable with `npx skills add`)
-examples/                demo decks (fictional content); components.md shows every block
+examples/                demo decks (fictional content); components.md shows every block, builds.md the `+++` build steps
 tests/                   pytest smoke tests
 ```
 

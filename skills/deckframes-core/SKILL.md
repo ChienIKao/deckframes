@@ -3,8 +3,8 @@ name: deckframes-core
 description: >
   The deck.md contract for deckframes: heading hierarchy (cover, chapters, sections, slides),
   `Title | Subtitle` headings, front-matter keys, inline marks (==highlight==, callouts, sources,
-  speaker notes), automatic layout selection and pagination. Read before writing or editing any
-  deck.md.
+  speaker notes), build steps (`+++` reveal / dim / focus / overlay), automatic layout selection
+  and pagination. Read before writing or editing any deck.md.
 ---
 
 # deck.md contract
@@ -19,9 +19,14 @@ description: >
 | `#### Slide title \| subtitle` | one content slide |
 | `#####` and deeper | bold sub-heading inside a slide |
 | `---` inside a slide | force a page break (same title continues) |
+| `+++` inside a slide | build step: the next slide repeats this one and adds what follows (see Build steps) |
 
 - Any heading takes ` | ` + subtitle. Chapters use it for the English name (`## 緒論 | Introduction`);
-  slides use it for a grey subtitle line.
+  slides use it for a grey subtitle line — only when the user's script has that subtitle (an
+  invented one reads as a hedge; the build warns `subtitle:`).
+- Speaker notes (`<!-- -->`) under `# Title` go to the cover; under a `##` heading (before its
+  first `###`) to that chapter's divider. Give the cover and every divider notes — the build warns
+  `notes:` when one is blank.
 - Content directly under `###` (no `####`) becomes one slide titled with the section name, so
   3-level scripts work unchanged.
 - Slide titles render as `{section} – {slide}` (`研究背景 – 工業 4.0`); identical names show once.
@@ -35,7 +40,7 @@ description: >
 ---
 theme: blockframe            # or template: <name|path>
 eyebrow: Thesis Defense      # pill above the cover title
-subtitle: English subtitle
+subtitle: English subtitle   # only if the user's script has one
 author: Presenter: Name
 authors: Ann Lee; Bo Chen     # cover author list (shown by covers that have an author block, e.g. academic)
 affiliations: Dept. of CS; Lab X
@@ -51,6 +56,7 @@ recap: false                 # replay the chapter divider before each section, c
 title_format: "{sub} – {title}"
 closing: Q&A                 # closing slide text; false = none
 closing_label: THANK YOU
+closing_image: assets/night.jpg # full-bleed cropped photo behind the closing title
 max_table_rows: 9            # longer tables split, header repeated
 section_level: 2
 subsection_level: 3
@@ -69,13 +75,13 @@ visual_bleed: 0.35          # inches the image may extend into the side margins
 | `**bold**`, `*italic*`, `` `code` ``, `[text](url)` | inline formatting |
 | `==key phrase==` | highlighter mark + bold |
 | `> quote` | quote; a slide holding only one quote becomes a quote card |
-| `> [!NOTE] text` | bottom callout. Kinds: NOTE, TIP, IMPORTANT, WARNING, CAUTION, SUMMARY, PROBLEM (negative tone), RESULT / SUCCESS (positive tone) |
+| `> [!NOTE] text` | bottom callout. Kinds: NOTE, TIP, HINT (compact sticky note), IMPORTANT, WARNING, CAUTION, SUMMARY, PROBLEM (negative tone), RESULT / SUCCESS (positive tone) |
 | paragraph starting `Source:` / `資料來源：` / `來源：` / `Ref:` | footer citation |
 | `![caption](assets/x.png)` on its own line | image with a thin outline + caption tag below (PNG, JPG or SVG — SVG stays vector); layout hints in the title: `![caption](x.png "left wide")` |
 | Markdown table | native table; ○ × ✓ and numbers auto-centred |
 | ```` ```lang ```` code fence | dark code card |
-| ```` ```cards ```` `steps` `timeline` `flow` `stats` `compare` `chart` `diagram` `lanes` `mapping` `stack` `matrix` `pyramid` `funnel` `cycle` `progress` | infographics → `deckframes-infographics` (vary them across the deck) |
-| `<!-- text -->` | speaker notes (multi-line OK) |
+| ```` ```cards ```` `steps` `timeline` `flow` `stats` `compare` `chart` `diagram` `lanes` `mapping` `stack` `matrix` `pyramid` `funnel` `cycle` `progress` `gantt` `annotate` | infographics → `deckframes-infographics` (vary them across the deck) |
+| `<!-- text -->` | speaker notes (multi-line OK); also on the cover and chapter dividers |
 
 ## No emoji — use icons
 
@@ -130,11 +136,48 @@ underneath at full width, or set `visual_below: auto` in the front matter; `"sid
 A build warning `image is low resolution (~N dpi)` means the source is too small for the space it
 gets — ask the user for a larger export.
 
+## Build steps (`+++`)
+
+A presenter often shows one slide in stages: the same slide again with one more element, the earlier
+part greyed out, or the whole slide faded behind a new layer. `+++` on its own line splits a slide
+into steps; each step becomes its own slide. A layer is laid out once with all of its steps, so
+nothing moves from one slide to the next and clicking through looks like an animation (decks stay
+plain slides — no PowerPoint animations to break).
+
+| Write | The next slide |
+|---|---|
+| `+++` | repeats everything so far and adds the content below the marker (space for it was reserved) |
+| `+++ dim` | same, but everything from the earlier steps turns pale grey |
+| `+++ focus=2` | greys out the earlier steps except item 2 of their visual (`focus=2,3`; a diagram node or the first cell of a table row also works: `focus=知識圖譜`) |
+| `+++ overlay` | lays a translucent veil over the slide so far and draws the content below as a new layer on top (text gets a lifted panel) |
+| `+++ overlay focus=3` | the veil leaves item / table row 3 uncovered (spotlight); callouts in that layer sit right next to it |
+
+```markdown
+#### Results | values are illustrative
+
+| Model | Accuracy |
+|---|---|
+| Baseline | 0.61 |
+| Ours | 0.82 |
+
++++ overlay focus=2
+
+> [!RESULT] Ours wins at the same model size.
+```
+
+- Speaker notes written after a `+++` belong to that step's slide.
+- Item-by-item reveals need no markers: add `build` to the component (`build`, `build=dim`,
+  `build=focus` — see deckframes-infographics).
+- Use builds for the slides you talk through in stages (architecture walk-throughs, problem →
+  solution, the key row of a results table) — not on every slide; each step is one more slide.
+- Template decks (`--template`) ignore the markers and show the finished slide.
+
 ## Pagination
 
 Text is measured against the real box: if it doesn't fit at 14 pt the slide is halved at a
 top-level bullet boundary and the next page gets `（續）`. Extra visuals get their own slides.
-Control breaks yourself with `---`.
+Control breaks yourself with `---`. Slides with build steps are never split (each layer keeps
+all of its visuals side by side): keep them short.
 
 ## Assets
 

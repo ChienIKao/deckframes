@@ -25,8 +25,8 @@ Typical chapters (keep the user's own if they differ); every chapter gets an Eng
 | `## 研究結果 \| Results` | experiments, ablations, error analysis |
 | `## 結論 \| Conclusion` | contributions, future work |
 
-Front matter: `eyebrow` (e.g. 碩士論文口試報告 / Thesis Defense), `author`, `date`, English
-`subtitle`, lab/school logos as `logo_left` / `logo_right` if provided, `closing: Q&A`.
+Front matter: `eyebrow` (e.g. 碩士論文口試報告 / Thesis Defense), `author`, `date`, `subtitle`
+only when the thesis has an English title, lab/school logos as `logo_left` / `logo_right` if provided, `closing: Q&A`.
 Set `recap: true` when chapters have ≥ 4 sections, so the committee sees where they are.
 
 ## 2. Convert content (see `deckframes-infographics`)
@@ -48,7 +48,9 @@ Set `recap: true` when chapters have ≥ 4 sections, so the committee sees where
 
 ## 3. Speaker notes
 
-Put timing and talking points in `<!-- -->` per slide. Budget ≈ 1 slide per minute of the allotted
+Put timing and talking points in `<!-- -->` per slide, including the cover (the opening: who you
+are, the thesis in one sentence) and every chapter divider (one line that hands over from the last
+chapter to this one). Budget ≈ 1 slide per minute of the allotted
 talk; if the deck runs long, tell the user which sections to compress rather than cutting content
 yourself.
 

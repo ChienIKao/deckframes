@@ -104,9 +104,11 @@ def cmd_build(a):
     out.parent.mkdir(parents=True, exist_ok=True)
     prs.save(out)
     print(f"✔ {out}  ({len(prs.slides)} slides, {engine})")
-    from .lint import variety
+    from .lint import hedges, missing_notes, subtitles, variety
 
-    for w in [*eng.warnings, *variety(doc)]:
+    src = root / state["source"] if root and state.get("source") else None
+    source = src.read_text(encoding="utf-8") if src and src.exists() else None
+    for w in [*eng.warnings, *variety(doc), *hedges(doc), *subtitles(doc, source), *missing_notes(doc)]:
         print("  ⚠", w)
     if root:
         proj.mark(root, "built")
@@ -276,7 +278,7 @@ def main(argv=None):
                    help="deckframes-general | deckframes-academic-defense")
     p.add_argument("--mode", choices=["verbatim", "refine"], default="verbatim")
     p.add_argument("--polish", choices=["written", "all"],
-                   help="de-AI scope: only agent-written text, or the user's text too (default: by mode)")
+                   help="de-AI scope: the user's script too (default: all), or only agent-written text")
     p.set_defaults(fn=cmd_init)
 
     p = sub.add_parser("build", help="deck.md → .pptx")

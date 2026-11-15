@@ -30,7 +30,7 @@ divider / nav / outline / callout / closing variant, a background, a texture and
 | Built-in | Look |
 |---|---|
 | `blockframe` (default) | Neo-Brutalism: thick black outlines, hard shadows, candy colours per chapter, star bursts |
-| `academic` | Lab-meeting / thesis style: white, blue pill nav bar, gold rule, serif titles, red/green problem/result banners, editorial cover with authors and affiliations |
+| `academic` | Lab-meeting / thesis style: white, blue pill nav bar, gold rule, serif titles, gold-outlined tinted cards with corner number badges and soft shadows, note-card callouts, editorial cover with authors and affiliations |
 | `aws` | AWS look: white, squid-ink navy, orange title rule and chapter numbers, console-grey cards, architecture-icon category colours |
 
 Match the theme to the audience: `academic` for lab meetings, defenses and reports; `aws` for
@@ -92,7 +92,13 @@ or `--from` another theme) → edit the tokens below (the file's `_edit` key rep
 | `divider` | `panel` `hero` `centered` `band` `minimal` |
 | `nav` | `band` `pills` `underline` `breadcrumb` `none` |
 | `outline` | `line` `list` `grid` |
-| `callout` | `pill` `banner` (full-width coloured bar) `tint` (tinted box with icon) |
+| `callout` | `pill` `banner` (full-width coloured bar) `tint` (tinted box with icon) `card` (tinted note card, accent outline, icon disc on its corner) |
+| `card` | box treatment inside infographics: `plain` (solid palette fills, default) or `tint` (light tint of the accent, accent outline, dark ink — cards, steps, flow, stats, stack, matrix, pyramid, cycle, diagram groups) |
+| `card_accent` | accent of tinted boxes, badges and arrows; defaults to `accent_line`, then the first palette colour |
+| `badge` | item numbers on tinted cards: `inline` (inside the card) or `corner` (a disc on the card's top-left corner) |
+| `elevation` | `true` adds a soft drop shadow under cards, badges, the current nav pills and callouts (for `outline` / `flat` surfaces, which have no shadow of their own) |
+| `legend` | `true`: card tags and `mapping` labels sit on the box's top border like a fieldset legend (✗ Problem 1 / ✓ Solution 1) |
+| `veil` | opacity of the veil an `+++ overlay` step lays over the slide below (default 0.84) |
 | `closing` | `frame` `centered` `poster` |
 | `ground` | `{"type": "solid"}` or `{"type": "gradient", "colors": [a, b], "angle": 90}`; `roles: {cover: {...}, divider: {...}}` overrides per slide role |
 | `texture` | `none` `grid` `scanlines` `dots` `paper` `noise` |
