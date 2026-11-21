@@ -485,9 +485,12 @@ def parse_markdown(text: str) -> Doc:
 
 # --------------------------------------------------------------------------- inline
 
+# Emphasis text: a `code span` is taken whole, so a marker inside one never closes the emphasis
+_BODY = r"(?:`[^`]+`|`(?![^`]*`)|[^`])+?"
 INLINE = re.compile(
-    r"==(?P<hl>.+?)==|\*\*(?P<b>.+?)\*\*|__(?P<b2>.+?)__|`(?P<code>[^`]+)`|\[(?P<lt>[^\]]+)\]\((?P<lu>[^)]+)\)"
-    r"|(?<![\w*])\*(?!\s)(?P<i>.+?)(?<!\s)\*(?!\*)|(?<!\w)_(?!\s)(?P<i2>.+?)(?<!\s)_(?!\w)"
+    rf"==(?P<hl>{_BODY})==|\*\*(?P<b>{_BODY})\*\*|__(?P<b2>{_BODY})__|`(?P<code>[^`]+)`"
+    r"|\[(?P<lt>[^\]]+)\]\((?P<lu>[^)]+)\)"
+    rf"|(?<![\w*])\*(?!\s)(?P<i>{_BODY})(?<!\s)\*(?!\*)|(?<!\w)_(?!\s)(?P<i2>{_BODY})(?<!\s)_(?!\w)"
 )
 
 
@@ -496,16 +499,19 @@ def inline_runs(text: str):
     for m in INLINE.finditer(text):
         if m.start() > pos:
             runs.append((text[pos:m.start()], {}))
-        if m.group("hl"):
-            runs.append((m.group("hl"), {"hl": True, "bold": True}))
-        elif m.group("b") or m.group("b2"):
-            runs.append((m.group("b") or m.group("b2"), {"bold": True}))
-        elif m.group("code"):
+        if m.group("code"):
             runs.append((m.group("code"), {"code": True}))
         elif m.group("lt"):
             runs.append((m.group("lt"), {"link": m.group("lu")}))
         else:
-            runs.append((m.group("i") or m.group("i2"), {"italic": True}))
+            if m.group("hl"):
+                body, fmt = m.group("hl"), {"hl": True, "bold": True}
+            elif m.group("b") or m.group("b2"):
+                body, fmt = m.group("b") or m.group("b2"), {"bold": True}
+            else:
+                body, fmt = m.group("i") or m.group("i2"), {"italic": True}
+            # emphasis around a code span keeps the code span's own text and font
+            runs += [(t, {**f, **fmt}) for t, f in inline_runs(body)] if "`" in body else [(body, fmt)]
         pos = m.end()
     if pos < len(text):
         runs.append((text[pos:], {}))

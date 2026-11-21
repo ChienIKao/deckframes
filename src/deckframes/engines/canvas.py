@@ -193,7 +193,8 @@ class Canvas(StyleMixin, ChromeMixin, DiagramMixin):
         return "4A4A4A" if self.luminance(fill) >= 0.5 else "D8D8D8"
 
     def shape(self, s, kind, x, y, w, h, fill=None, line=None, lw=None, rot=0.0, pattern=None):
-        sp = strip_style(s.shapes.add_shape(kind, E(x), E(y), E(w), E(h)))
+        # PowerPoint refuses to open a file with a negative extent anywhere, so never write one
+        sp = strip_style(s.shapes.add_shape(kind, E(x), E(y), E(max(w, 0)), E(max(h, 0))))
         if pattern:
             sp.fill.patterned()
             sp.fill.pattern = pattern
@@ -231,7 +232,8 @@ class Canvas(StyleMixin, ChromeMixin, DiagramMixin):
         latin = {"display": self.f_display, "label": self.f_label, "body": self.f_body, "heading": self.f_heading,
                  "code": self.f_code}[font]
         ea_face = self.f_ea_heading if font == "heading" else self.f_ea
-        for chunk, fmt in inline_runs(text):
+        # code is shown as written: `__x__` or `_x_` inside it is not Markdown emphasis
+        for chunk, fmt in [(text, {})] if font == "code" else inline_runs(text):
             if not chunk:
                 continue
             r = p.add_run()
@@ -266,7 +268,7 @@ class Canvas(StyleMixin, ChromeMixin, DiagramMixin):
              anchor=MSO_ANCHOR.TOP, spc=None, line_spacing=None, target=None, margin=0.0):
         """lines: str or list[str|dict(text,size,bold,color,font,space_after)]."""
         if target is None:
-            target = s.shapes.add_textbox(E(x), E(y), E(w), E(h))
+            target = s.shapes.add_textbox(E(x), E(y), E(max(w, 0)), E(max(h, 0)))
         tf = target.text_frame
         self.tf_setup(tf, anchor, margin)
         if isinstance(lines, str):
@@ -1591,6 +1593,9 @@ class Canvas(StyleMixin, ChromeMixin, DiagramMixin):
                                                                                 and "vertical" not in d["args"])
         if "axis" in d["args"]:
             return self.steps_axis(s, items, x, y, w, h)
+        gap = 0.75 if self.tinted else 0.55   # the gaps steps_tint / the card row below use
+        if horizontal and (w - gap * (n - 1)) / n < 1.0:
+            horizontal = False   # cards this narrow (many steps beside text) leave no room for text: use rows
         if any(it.get("panels") for it in items):
             if horizontal:
                 return self.steps_panels(s, d, x, y, w, h)
