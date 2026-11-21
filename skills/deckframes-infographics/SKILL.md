@@ -103,7 +103,7 @@ SVG path. Pick icons that carry meaning (clock = waiting time, database = data) 
 | Block | 1st field | 2nd field | extra / children | Options after the block name |
 |---|---|---|---|---|
 | `cards` | card title | one-line description | bullet details | `stack`, `grid`, `cols=3` |
-| `steps` / `timeline` | step name | description | bullet details | `vertical`, `horizontal` |
+| `steps` / `timeline` | step name | description | bullet details | `vertical`, `horizontal` (too many items for one row in the space, e.g. 5+ beside text, are drawn as rows with a build warning) |
 | `steps` detail panels | step name | description | indented `> Panel title`, then panel lines until the next `>` | `horizontal`; vertical flattens panels into children |
 | `timeline axis` | time | bold event label | 3rd field / children = detail; `img:` = photo | `axis` (also `steps horizontal axis`) |
 | `gantt` | row title | small description | 3rd field = span; `window:`, `at:`, `note:`, `color:` | range, `cols=…`, `now=…`; free `group Label: A-B` lines |

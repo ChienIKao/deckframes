@@ -450,6 +450,51 @@ def test_stack_with_descriptions_fits_a_narrow_column(tmp_path):
     assert desc.left >= block.left + block.width and desc.width > 0
 
 
+def test_steps_row_beside_text_keeps_positive_sizes(tmp_path, capsys):
+    from pptx import Presentation
+    from pptx.util import Inches
+
+    titles = ["取得時間", "評估問題", "搜尋與讀頁", "依證據缺口選工具", "整理引用", "回答"]
+    body = ""
+    for kind in ("steps horizontal", "timeline"):
+        for n in (4, 6):
+            body += (f"#### {kind} {n}\n\n```{kind}\n" + "".join(f"- {t} | 說明\n" for t in titles[:n])
+                     + "```\n\n- 用 contextId 關聯多次互動\n- 只定義怎麼交換工作資訊\n\n")
+    src = tmp_path / "s.md"
+    src.write_text("---\ntheme: academic\noutline: false\nclosing: false\n---\n\n# T\n\n## 章 | Ch\n\n### 節\n\n"
+                   + body, encoding="utf-8")
+    out = tmp_path / "s.pptx"
+    main(["build", str(src), "-o", str(out)])
+    for slide in list(Presentation(str(out)).slides)[2:]:
+        assert all(sh.width >= 0 and sh.height >= 0 for sh in slide.shapes)   # PowerPoint refuses negative sizes
+        steps = [sh for sh in slide.shapes if sh.has_text_frame and sh.text_frame.text.split("\n")[0] in titles]
+        if len(steps) == 6:   # too many for one row beside text: drawn as rows with a full text column
+            assert all(sh.width >= Inches(1) for sh in steps), [sh.text_frame.text for sh in steps]
+    assert capsys.readouterr().out.count("do not fit one row here") == 2   # steps + timeline, 6 items each
+
+
+def test_code_is_shown_as_written(tmp_path):
+    from pptx import Presentation
+
+    from deckframes.markdown import inline_runs
+
+    assert inline_runs("`__event_emitter__`") == [("__event_emitter__", {"code": True})]
+    assert inline_runs("a __b `c__d` e") == [("a __b ", {}), ("c__d", {"code": True}), (" e", {})]
+    assert inline_runs("**see `x_y`**") == [("see ", {"bold": True}), ("x_y", {"code": True, "bold": True})]
+    assert inline_runs("**bold** and _it_") == [("bold", {"bold": True}), (" and ", {}), ("it", {"italic": True})]
+
+    code = ["await __event_emitter__({", '    "type": "status", "data": {"done": _x_},', "})  # **not bold**"]
+    src = tmp_path / "c.md"
+    src.write_text("---\ntheme: academic\noutline: false\nclosing: false\n---\n\n# T\n\n## 章 | Ch\n\n### 節\n\n"
+                   "#### Code\n\n```python\n" + "\n".join(code) + "\n```\n", encoding="utf-8")
+    out = tmp_path / "c.pptx"
+    main(["build", str(src), "-o", str(out)])
+    slide = list(Presentation(str(out)).slides)[2]
+    box = next(sh for sh in slide.shapes if sh.has_text_frame and "__event_emitter__" in sh.text_frame.text)
+    assert box.text_frame.text.split("\n") == code
+    assert not any(r.font.bold or r.font.italic for p in box.text_frame.paragraphs for r in p.runs)
+
+
 def test_preview_reports_renderer_failure(tmp_path, monkeypatch):
     import pytest
 
