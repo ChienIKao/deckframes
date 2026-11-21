@@ -486,11 +486,11 @@ def parse_markdown(text: str) -> Doc:
 # --------------------------------------------------------------------------- inline
 
 # Emphasis text: a `code span` is taken whole, so a marker inside one never closes the emphasis
-_BODY = r"(?:`[^`]+`|`(?![^`]*`)|[^`])+?"
+_EMPH_BODY = r"(?:`[^`]+`|`(?![^`]*`)|[^`])+?"
 INLINE = re.compile(
-    rf"==(?P<hl>{_BODY})==|\*\*(?P<b>{_BODY})\*\*|__(?P<b2>{_BODY})__|`(?P<code>[^`]+)`"
+    rf"==(?P<hl>{_EMPH_BODY})==|\*\*(?P<b>{_EMPH_BODY})\*\*|__(?P<b2>{_EMPH_BODY})__|`(?P<code>[^`]+)`"
     r"|\[(?P<lt>[^\]]+)\]\((?P<lu>[^)]+)\)"
-    rf"|(?<![\w*])\*(?!\s)(?P<i>{_BODY})(?<!\s)\*(?!\*)|(?<!\w)_(?!\s)(?P<i2>{_BODY})(?<!\s)_(?!\w)"
+    rf"|(?<![\w*])\*(?!\s)(?P<i>{_EMPH_BODY})(?<!\s)\*(?!\*)|(?<!\w)_(?!\s)(?P<i2>{_EMPH_BODY})(?<!\s)_(?!\w)"
 )
 
 

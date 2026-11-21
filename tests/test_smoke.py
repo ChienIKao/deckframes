@@ -450,8 +450,9 @@ def test_stack_with_descriptions_fits_a_narrow_column(tmp_path):
     assert desc.left >= block.left + block.width and desc.width > 0
 
 
-def test_steps_row_beside_text_keeps_positive_sizes(tmp_path):
+def test_steps_row_beside_text_keeps_positive_sizes(tmp_path, capsys):
     from pptx import Presentation
+    from pptx.util import Inches
 
     titles = ["取得時間", "評估問題", "搜尋與讀頁", "依證據缺口選工具", "整理引用", "回答"]
     body = ""
@@ -466,9 +467,10 @@ def test_steps_row_beside_text_keeps_positive_sizes(tmp_path):
     main(["build", str(src), "-o", str(out)])
     for slide in list(Presentation(str(out)).slides)[2:]:
         assert all(sh.width >= 0 and sh.height >= 0 for sh in slide.shapes)   # PowerPoint refuses negative sizes
-        for sh in slide.shapes:   # every step keeps a usable text column (6 steps fall back to rows)
-            if sh.has_text_frame and sh.text_frame.text.split("\n")[0] in titles:
-                assert sh.width >= 914400 * 0.5, sh.text_frame.text
+        steps = [sh for sh in slide.shapes if sh.has_text_frame and sh.text_frame.text.split("\n")[0] in titles]
+        if len(steps) == 6:   # too many for one row beside text: drawn as rows with a full text column
+            assert all(sh.width >= Inches(1) for sh in steps), [sh.text_frame.text for sh in steps]
+    assert capsys.readouterr().out.count("do not fit one row here") == 2   # steps + timeline, 6 items each
 
 
 def test_code_is_shown_as_written(tmp_path):

@@ -193,7 +193,7 @@ class Canvas(StyleMixin, ChromeMixin, DiagramMixin):
         return "4A4A4A" if self.luminance(fill) >= 0.5 else "D8D8D8"
 
     def shape(self, s, kind, x, y, w, h, fill=None, line=None, lw=None, rot=0.0, pattern=None):
-        # PowerPoint refuses to open a file with a negative extent anywhere, so never write one
+        # PowerPoint refuses to open a file with any negative extent: shapes and text boxes never get one
         sp = strip_style(s.shapes.add_shape(kind, E(x), E(y), E(max(w, 0)), E(max(h, 0))))
         if pattern:
             sp.fill.patterned()
@@ -1596,6 +1596,10 @@ class Canvas(StyleMixin, ChromeMixin, DiagramMixin):
         gap = 0.75 if self.tinted else 0.55   # the gaps steps_tint / the card row below use
         if horizontal and (w - gap * (n - 1)) / n < 1.0:
             horizontal = False   # cards this narrow (many steps beside text) leave no room for text: use rows
+            msg = (f"[{plain(items[0]['title'])} …] {d['type']}: {n} items do not fit one row here, drawn as rows"
+                   " — give the block its own slide to keep the row")
+            if msg not in self.warnings:
+                self.warnings.append(msg)
         if any(it.get("panels") for it in items):
             if horizontal:
                 return self.steps_panels(s, d, x, y, w, h)
